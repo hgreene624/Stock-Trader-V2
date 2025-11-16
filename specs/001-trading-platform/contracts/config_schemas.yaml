@@ -1,0 +1,304 @@
+# Configuration Schema Examples
+# All YAML configs must conform to these schemas (validated via pydantic)
+
+# ============================================================================
+# system.yaml - Main system configuration
+# ============================================================================
+
+system:
+  # Execution mode: "backtest" | "paper" | "live"
+  mode: "backtest"
+
+  # Initial NAV per mode
+  backtest_initial_nav: 100000.00  # Simulated starting capital
+  # paper_initial_nav: not used (reads from broker account)
+  # live_initial_nav: not used (reads from broker account)
+
+  # Primary timeframe for strategy decisions
+  timeframe: "H4"  # 4-hour bars
+
+  # Data paths
+  data_dir: "./data"
+  results_dir: "./results"
+  logs_dir: "./logs"
+
+  # Active models with budgets (NAV fractions)
+  models:
+    - name: "EquityTrendModel_v1"
+      version: "1.0.0"
+      status: "live"  # research | candidate | paper | live
+      budget_fraction: 0.30  # 30% of NAV
+
+    - name: "IndexMeanReversionModel_v1"
+      version: "1.0.0"
+      status: "live"
+      budget_fraction: 0.25  # 25% of NAV
+
+    - name: "CryptoMomentumModel_v1"
+      version: "1.0.0"
+      status: "paper"
+      budget_fraction: 0.15  # 15% of NAV
+
+  # Risk limits (enforced by Risk Engine)
+  risk:
+    max_leverage: 1.2  # Gross exposure / NAV
+    per_asset_cap: 0.40  # Max 40% of NAV in single asset
+    crypto_class_cap: 0.20  # Max 20% of NAV in crypto
+    drawdown_trigger: 0.15  # 15% triggers de-risking
+    drawdown_halt: 0.20  # 20% triggers full exit
+    derisking_factor: 0.50  # Reduce budgets to 50% on trigger
+
+  # Broker configuration
+  brokers:
+    alpaca:
+      api_key_env: "ALPACA_API_KEY"  # Read from environment
+      api_secret_env: "ALPACA_API_SECRET"
+      base_url: "https://paper-api.alpaca.markets"  # Paper trading URL
+
+    binance:
+      api_key_env: "BINANCE_API_KEY"
+      api_secret_env: "BINANCE_API_SECRET"
+
+    kraken:
+      api_key_env: "KRAKEN_API_KEY"
+      api_secret_env: "KRAKEN_API_SECRET"
+
+  # Logging configuration
+  logging:
+    level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+    format: "json"  # Structured JSON lines
+    files:
+      trades: "./logs/trades.log"
+      performance: "./logs/performance.log"
+      regime: "./logs/regime.log"
+      errors: "./logs/errors.log"
+
+
+# ============================================================================
+# models.yaml - Model-specific parameters
+# ============================================================================
+
+models:
+  EquityTrendModel_v1:
+    version: "1.0.0"
+    description: "Long-only equity trend following using 200D MA and momentum"
+
+    # Asset universe
+    universe:
+      - "SPY"  # S&P 500 ETF
+      - "QQQ"  # Nasdaq 100 ETF
+
+    asset_classes:
+      - "equity"
+
+    # Strategy parameters
+    parameters:
+      slow_ma_period: 200  # Daily MA for trend detection
+      momentum_lookback_days: 60  # 60D momentum
+      exit_ma_period: 50  # Faster MA for exits
+
+      # Position sizing
+      equal_weight: true  # Equal weight across universe (if false, use momentum ranking)
+      max_positions: 2  # Max concurrent positions
+
+    # Execution hints
+    execution:
+      urgency: "normal"
+      horizon: "position"  # Longer-term holds
+
+  IndexMeanReversionModel_v1:
+    version: "1.0.0"
+    description: "Mean reversion on major index ETFs using RSI + Bollinger Bands"
+
+    universe:
+      - "SPY"
+      - "QQQ"
+      - "DIA"  # Dow Jones ETF
+
+    asset_classes:
+      - "equity"
+
+    parameters:
+      rsi_period: 14  # RSI lookback
+      rsi_oversold: 30  # Entry threshold
+      rsi_overbought: 70  # Exit threshold
+
+      bb_period: 20  # Bollinger Band period
+      bb_std: 2.0  # Standard deviations
+
+      equal_weight: true
+      max_positions: 3
+
+    execution:
+      urgency: "high"  # Mean reversion is time-sensitive
+      horizon: "swing"  # Shorter holds
+
+  CryptoMomentumModel_v1:
+    version: "1.0.0"
+    description: "Crypto momentum with regime gating (bull markets only)"
+
+    universe:
+      - "BTC-USD"
+      - "ETH-USD"
+
+    asset_classes:
+      - "crypto"
+
+    parameters:
+      momentum_short_days: 30  # Short-term momentum
+      momentum_long_days: 60  # Long-term momentum
+
+      # Regime gating
+      only_in_crypto_bull: true  # Only trade in crypto bull regime
+
+      equal_weight: false  # Weight by momentum strength
+      max_positions: 2
+
+    execution:
+      urgency: "normal"
+      horizon: "position"
+
+
+# ============================================================================
+# regime_budgets.yaml - Regime-based budget adjustments
+# ============================================================================
+
+regime_budgets:
+  # Budget multipliers per regime (applied to base model budgets)
+  # Example: If EquityTrendModel has budget 0.30 and equity_bull multiplier is 1.2,
+  #          effective budget = 0.30 × 1.2 = 0.36
+
+  equity_bull:
+    EquityTrendModel_v1: 1.2  # Increase equity trend budget in bull market
+    IndexMeanReversionModel_v1: 0.8  # Reduce mean reversion in strong trends
+    CryptoMomentumModel_v1: 1.0  # No change
+
+  equity_bear:
+    EquityTrendModel_v1: 0.5  # Reduce trend following in bear market
+    IndexMeanReversionModel_v1: 1.2  # Increase mean reversion (more volatility)
+    CryptoMomentumModel_v1: 1.0
+
+  equity_neutral:
+    EquityTrendModel_v1: 1.0
+    IndexMeanReversionModel_v1: 1.0
+    CryptoMomentumModel_v1: 1.0
+
+  vol_high:
+    # High volatility: reduce all budgets by 20%
+    EquityTrendModel_v1: 0.8
+    IndexMeanReversionModel_v1: 0.8
+    CryptoMomentumModel_v1: 0.7  # More conservative on crypto
+
+  vol_low:
+    # Low volatility: can increase risk slightly
+    EquityTrendModel_v1: 1.1
+    IndexMeanReversionModel_v1: 1.1
+    CryptoMomentumModel_v1: 1.0
+
+  crypto_bull:
+    CryptoMomentumModel_v1: 1.3  # Increase crypto budget in bull market
+
+  crypto_bear:
+    CryptoMomentumModel_v1: 0.0  # Exit crypto entirely in bear market
+
+
+# ============================================================================
+# experiments/exp_001_equity_trend_optimization.yaml - Experiment override
+# ============================================================================
+
+# Experiment: Optimize EquityTrendModel_v1 MA periods
+experiment:
+  name: "equity_trend_ma_optimization"
+  description: "Grid search over slow_ma_period and momentum_lookback_days"
+  base_config: "configs/base/system.yaml"  # Inherit from base
+
+  # Override specific parameters
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+    # Test single model in isolation
+    models:
+      - name: "EquityTrendModel_v1"
+        version: "1.0.0"
+        status: "research"
+        budget_fraction: 1.0  # 100% allocation for testing
+
+  # Parameter grid for optimization
+  parameter_grid:
+    models.EquityTrendModel_v1.parameters.slow_ma_period:
+      - 150
+      - 200
+      - 250
+
+    models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+      - 30
+      - 60
+      - 90
+
+  # Backtest period
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization metric
+  optimization:
+    metric: "bps"  # Balanced Performance Score
+    maximize: true
+
+
+# ============================================================================
+# Pydantic Schema Validation Example (Python code)
+# ============================================================================
+
+# Example pydantic models to validate YAML configs:
+#
+# from pydantic import BaseModel, Field, validator
+# from typing import List, Dict, Literal
+# from decimal import Decimal
+#
+# class ModelConfig(BaseModel):
+#     name: str
+#     version: str
+#     status: Literal["research", "candidate", "paper", "live"]
+#     budget_fraction: float = Field(ge=0.0, le=1.0)
+#
+#     @validator('budget_fraction')
+#     def budget_must_be_valid(cls, v):
+#         if not 0.0 <= v <= 1.0:
+#             raise ValueError('budget_fraction must be in [0, 1]')
+#         return v
+#
+# class RiskConfig(BaseModel):
+#     max_leverage: float = Field(gt=0.0)
+#     per_asset_cap: float = Field(ge=0.0, le=1.0)
+#     crypto_class_cap: float = Field(ge=0.0, le=1.0)
+#     drawdown_trigger: float = Field(ge=0.0, le=1.0)
+#     drawdown_halt: float = Field(ge=0.0, le=1.0)
+#     derisking_factor: float = Field(ge=0.0, le=1.0)
+#
+# class SystemConfig(BaseModel):
+#     mode: Literal["backtest", "paper", "live"]
+#     backtest_initial_nav: Decimal
+#     timeframe: str
+#     data_dir: str
+#     results_dir: str
+#     logs_dir: str
+#     models: List[ModelConfig]
+#     risk: RiskConfig
+#
+#     @validator('models')
+#     def total_budget_valid(cls, models):
+#         total = sum(m.budget_fraction for m in models)
+#         if total > 1.0:
+#             raise ValueError(f'Total budget {total} exceeds 1.0')
+#         return models
+#
+# # Usage:
+# import yaml
+# with open('configs/base/system.yaml') as f:
+#     config_dict = yaml.safe_load(f)
+#
+# system_config = SystemConfig(**config_dict['system'])
+# print("Config validated successfully!")
