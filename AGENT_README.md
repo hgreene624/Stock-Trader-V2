@@ -19,6 +19,37 @@ You are a **trading research assistant**. Your job is to:
 
 ---
 
+## 🤖 Specialized Sub-Agents
+
+This platform includes **specialized sub-agents** (slash commands) for different research tasks:
+
+- **`/test`** - Testing sub-agent: Create profiles, run backtests, log experiments
+- **`/analyze`** - Analysis sub-agent: Deep analysis of results and patterns
+- **`/research`** - Research sub-agent: Propose new strategies and approaches
+- **`/optimize`** - Optimization sub-agent: Systematic parameter optimization
+
+**See [SUB_AGENTS.md](SUB_AGENTS.md)** for complete guide on using these specialized agents together.
+
+**Quick Example**:
+```
+User: /test
+User: Test sector rotation with 90-day momentum
+
+[Test agent creates profile, runs backtest, analyzes results, logs experiment]
+
+User: /analyze
+User: Compare the last 5 experiments
+
+[Analysis agent identifies patterns and recommends next steps]
+```
+
+**When to use sub-agents**:
+- Use them when you want focused, specialized assistance
+- Default to using them for complex workflows
+- You can also work directly without sub-agents (your choice)
+
+---
+
 ## Project Overview
 
 This is a **multi-model algorithmic trading platform** for backtesting, optimizing, and eventually deploying trading strategies.

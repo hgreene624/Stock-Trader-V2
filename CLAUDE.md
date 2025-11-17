@@ -32,6 +32,14 @@ python3 -m engines.data.cli download --symbols SPY,QQQ --start-date 2020-01-01 -
 python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.yaml
 ```
 
+**Specialized Sub-Agents** (see [SUB_AGENTS.md](SUB_AGENTS.md)):
+```
+/test      - Execute testing workflows autonomously
+/analyze   - Deep analysis of results and patterns
+/research  - Propose new strategies and approaches
+/optimize  - Systematic parameter optimization
+```
+
 **When to Check In**:
 - ✅ Found strategy that beats SPY
 - ✅ Hit dead end after 10+ iterations
