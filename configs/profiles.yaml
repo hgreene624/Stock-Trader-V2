@@ -47,6 +47,56 @@ profiles:
       top_n: 3
       min_momentum: 0.044
 
+  sector_rotation_bull:
+    description: "BULL MARKET SPECIALIST - Active only in bull regimes (optimized from walk-forward Windows 1, 5)"
+    model: SectorRotationBull_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 80
+      top_n: 4
+      min_momentum: 0.03
+      target_leverage: 1.3
+
+  sector_rotation_bear:
+    description: "BEAR MARKET SPECIALIST - Active only in bear regimes (defensive baseline params)"
+    model: SectorRotationBear_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 126
+      top_n: 2
+      min_momentum: 0.10
+      target_leverage: 1.0
+
   sector_rotation_ea_optimized_leverage:
     description: EA-optimized parameters WITH 1.25x leverage - BEST COMBO
     model: SectorRotationModel_v1

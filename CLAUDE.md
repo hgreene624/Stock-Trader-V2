@@ -34,6 +34,9 @@ python3 -m engines.data.cli download --symbols SPY,QQQ --start-date 2020-01-01 -
 # Walk-forward optimization (prevents overfitting!)
 python3 -m engines.optimization.walk_forward_cli --quick
 
+# Walk-forward in new tab for real-time monitoring (macOS)
+python3 -m engines.optimization.walk_forward_cli --quick --new-tab
+
 # Standard optimization (use with caution - can overfit)
 python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.yaml
 ```
@@ -506,6 +509,7 @@ Check:
 | Download data | `python -m engines.data.cli download --symbols SPY QQQ --start 2020-01-01` |
 | Run backtest (traditional) | `python -m backtest.cli run --config configs/base/system.yaml` |
 | **Walk-forward optimization** | `python -m engines.optimization.walk_forward_cli --quick` |
+| **Walk-forward (monitored)** | `python -m engines.optimization.walk_forward_cli --quick --new-tab` |
 | Standard optimization | `python -m engines.optimization.cli run --experiment configs/experiments/exp_001_equity_trend_grid.yaml` |
 | View model stages | `python -m backtest.cli list-models` |
 | Promote model | `python -m backtest.cli promote --model MODEL_NAME --reason "REASON"` |
@@ -515,6 +519,7 @@ Check:
 
 - **Walk-Forward Guide**: [WALK_FORWARD_GUIDE.md](WALK_FORWARD_GUIDE.md) - **NEW!** Prevent overfitting with out-of-sample validation
 - **Walk-Forward Implementation**: [WALK_FORWARD_IMPLEMENTATION.md](WALK_FORWARD_IMPLEMENTATION.md) - Technical details
+- **Monitoring Long Runs**: [docs/MONITORING_LONG_RUNS.md](docs/MONITORING_LONG_RUNS.md) - **NEW!** Real-time progress monitoring for EA optimization
 - **Workflow Guide**: [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) - Rapid iteration patterns using profiles
 - **Session Summaries**: [SESSION_SUMMARY_2025-11-17_CONTINUED.md](SESSION_SUMMARY_2025-11-17_CONTINUED.md) - Recent improvements
 - **Quickstart Guide**: [QUICKSTART.md](QUICKSTART.md) - Detailed 30-minute walkthrough

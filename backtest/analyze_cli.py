@@ -34,6 +34,8 @@ from backtest.reporting import BacktestReporter
 from backtest.visualization import BacktestVisualizer
 from utils.logging import StructuredLogger
 from models.sector_rotation_v1 import SectorRotationModel_v1
+from models.sector_rotation_bull_v1 import SectorRotationBull_v1
+from models.sector_rotation_bear_v1 import SectorRotationBear_v1
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
 from models.equity_trend_v2_daily import EquityTrendModel_v2_Daily
@@ -83,6 +85,10 @@ class BacktestAnalyzer:
         """
         if model_name == "SectorRotationModel_v1":
             return SectorRotationModel_v1(**parameters)
+        elif model_name == "SectorRotationBull_v1":
+            return SectorRotationBull_v1(**parameters)
+        elif model_name == "SectorRotationBear_v1":
+            return SectorRotationBear_v1(**parameters)
         elif model_name == "EquityTrendModel_v1":
             return EquityTrendModel_v1(**parameters)
         elif model_name == "EquityTrendModel_v1_Daily":

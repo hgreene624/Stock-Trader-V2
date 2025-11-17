@@ -89,25 +89,44 @@ class EquityRegimeClassifier:
             # Fallback to available data
             momentum = 0.0
 
-        # Classify
-        price_above_ma = current_price > ma_200
-        momentum_positive = momentum > 0
+        # Classify (RELAXED CRITERIA: Use 200D MA as primary signal)
+        # This allows regime-specific models to activate more frequently
 
-        if price_above_ma and momentum_positive:
-            regime = 'bull'
-        elif not price_above_ma and not momentum_positive:
-            regime = 'bear'
+        # Ensure scalar values
+        current_price_scalar = float(current_price)
+        ma_200_scalar = float(ma_200)
+        momentum_scalar = float(momentum)
+
+        price_above_ma = current_price_scalar > ma_200_scalar
+        momentum_positive = momentum_scalar > 0
+
+        # Use momentum as a tiebreaker for marginal cases (within 2% of MA)
+        price_distance_from_ma = (current_price_scalar - ma_200_scalar) / ma_200_scalar
+        near_ma = abs(price_distance_from_ma) < 0.02  # Within 2% of MA
+
+        if near_ma:
+            # Close to MA - use momentum to decide
+            if momentum_positive:
+                regime = 'bull'
+            else:
+                regime = 'bear'
         else:
-            regime = 'neutral'
+            # Clear signal from price vs MA
+            if price_above_ma:
+                regime = 'bull'
+            else:
+                regime = 'bear'
 
         self.logger.info(
             f"Equity regime classified as {regime.upper()}",
             extra={
                 "timestamp": str(timestamp),
-                "current_price": round(float(current_price), 2),
-                "ma_200": round(float(ma_200), 2),
+                "current_price": round(current_price_scalar, 2),
+                "ma_200": round(ma_200_scalar, 2),
                 "price_above_ma": price_above_ma,
-                "momentum_6m": round(float(momentum), 4),
+                "price_distance_pct": round(price_distance_from_ma * 100, 2),
+                "near_ma": near_ma,
+                "momentum_6m": round(momentum_scalar, 4),
                 "momentum_positive": momentum_positive,
                 "regime": regime
             }

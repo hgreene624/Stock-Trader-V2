@@ -4,10 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="phase 8 done">
-      <change beforePath="$PROJECT_DIR$/QUICKSTART.md" beforeDir="false" afterPath="$PROJECT_DIR$/QUICKSTART.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backtest/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/backtest/cli.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/base.py" afterDir="false" />
+    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="phase 9 done. Documentation updated">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WALK_FORWARD_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/WALK_FORWARD_GUIDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/profiles.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/configs/profiles.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/engines/optimization/evolutionary.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/optimization/evolutionary.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/engines/optimization/walk_forward.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/optimization/walk_forward.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/engines/optimization/walk_forward_cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/optimization/walk_forward_cli.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/specs/001-trading-platform/tasks.md" beforeDir="false" afterPath="$PROJECT_DIR$/specs/001-trading-platform/tasks.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -123,7 +127,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763358073655</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="phase 9 done. Documentation updated">
+      <option name="closed" value="true" />
+      <created>1763393419588</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1763393419588</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -134,6 +146,7 @@
     <MESSAGE value="validation script troubleshooted" />
     <MESSAGE value="phase 6 finished and test results all pass" />
     <MESSAGE value="phase 8 done" />
-    <option name="LAST_COMMIT_MESSAGE" value="phase 8 done" />
+    <MESSAGE value="phase 9 done. Documentation updated" />
+    <option name="LAST_COMMIT_MESSAGE" value="phase 9 done. Documentation updated" />
   </component>
 </project>

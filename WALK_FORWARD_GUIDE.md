@@ -89,7 +89,6 @@ momentum_period: [60, 150, 80, 200]   → mean=122, std=62,  CV=51% ❌
 
 ```bash
 python -m engines.optimization.walk_forward_cli \
-    --model SectorRotationModel_v1 \
     --start 2020-01-01 \
     --end 2024-12-31 \
     --train-months 24 \
@@ -106,22 +105,48 @@ python -m engines.optimization.walk_forward_cli \
 
 ```bash
 python -m engines.optimization.walk_forward_cli \
-    --model SectorRotationModel_v1 \
-    --params momentum_period:60-200 min_momentum:0.0-0.15 top_n:2,3,4 \
-    --method evolutionary \
-    --metric cagr
+    --param-range momentum_period=80:160 \
+    --param-range min_momentum=0.0:0.10 \
+    --param-range top_n=2:5 \
+    --start 2020-01-01 \
+    --end 2024-12-31
 ```
 
 ### Faster Testing (Shorter Windows)
 
 ```bash
 python -m engines.optimization.walk_forward_cli \
-    --model SectorRotationModel_v1 \
     --train-months 12 \
     --test-months 6 \
     --step-months 6 \
-    --method random
+    --population 10 \
+    --generations 10
 ```
+
+### Advanced Controls (EA + Windows)
+
+```bash
+python -m engines.optimization.walk_forward_cli \
+    --start 2020-01-01 \
+    --end 2024-12-31 \
+    --train-months 18 \
+    --test-months 9 \
+    --step-months 9 \
+    --population 30 \
+    --generations 20 \
+    --mutation-rate 0.3 \
+    --crossover-rate 0.85 \
+    --elitism-count 3 \
+    --tournament-size 4 \
+    --mutation-strength 0.2 \
+    --max-windows 5 \
+    --ea-seed 42
+```
+
+**Tips:**
+- Use `--max-windows` when you only need a subset of segments (faster iterations).
+- `--param-range` (repeatable) lets you widen/narrow the EA search space without editing code.
+- Tune EA knobs (`--mutation-rate`, `--crossover-rate`, `--elitism-count`, `--tournament-size`, `--mutation-strength`) to trade off exploration vs. exploitation.
 
 ---
 

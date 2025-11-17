@@ -220,7 +220,7 @@ Based on plan.md, this is a single Python project with structure:
 - [X] T076 [US7] Add lifecycle filtering in live/paper_runner.py (only load candidate/paper models)
 - [X] T077 [US7] Add lifecycle filtering in live/live_runner.py (only load live models)
 - [X] T078 [US7] Add unit test for lifecycle transitions in tests/unit/test_model_lifecycle.py
-- [X] T079 [US7] Add integration test for lifecycle management in tests/integration/test_model_lifecycle.py
+- [X]how T079 [US7] Add integration test for lifecycle management in tests/integration/test_model_lifecycle.py
 
 **Checkpoint**: Model lifecycle management complete - systematic path from research to live trading
 

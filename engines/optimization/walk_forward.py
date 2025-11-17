@@ -7,7 +7,7 @@ out-of-sample validation windows.
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 import json
@@ -19,6 +19,38 @@ import yaml
 from engines.optimization.evolutionary import EvolutionaryOptimizer
 from backtest.runner import BacktestRunner
 from utils.logging import StructuredLogger
+
+
+# Picklable fitness function wrapper (must be at module level for multiprocessing)
+class FitnessEvaluator:
+    """Wrapper for fitness evaluation that can be pickled for multiprocessing."""
+
+    def __init__(self, model_class, config_path, start_date, end_date, logger):
+        self.model_class = model_class
+        self.config_path = config_path
+        self.start_date = start_date
+        self.end_date = end_date
+        self.logger = logger
+
+    def __call__(self, params):
+        """Evaluate fitness for given parameters."""
+        try:
+            # Create model with params
+            model = self.model_class(**params)
+
+            # Run backtest on training period
+            runner = BacktestRunner(self.config_path, logger=self.logger)
+            result = runner.run(
+                model=model,
+                start_date=self.start_date,
+                end_date=self.end_date
+            )
+
+            # Return BPS as fitness
+            return result['metrics']['bps']
+        except Exception as e:
+            self.logger.error(f"Error evaluating params {params}: {e}")
+            return -999.0  # Very low fitness for failed runs
 
 
 @dataclass
@@ -75,7 +107,15 @@ class WalkForwardOptimizer:
         step_months: int = 12,
         population_size: int = 20,
         generations: int = 15,
-        logger: logging.Logger = None
+        logger: logging.Logger = None,
+        n_jobs: int = None,
+        mutation_rate: float = 0.2,
+        crossover_rate: float = 0.7,
+        elitism_count: int = 2,
+        tournament_size: int = 3,
+        mutation_strength: float = 0.1,
+        seed: Optional[int] = None,
+        max_windows: Optional[int] = None
     ):
         self.model_class = model_class
         self.param_ranges = param_ranges
@@ -85,6 +125,14 @@ class WalkForwardOptimizer:
         self.population_size = population_size
         self.generations = generations
         self.logger = logger or StructuredLogger()
+        self.n_jobs = n_jobs  # None = auto-detect in EA
+        self.mutation_rate = mutation_rate
+        self.crossover_rate = crossover_rate
+        self.elitism_count = elitism_count
+        self.tournament_size = tournament_size
+        self.mutation_strength = mutation_strength
+        self.seed = seed
+        self.max_windows = max_windows
 
     def generate_windows(
         self,
@@ -137,42 +185,35 @@ class WalkForwardOptimizer:
         ea = EvolutionaryOptimizer(
             population_size=self.population_size,
             num_generations=self.generations,
-            mutation_rate=0.2,
-            crossover_rate=0.7,
-            elitism_count=2,
-            logger=self.logger
+            mutation_rate=self.mutation_rate,
+            crossover_rate=self.crossover_rate,
+            elitism_count=self.elitism_count,
+            tournament_size=self.tournament_size,
+            logger=self.logger,
+            n_jobs=self.n_jobs,
+            mutation_strength=self.mutation_strength,
+            seed=self.seed
         )
 
         # Seed random population
         initial_pop = ea.seed_population([], self.param_ranges)
 
-        # Define fitness function
-        def fitness_fn(params):
-            try:
-                # Create model with params
-                model = self.model_class(**params)
-
-                # Run backtest on training period
-                runner = BacktestRunner(config_path, logger=self.logger)
-                result = runner.run(
-                    model=model,
-                    start_date=window.train_start,
-                    end_date=window.train_end
-                )
-
-                # Return BPS as fitness
-                return result['metrics']['bps']
-            except Exception as e:
-                self.logger.error(f"Error evaluating params {params}: {e}")
-                return -999.0  # Very low fitness for failed runs
+        # Create picklable fitness evaluator (for multiprocessing support)
+        fitness_fn = FitnessEvaluator(
+            model_class=self.model_class,
+            config_path=config_path,
+            start_date=window.train_start,
+            end_date=window.train_end,
+            logger=self.logger
+        )
 
         # Run EA
-        final_pop, history = ea.optimize(initial_pop, fitness_fn, self.param_ranges, self.generations)
+        final_pop, final_fitness_scores = ea.optimize(initial_pop, fitness_fn, self.param_ranges)
 
         # Get best from final population
-        best_individual = max(final_pop, key=lambda x: x['fitness'])
-        best_params = best_individual['params']
-        best_fitness = best_individual['fitness']
+        best_idx = max(range(len(final_pop)), key=lambda i: final_fitness_scores[i])
+        best_params = final_pop[best_idx]
+        best_fitness = final_fitness_scores[best_idx]
 
         print(f"\nBest training params: {best_params}")
         print(f"Best fitness (BPS): {best_fitness:.3f}")
@@ -225,10 +266,23 @@ class WalkForwardOptimizer:
         print(f"Train window: {self.train_period_months} months")
         print(f"Test window: {self.test_period_months} months")
         print(f"Step size: {self.step_months} months")
-        print(f"EA: {self.population_size} population, {self.generations} generations")
+        print(
+            "EA: "
+            f"population={self.population_size}, "
+            f"generations={self.generations}, "
+            f"mutation_rate={self.mutation_rate}, "
+            f"crossover_rate={self.crossover_rate}, "
+            f"elitism={self.elitism_count}, "
+            f"tournament_size={self.tournament_size}, "
+            f"mutation_strength={self.mutation_strength}"
+        )
 
         # Generate windows
         windows = self.generate_windows(start_date, end_date)
+        if self.max_windows is not None:
+            windows = windows[:self.max_windows]
+            print(f"\nLimiting to first {len(windows)} windows (max={self.max_windows})")
+
         print(f"\nGenerated {len(windows)} walk-forward windows:")
         for window in windows:
             print(f"  {window}")
@@ -270,7 +324,14 @@ class WalkForwardOptimizer:
                 "test_period_months": self.test_period_months,
                 "step_months": self.step_months,
                 "population_size": self.population_size,
-                "generations": self.generations
+                "generations": self.generations,
+                "mutation_rate": self.mutation_rate,
+                "crossover_rate": self.crossover_rate,
+                "elitism_count": self.elitism_count,
+                "tournament_size": self.tournament_size,
+                "mutation_strength": self.mutation_strength,
+                "seed": self.seed,
+                "max_windows": self.max_windows
             },
             "summary": {
                 "num_windows": len(windows),

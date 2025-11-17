@@ -21,6 +21,8 @@ import copy
 from typing import Dict, List, Any, Optional, Callable, Tuple
 from pathlib import Path
 import sys
+from multiprocessing import Pool, cpu_count
+import os
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from utils.logging import StructuredLogger
@@ -48,11 +50,13 @@ class EvolutionaryOptimizer:
         elitism_count: int = 2,
         tournament_size: int = 3,
         seed: Optional[int] = None,
-        logger: Optional[StructuredLogger] = None
+        logger: Optional[StructuredLogger] = None,
+        n_jobs: Optional[int] = None,
+        mutation_strength: float = 0.1
     ):
         """
         Initialize evolutionary optimizer.
-        
+
         Args:
             population_size: Number of individuals in population
             num_generations: Number of generations to evolve
@@ -62,6 +66,8 @@ class EvolutionaryOptimizer:
             tournament_size: Size of tournament for selection
             seed: Random seed for reproducibility
             logger: Optional logger instance
+            n_jobs: Number of parallel processes (default: CPU cores - 1, or 1 if <= 2 cores)
+            mutation_strength: Fraction of parameter range to use for Gaussian mutation noise
         """
         self.population_size = population_size
         self.num_generations = num_generations
@@ -71,6 +77,15 @@ class EvolutionaryOptimizer:
         self.tournament_size = tournament_size
         self.logger = logger or StructuredLogger()
         self.rng = random.Random(seed)
+        self.mutation_strength = mutation_strength
+
+        # Set n_jobs for parallelization
+        if n_jobs is None:
+            # Auto-detect: use all cores - 1, but at least 1
+            total_cores = cpu_count()
+            self.n_jobs = max(1, total_cores - 1) if total_cores > 2 else 1
+        else:
+            self.n_jobs = max(1, n_jobs)  # Ensure at least 1
         
     def seed_population(
         self,
@@ -184,7 +199,7 @@ class EvolutionaryOptimizer:
         self,
         individual: Dict[str, Any],
         param_ranges: Dict[str, Tuple[Any, Any]],
-        mutation_strength: float = 0.1
+        mutation_strength: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Apply mutation to individual.
@@ -203,6 +218,8 @@ class EvolutionaryOptimizer:
         """
         mutated = copy.deepcopy(individual)
         
+        strength = mutation_strength if mutation_strength is not None else self.mutation_strength
+
         for param_name, value in mutated.items():
             if self.rng.random() < self.mutation_rate:
                 min_val, max_val = param_ranges[param_name]
@@ -210,13 +227,13 @@ class EvolutionaryOptimizer:
                 if isinstance(value, int):
                     # Integer parameter: add random offset
                     param_range = max_val - min_val
-                    offset = int(self.rng.gauss(0, param_range * mutation_strength))
+                    offset = int(self.rng.gauss(0, param_range * strength))
                     mutated[param_name] = max(min_val, min(max_val, value + offset))
                     
                 elif isinstance(value, float):
                     # Float parameter: add Gaussian noise
                     param_range = max_val - min_val
-                    noise = self.rng.gauss(0, param_range * mutation_strength)
+                    noise = self.rng.gauss(0, param_range * strength)
                     mutated[param_name] = max(min_val, min(max_val, value + noise))
         
         return mutated
@@ -310,6 +327,9 @@ class EvolutionaryOptimizer:
         print(f"Total backtests to run: {total_backtests}", flush=True)
         print(f"Population size: {self.population_size}", flush=True)
         print(f"Generations: {self.num_generations}", flush=True)
+        print(f"Parallel processes: {self.n_jobs}", flush=True)
+        if self.n_jobs > 1:
+            print(f"⚡ PARALLEL MODE: Using {self.n_jobs} cores (~{self.n_jobs}x speedup)", flush=True)
         print(f"{'='*80}\n", flush=True)
 
         self.logger.info(
@@ -319,36 +339,60 @@ class EvolutionaryOptimizer:
                 "num_generations": self.num_generations,
                 "mutation_rate": self.mutation_rate,
                 "crossover_rate": self.crossover_rate,
-                "elitism_count": self.elitism_count
+                "elitism_count": self.elitism_count,
+                "mutation_strength": self.mutation_strength
             }
         )
 
         for generation in range(self.num_generations):
             gen_start_time = time.time()
 
-            # Evaluate fitness for entire population with progress tracking
-            fitness_scores = []
-            for i, individual in enumerate(population):
-                # Run backtest
-                fitness = fitness_function(individual)
-                fitness_scores.append(fitness)
+            # Evaluate fitness for entire population
+            if self.n_jobs > 1:
+                # PARALLEL MODE: Use multiprocessing
+                with Pool(processes=self.n_jobs) as pool:
+                    fitness_scores = pool.map(fitness_function, population)
 
-                # Update progress
-                completed_backtests += 1
+                # Update progress counter
+                completed_backtests += self.population_size
                 progress_pct = (completed_backtests / total_backtests) * 100
-
-                # Calculate time estimates
                 elapsed_time = time.time() - start_time
                 avg_time_per_backtest = elapsed_time / completed_backtests
                 remaining_backtests = total_backtests - completed_backtests
                 estimated_time_remaining = avg_time_per_backtest * remaining_backtests
 
-                # Print progress every backtest
+                # Print generation progress (parallel mode shows summary after all complete)
+                best_in_gen = max(fitness_scores)
+                avg_in_gen = sum(fitness_scores) / len(fitness_scores)
                 print(f"  Gen {generation+1}/{self.num_generations} | "
-                      f"Individual {i+1}/{self.population_size} | "
+                      f"Completed: {self.population_size} individuals | "
                       f"Progress: {progress_pct:.1f}% | "
                       f"Est. remaining: {estimated_time_remaining/60:.1f} min | "
-                      f"BPS: {fitness:.3f}", flush=True)
+                      f"Best BPS: {best_in_gen:.3f} | Avg BPS: {avg_in_gen:.3f}", flush=True)
+            else:
+                # SEQUENTIAL MODE: Original behavior with per-individual progress
+                fitness_scores = []
+                for i, individual in enumerate(population):
+                    # Run backtest
+                    fitness = fitness_function(individual)
+                    fitness_scores.append(fitness)
+
+                    # Update progress
+                    completed_backtests += 1
+                    progress_pct = (completed_backtests / total_backtests) * 100
+
+                    # Calculate time estimates
+                    elapsed_time = time.time() - start_time
+                    avg_time_per_backtest = elapsed_time / completed_backtests
+                    remaining_backtests = total_backtests - completed_backtests
+                    estimated_time_remaining = avg_time_per_backtest * remaining_backtests
+
+                    # Print progress every backtest
+                    print(f"  Gen {generation+1}/{self.num_generations} | "
+                          f"Individual {i+1}/{self.population_size} | "
+                          f"Progress: {progress_pct:.1f}% | "
+                          f"Est. remaining: {estimated_time_remaining/60:.1f} min | "
+                          f"BPS: {fitness:.3f}", flush=True)
 
             # Print generation summary
             gen_time = time.time() - gen_start_time
