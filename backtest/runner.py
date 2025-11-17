@@ -21,7 +21,7 @@ from models.base import BaseModel, RegimeState
 from backtest.executor import BacktestExecutor, BacktestConfig
 from utils.config import ConfigLoader
 from utils.logging import StructuredLogger
-from utils.metrics import PerformanceMetrics
+from utils.metrics import calculate_sharpe_ratio, calculate_cagr, calculate_max_drawdown, calculate_bps
 
 
 class BacktestRunner:
@@ -52,7 +52,7 @@ class BacktestRunner:
         self.logger = logger or StructuredLogger()
 
         # Load configuration
-        self.config = ConfigLoader.load_config(config_path)
+        self.config = ConfigLoader.load_yaml(config_path)
         self.logger.info(f"Loaded config from {config_path}")
 
         # Extract backtest config
@@ -122,6 +122,11 @@ class BacktestRunner:
             daily_timeframe=self.backtest_config.get('daily_timeframe', '1D'),
             asset_class=self.backtest_config.get('asset_class', 'equity')
         )
+
+        # Filter data to backtest period (avoid future data in lookback validation)
+        end_date_ts = pd.Timestamp(end_date, tz='UTC')
+        for symbol in asset_data:
+            asset_data[symbol] = asset_data[symbol][asset_data[symbol].index <= end_date_ts]
 
         # Step 2: Get backtest timestamps
         timestamps = self.pipeline.get_timestamps(
@@ -239,7 +244,7 @@ class BacktestRunner:
             # Convert model-relative weights to NAV-relative weights
             nav_weights = {
                 symbol: weight * model_budget_fraction
-                for symbol, weight in model_output.target_weights.items()
+                for symbol, weight in model_output.weights.items()
             }
 
             # Submit to executor
@@ -267,11 +272,13 @@ class BacktestRunner:
             RegimeState
         """
         # TODO: Implement actual regime classification in Phase 4
+        # For now, return a neutral regime with current timestamp
         return RegimeState(
-            equity='NEUTRAL',
-            volatility='NORMAL',
-            crypto='NEUTRAL',
-            macro='NEUTRAL'
+            timestamp=pd.Timestamp.now(tz='UTC'),
+            equity_regime='neutral',
+            vol_regime='normal',
+            crypto_regime='neutral',
+            macro_regime='neutral'
         )
 
     def _calculate_metrics(
@@ -291,24 +298,33 @@ class BacktestRunner:
         """
         returns = nav_series.pct_change().dropna()
 
+        # Calculate initial and final values
+        initial_nav = float(nav_series.iloc[0])
+        final_nav = float(nav_series.iloc[-1])
+        total_return = (final_nav - initial_nav) / initial_nav
+
+        # Calculate time period in years
+        time_delta = nav_series.index[-1] - nav_series.index[0]
+        years = time_delta.total_seconds() / (365.25 * 24 * 3600)
+
         # Calculate metrics
         metrics = {
-            "total_return": PerformanceMetrics.calculate_total_return(nav_series),
-            "cagr": PerformanceMetrics.calculate_cagr(nav_series),
-            "sharpe_ratio": PerformanceMetrics.calculate_sharpe_ratio(returns),
-            "max_drawdown": PerformanceMetrics.calculate_max_drawdown(nav_series),
+            "total_return": total_return,
+            "cagr": calculate_cagr(initial_nav, final_nav, years),
+            "sharpe_ratio": calculate_sharpe_ratio(returns, periods_per_year=2190),  # H4 bars
+            "max_drawdown": calculate_max_drawdown(nav_series),
             "win_rate": self._calculate_win_rate(trade_log),
             "total_trades": len(trade_log),
-            "initial_nav": float(nav_series.iloc[0]),
-            "final_nav": float(nav_series.iloc[-1])
+            "initial_nav": initial_nav,
+            "final_nav": final_nav
         }
 
         # Calculate BPS
-        metrics['bps'] = PerformanceMetrics.calculate_bps(
+        metrics['bps'] = calculate_bps(
             sharpe_ratio=metrics['sharpe_ratio'],
             cagr=metrics['cagr'],
             win_rate=metrics['win_rate'],
-            max_drawdown=abs(metrics['max_drawdown'])
+            max_drawdown=metrics['max_drawdown']
         )
 
         return metrics

@@ -103,7 +103,7 @@ class BacktestExecutor(ExecutionInterface):
         current_values = {}
         for symbol, position in self.positions.items():
             if symbol in prices:
-                current_values[symbol] = position.quantity * prices[symbol]
+                current_values[symbol] = float(position.quantity) * prices[symbol]
             else:
                 # Price not available, assume position value = 0 (will liquidate)
                 current_values[symbol] = 0.0
@@ -210,28 +210,44 @@ class BacktestExecutor(ExecutionInterface):
                 del self.positions[symbol]
             else:
                 # Update position
-                # Update average price (weighted)
+                # Update average entry price (weighted) - convert to floats for calculation
+                new_qty_float = float(new_quantity)
                 if (position.quantity > 0 and quantity > 0) or \
                    (position.quantity < 0 and quantity < 0):
                     # Adding to position
-                    total_value = (position.quantity * position.avg_price) + \
-                                  (quantity * fill_price)
-                    new_avg_price = total_value / new_quantity
+                    pos_qty = float(position.quantity)
+                    pos_entry = float(position.entry_price)
+                    total_value = (pos_qty * pos_entry) + (quantity * fill_price)
+                    new_entry_price = total_value / new_qty_float
                 else:
-                    # Reducing position, keep old avg price
-                    new_avg_price = position.avg_price
+                    # Reducing position, keep old entry price
+                    new_entry_price = float(position.entry_price)
+
+                # Create updated position (floats already converted above)
+                entry_price_float = float(new_entry_price)
+                market_value = new_qty_float * fill_price
+                unrealized_pnl = (fill_price - entry_price_float) * new_qty_float
 
                 self.positions[symbol] = Position(
                     symbol=symbol,
-                    quantity=new_quantity,
-                    avg_price=new_avg_price
+                    quantity=Decimal(str(new_qty_float)),
+                    entry_price=Decimal(str(entry_price_float)),
+                    market_price=Decimal(str(fill_price)),
+                    market_value=Decimal(str(market_value)),
+                    unrealized_pnl=Decimal(str(unrealized_pnl))
                 )
         else:
             # New position
+            market_value = quantity * fill_price
+            unrealized_pnl = 0.0  # No unrealized P&L at entry
+
             self.positions[symbol] = Position(
                 symbol=symbol,
-                quantity=quantity,
-                avg_price=fill_price
+                quantity=Decimal(str(quantity)),
+                entry_price=Decimal(str(fill_price)),
+                market_price=Decimal(str(fill_price)),
+                market_value=Decimal(str(market_value)),
+                unrealized_pnl=Decimal(str(unrealized_pnl))
             )
 
         # Log trade
@@ -248,22 +264,24 @@ class BacktestExecutor(ExecutionInterface):
         self.trade_history.append(trade_record)
 
         self.logger.log_trade(
-            timestamp=timestamp,
+            trade_id=f"{symbol}_{timestamp.isoformat()}",
+            timestamp=timestamp.isoformat(),
             symbol=symbol,
-            side=trade_record["side"],
+            side=trade_record["side"].lower(),  # "buy" or "sell" (lowercase)
             quantity=abs(quantity),
             price=fill_price,
-            commission=float(commission)
+            fees=float(commission),
+            nav_at_trade=float(self.get_nav())
         )
 
         # Create order result
         order_result = OrderResult(
-            symbol=symbol,
-            quantity=quantity,
-            filled_price=fill_price,
-            commission=float(commission),
-            timestamp=timestamp,
-            status="FILLED"
+            success=True,
+            order_id=f"{symbol}_{timestamp.isoformat()}",
+            filled_quantity=Decimal(str(abs(quantity))),
+            filled_price=Decimal(str(fill_price)),
+            fees=commission,
+            slippage=Decimal(str(abs(fill_price - fill_price)))  # Slippage is already applied in fill_price
         )
 
         return order_result
@@ -318,17 +336,31 @@ class BacktestExecutor(ExecutionInterface):
         """
         Calculate current NAV (cash + position values).
 
-        Uses last known prices for positions.
+        Uses market prices for positions.
         """
         nav = self.cash
 
-        # Add position values
+        # Add position values using market_value from positions
         for symbol, position in self.positions.items():
-            # Use last known price (avg_price as fallback)
-            position_value = Decimal(str(position.quantity * position.avg_price))
-            nav += position_value
+            nav += position.market_value
 
         return nav
+
+    def get_broker_metadata(self) -> Dict[str, any]:
+        """
+        Get backtest metadata.
+
+        Returns:
+            Dictionary with backtest-specific information
+        """
+        return {
+            "mode": "backtest",
+            "start_date": self.config.start_date,
+            "end_date": self.config.end_date,
+            "initial_nav": float(self.config.initial_nav),
+            "slippage_bps": self.config.slippage_bps,
+            "commission_bps": self.config.commission_bps,
+        }
 
     def record_nav(self, timestamp: pd.Timestamp):
         """
@@ -346,12 +378,12 @@ class BacktestExecutor(ExecutionInterface):
 
         for symbol, position in self.positions.items():
             if symbol in prices:
-                market_price = prices[symbol]
+                market_price = Decimal(str(prices[symbol]))
             else:
-                # Use avg price if market price unavailable
-                market_price = position.avg_price
+                # Use entry price if market price unavailable
+                market_price = position.entry_price
 
-            position_value = Decimal(str(position.quantity * market_price))
+            position_value = position.quantity * market_price
             position_values[symbol] = float(position_value)
             total_position_value += position_value
 

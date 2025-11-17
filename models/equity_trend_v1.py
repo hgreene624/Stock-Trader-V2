@@ -52,9 +52,19 @@ class EquityTrendModel_v1(BaseModel):
             momentum_period: Momentum lookback period in days (default: 120 ≈ 6M)
             momentum_threshold: Minimum momentum to be LONG (default: 0.0)
         """
-        super().__init__(model_id)
-
         self.assets = assets or ["SPY", "QQQ"]
+        self.model_id = model_id  # Store for compatibility
+
+        # Initialize base model with required arguments
+        super().__init__(
+            name=model_id,
+            version="1.0.0",
+            universe=self.assets,
+            ma_period=ma_period,
+            momentum_period=momentum_period,
+            momentum_threshold=momentum_threshold
+        )
+
         self.ma_period = ma_period
         self.momentum_period = momentum_period
         self.momentum_threshold = momentum_threshold
@@ -154,15 +164,9 @@ class EquityTrendModel_v1(BaseModel):
 
         # Create ModelOutput
         output = ModelOutput(
-            model_id=self.model_id,
+            model_name=self.model_id,
             timestamp=context.timestamp,
-            target_weights=weights,
-            metadata={
-                "signals": signals,
-                "active_signals": active_signals,
-                "ma_period": self.ma_period,
-                "momentum_period": self.momentum_period
-            }
+            weights=weights
         )
 
         return output

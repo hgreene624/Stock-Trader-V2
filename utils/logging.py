@@ -231,6 +231,27 @@ class StructuredLogger:
             }
         )
 
+    # Convenience methods for general logging
+    def info(self, message: str, extra: Optional[dict] = None):
+        """
+        Log an informational message.
+
+        Args:
+            message: Log message
+            extra: Additional context
+        """
+        self.performance_logger.info(message, extra=extra or {})
+
+    def error(self, message: str, extra: Optional[dict] = None):
+        """
+        Log an error message.
+
+        Args:
+            message: Error message
+            extra: Additional context
+        """
+        self.errors_logger.error(message, extra=extra or {})
+
 
 # Global logger instance
 _logger: Optional[StructuredLogger] = None

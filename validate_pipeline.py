@@ -192,6 +192,7 @@ class PipelineValidator:
 
     def test_utils_logging(self):
         """Test structured logger."""
+        import pandas as pd
         from utils.logging import StructuredLogger
 
         logger = StructuredLogger(logs_dir=str(self.temp_dir / "logs"))
@@ -202,12 +203,13 @@ class PipelineValidator:
 
         # Test trade logging
         logger.log_trade(
-            timestamp=pd.Timestamp.now(tz='UTC'),
+            trade_id="test_001",
+            timestamp=pd.Timestamp.now(tz='UTC').isoformat(),
             symbol="SPY",
-            side="BUY",
+            side="buy",
             quantity=100,
             price=450.0,
-            commission=5.0
+            fees=5.0
         )
 
         # Verify log files created
@@ -237,8 +239,8 @@ class PipelineValidator:
         with open(config_path, 'w') as f:
             f.write(config_content)
 
-        # Load config
-        config = ConfigLoader.load_config(str(config_path))
+        # Load config using class method
+        config = ConfigLoader.load_yaml(str(config_path))
 
         assert config['test_key'] == 'test_value'
         assert config['nested']['key1'] == 'value1'
@@ -254,7 +256,7 @@ class PipelineValidator:
         # Test UTC normalization
         ts = pd.Timestamp('2025-01-15 12:00:00', tz='America/New_York')
         utc_ts = normalize_to_utc(ts)
-        assert utc_ts.tz.zone == 'UTC'
+        assert str(utc_ts.tz) == 'UTC', f"Expected UTC timezone, got {utc_ts.tz}"
 
         # Test H4 boundary detection
         h4_ts = pd.Timestamp('2025-01-15 12:00:00', tz='UTC')
@@ -273,7 +275,7 @@ class PipelineValidator:
         """Test performance metrics calculator."""
         import pandas as pd
         import numpy as np
-        from utils.metrics import PerformanceMetrics
+        from utils.metrics import calculate_sharpe_ratio, calculate_cagr, calculate_max_drawdown
 
         # Create sample NAV series
         dates = pd.date_range('2023-01-01', periods=252, freq='D', tz='UTC')
@@ -284,13 +286,15 @@ class PipelineValidator:
         returns = nav_series.pct_change().dropna()
 
         # Test metrics
-        sharpe = PerformanceMetrics.calculate_sharpe_ratio(returns)
-        cagr = PerformanceMetrics.calculate_cagr(nav_series)
-        max_dd = PerformanceMetrics.calculate_max_drawdown(nav_series)
+        sharpe = calculate_sharpe_ratio(returns, periods_per_year=252)
+        initial = float(nav_series.iloc[0])
+        final = float(nav_series.iloc[-1])
+        cagr = calculate_cagr(initial, final, years=1.0)
+        max_dd = calculate_max_drawdown(nav_series)
 
         assert -10 < sharpe < 10, f"Sharpe ratio out of range: {sharpe}"
         assert -1 < cagr < 5, f"CAGR out of range: {cagr}"
-        assert -1 < max_dd < 0, f"Max drawdown out of range: {max_dd}"
+        assert 0 <= max_dd <= 1, f"Max drawdown out of range: {max_dd}"
 
         self.log_verbose(f"  Sharpe: {sharpe:.2f}")
         self.log_verbose(f"  CAGR: {cagr:.2%}")
@@ -415,14 +419,16 @@ class PipelineValidator:
             'daily_ma_200': [440, 441, 442]
         }, index=pd.date_range('2025-01-15', periods=3, freq='4H', tz='UTC'))
 
+        ts = pd.Timestamp('2025-01-15 08:00', tz='UTC')
         context = Context(
-            timestamp=pd.Timestamp('2025-01-15 08:00', tz='UTC'),
+            timestamp=ts,
             asset_features={'SPY': spy_data},
             regime=RegimeState(
-                equity='NEUTRAL',
-                volatility='NORMAL',
-                crypto='NEUTRAL',
-                macro='NEUTRAL'
+                timestamp=ts,
+                equity_regime='neutral',
+                vol_regime='normal',
+                crypto_regime='neutral',
+                macro_regime='neutral'
             ),
             model_budget_fraction=0.30,
             model_budget_value=Decimal('30000.00')
@@ -464,10 +470,11 @@ class PipelineValidator:
             timestamp=dates[-1],
             asset_features={'SPY': spy_data, 'QQQ': qqq_data},
             regime=RegimeState(
-                equity='BULL',
-                volatility='NORMAL',
-                crypto='NEUTRAL',
-                macro='EXPANSION'
+                timestamp=dates[-1],
+                equity_regime='bull',
+                vol_regime='normal',
+                crypto_regime='neutral',
+                macro_regime='expansion'
             ),
             model_budget_fraction=0.30,
             model_budget_value=Decimal('30000.00')
@@ -478,14 +485,14 @@ class PipelineValidator:
         output = model.generate_target_weights(context)
 
         # Verify signals
-        assert output.target_weights['SPY'] > 0, "SPY should be LONG"
-        assert output.target_weights['QQQ'] == 0, "QQQ should be FLAT"
+        assert output.weights['SPY'] > 0, "SPY should be LONG"
+        assert output.weights['QQQ'] == 0, "QQQ should be FLAT"
 
-        total_weight = sum(output.target_weights.values())
+        total_weight = sum(output.weights.values())
         assert 0 <= total_weight <= 1.0, f"Total weight {total_weight} out of range"
 
-        self.log_verbose(f"  SPY signal: LONG ({output.target_weights['SPY']:.2%})")
-        self.log_verbose(f"  QQQ signal: FLAT ({output.target_weights['QQQ']:.2%})")
+        self.log_verbose(f"  SPY signal: LONG ({output.weights['SPY']:.2%})")
+        self.log_verbose(f"  QQQ signal: FLAT ({output.weights['QQQ']:.2%})")
 
     def test_backtest_executor(self):
         """Test backtest executor."""
@@ -676,9 +683,11 @@ class PipelineValidator:
         # Use data from pipeline test if available, otherwise generate
         if not (data_dir / 'equities' / 'SPY_1D.parquet').exists():
             self.log_verbose("  Generating synthetic data...")
-            # Generate as in test_data_pipeline
-            dates_1d = pd.date_range('2023-01-01', periods=500, freq='1D', tz='UTC')
-            dates_4h = pd.date_range('2023-01-01', periods=3000, freq='4H', tz='UTC')
+            # Generate data with appropriate date range
+            # Start early enough to allow for 200-day MA lookback
+            # End slightly after backtest end to avoid edge effects
+            dates_1d = pd.date_range('2022-01-01', '2024-01-15', freq='1D', tz='UTC')
+            dates_4h = pd.date_range('2022-01-01', '2024-01-15', freq='4h', tz='UTC')
 
             for symbol in ['SPY', 'QQQ']:
                 base_price = 450 if symbol == 'SPY' else 380
