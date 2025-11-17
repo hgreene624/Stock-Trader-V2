@@ -6,7 +6,7 @@ The trading platform now includes specialized sub-agents for different aspects o
 
 ## Available Sub-Agents
 
-### `/test` - Testing Sub-Agent
+### `/agent.test` - Testing Sub-Agent
 **Purpose**: Execute autonomous testing workflows
 
 **Capabilities**:
@@ -38,7 +38,7 @@ The test agent will:
 
 ---
 
-### `/analyze` - Analysis Sub-Agent
+### `/agent.analyze` - Analysis Sub-Agent
 **Purpose**: Deep analysis of results and patterns
 
 **Capabilities**:
@@ -69,7 +69,7 @@ The analysis agent will:
 
 ---
 
-### `/research` - Research Sub-Agent
+### `/agent.research` - Research Sub-Agent
 **Purpose**: Propose new strategies and approaches
 
 **Capabilities**:
@@ -100,7 +100,7 @@ The research agent will:
 
 ---
 
-### `/optimize` - Optimization Sub-Agent
+### `/agent.optimize` - Optimization Sub-Agent
 **Purpose**: Systematic parameter optimization
 
 **Capabilities**:
@@ -237,7 +237,7 @@ RESEARCH         →  OPTIMIZE       →  TEST           →  ANALYZE
 
 **Current State**: SectorRotationModel_v1 @ 11.69% CAGR (vs SPY 14.63%)
 
-**Step 1: Analyze** `/analyze`
+**Step 1: Analyze** `/agent.analyze`
 ```
 User: Why aren't we beating SPY?
 
@@ -258,7 +258,7 @@ Findings:
 Recommendation: Test modest leverage first (easiest, lowest risk)
 ```
 
-**Step 2: Research** `/research`
+**Step 2: Research** `/agent.research`
 ```
 User: Propose how to implement leverage safely
 
@@ -279,7 +279,7 @@ Success Criteria:
 - MaxDD < -40%
 ```
 
-**Step 3: Test** `/test`
+**Step 3: Test** `/agent.test`
 ```
 User: Test sector rotation with 1.2x leverage
 
@@ -298,7 +298,7 @@ Status: CLOSE to beating SPY! Just 0.51% short.
 Next: Try 1.25x leverage or optimize parameters under leverage
 ```
 
-**Step 4: Optimize** `/optimize`
+**Step 4: Optimize** `/agent.optimize`
 ```
 User: Optimize momentum and top_n with 1.2x leverage
 
@@ -320,7 +320,7 @@ Out-of-sample (2023-2024): CAGR 14.89% (still beats SPY)
 Status: SUCCESS! Found parameters that beat SPY.
 ```
 
-**Step 5: Analyze** `/analyze`
+**Step 5: Analyze** `/agent.analyze`
 ```
 User: Analyze the winning strategy
 
@@ -351,15 +351,15 @@ Recommendation: PROMOTE to candidate stage for paper trading
 ### Use the Right Agent for the Job
 
 **Don't**:
-- Ask `/test` to analyze patterns (use `/analyze`)
-- Ask `/research` to run backtests (use `/test`)
-- Ask `/analyze` to propose new strategies (use `/research`)
+- Ask `/agent.test` to analyze patterns (use `/agent.analyze`)
+- Ask `/agent.research` to run backtests (use `/agent.test`)
+- Ask `/agent.analyze` to propose new strategies (use `/agent.research`)
 
 **Do**:
-- Use `/research` for ideas
-- Use `/optimize` for systematic parameter search
-- Use `/test` for quick validation
-- Use `/analyze` for understanding results
+- Use `/agent.research` for ideas
+- Use `/agent.optimize` for systematic parameter search
+- Use `/agent.test` for quick validation
+- Use `/agent.analyze` for understanding results
 
 ### Sequential vs Parallel
 
@@ -453,23 +453,23 @@ This ensures learning persists across sessions.
 
 ### "Agent is stuck in a loop"
 - Sub-agent may be trying similar things repeatedly
-- Use `/analyze` to identify pattern
-- Use `/research` to propose fresh approaches
+- Use `/agent.analyze` to identify pattern
+- Use `/agent.research` to propose fresh approaches
 
 ### "Results aren't improving"
 - You may have hit local optimum
-- Use `/research` to explore different strategy types
+- Use `/agent.research` to explore different strategy types
 - Consider that current approach may have fundamental limits
 
 ### "Optimization finds overfitted parameters"
-- Always validate out-of-sample with `/test`
-- Use `/analyze` to check parameter stability
+- Always validate out-of-sample with `/agent.test`
+- Use `/agent.analyze` to check parameter stability
 - Reduce parameter count in optimization
 
 ### "Don't know which agent to use"
-- Default to `/test` for trying things
-- Use `/analyze` when confused about results
-- Use `/research` when stuck
+- Default to `/agent.test` for trying things
+- Use `/agent.analyze` when confused about results
+- Use `/agent.research` when stuck
 
 ---
 
@@ -477,14 +477,14 @@ This ensures learning persists across sessions.
 
 | Task | Agent | Example |
 |------|-------|---------|
-| Test an idea | `/test` | "Test 90-day momentum" |
-| Compare results | `/analyze` | "Compare last 5 tests" |
-| Need new ideas | `/research` | "What else should we try?" |
-| Find best params | `/optimize` | "Optimize momentum_period" |
-| Understand why | `/analyze` | "Why didn't this work?" |
-| Validate strategy | `/test` | "Test on 2023-2024 data" |
-| Diagnose issues | `/analyze` | "What's wrong with this strategy?" |
-| Explore alternatives | `/research` | "Propose alternative approaches" |
+| Test an idea | `/agent.test` | "Test 90-day momentum" |
+| Compare results | `/agent.analyze` | "Compare last 5 tests" |
+| Need new ideas | `/agent.research` | "What else should we try?" |
+| Find best params | `/agent.optimize` | "Optimize momentum_period" |
+| Understand why | `/agent.analyze` | "Why didn't this work?" |
+| Validate strategy | `/agent.test` | "Test on 2023-2024 data" |
+| Diagnose issues | `/agent.analyze` | "What's wrong with this strategy?" |
+| Explore alternatives | `/agent.research` | "Propose alternative approaches" |
 
 ---
 
@@ -492,10 +492,10 @@ This ensures learning persists across sessions.
 
 The sub-agent system provides **specialized experts** for each phase of trading research:
 
-1. **`/research`** - The strategist (proposes ideas)
-2. **`/optimize`** - The mathematician (finds optimal parameters)
-3. **`/test`** - The experimenter (validates hypotheses)
-4. **`/analyze`** - The scientist (interprets results)
+1. **`/agent.research`** - The strategist (proposes ideas)
+2. **`/agent.optimize`** - The mathematician (finds optimal parameters)
+3. **`/agent.test`** - The experimenter (validates hypotheses)
+4. **`/agent.analyze`** - The scientist (interprets results)
 
 Together, they enable **autonomous research** to beat SPY (14.63% CAGR) through systematic experimentation, analysis, and iteration.
 

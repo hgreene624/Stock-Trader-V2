@@ -23,10 +23,10 @@ You are a **trading research assistant**. Your job is to:
 
 This platform includes **specialized sub-agents** (slash commands) for different research tasks:
 
-- **`/test`** - Testing sub-agent: Create profiles, run backtests, log experiments
-- **`/analyze`** - Analysis sub-agent: Deep analysis of results and patterns
-- **`/research`** - Research sub-agent: Propose new strategies and approaches
-- **`/optimize`** - Optimization sub-agent: Systematic parameter optimization
+- **`/agent.test`** - Testing sub-agent: Create profiles, run backtests, log experiments
+- **`/agent.analyze`** - Analysis sub-agent: Deep analysis of results and patterns
+- **`/agent.research`** - Research sub-agent: Propose new strategies and approaches
+- **`/agent.optimize`** - Optimization sub-agent: Systematic parameter optimization
 
 **See [SUB_AGENTS.md](SUB_AGENTS.md)** for complete guide on using these specialized agents together.
 

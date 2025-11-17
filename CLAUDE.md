@@ -34,10 +34,10 @@ python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.
 
 **Specialized Sub-Agents** (see [SUB_AGENTS.md](SUB_AGENTS.md)):
 ```
-/test      - Execute testing workflows autonomously
-/analyze   - Deep analysis of results and patterns
-/research  - Propose new strategies and approaches
-/optimize  - Systematic parameter optimization
+/agent.test      - Execute testing workflows autonomously
+/agent.analyze   - Deep analysis of results and patterns
+/agent.research  - Propose new strategies and approaches
+/agent.optimize  - Systematic parameter optimization
 ```
 
 **When to Check In**:
@@ -151,13 +151,13 @@ pytest
 # Run specific test categories
 pytest tests/unit/                           # Unit tests only
 pytest tests/integration/                    # Integration tests only
-pytest tests/unit/test_model_lifecycle.py    # Specific test file
+pytest tests/unit/agent.test_model_lifecycle.py    # Specific test file
 
 # Run with coverage report
 pytest --cov=. --cov-report=html
 
 # Run critical no-lookahead test
-pytest tests/test_no_lookahead.py -v
+pytest tests/agent.test_no_lookahead.py -v
 ```
 
 ### Data Management
@@ -409,7 +409,7 @@ Alignment is handled automatically by `engines/data/pipeline.py` and validated i
 ### Before Running Any Backtest
 ```bash
 # Ensure no look-ahead bias
-pytest tests/test_no_lookahead.py -v
+pytest tests/agent.test_no_lookahead.py -v
 
 # Validate entire pipeline
 python validate_pipeline.py

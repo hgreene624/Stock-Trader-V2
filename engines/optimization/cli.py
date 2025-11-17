@@ -39,6 +39,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from engines.optimization.grid_search import GridSearchOptimizer, RandomSearchOptimizer
 from engines.optimization.evolutionary import EvolutionaryOptimizer
 from utils.logging import StructuredLogger
+from backtest.runner import BacktestRunner
+from models.sector_rotation_v1 import SectorRotationModel_v1
+from models.equity_trend_v1 import EquityTrendModel_v1
+from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
+from models.equity_trend_v2_daily import EquityTrendModel_v2_Daily
 
 
 class OptimizationCLI:
@@ -201,6 +206,59 @@ class OptimizationCLI:
 
         return parameter_sets
 
+    def create_backtest_fitness_function(self, exp_config: Dict[str, Any]):
+        """
+        Create a fitness function that runs actual backtests.
+
+        Args:
+            exp_config: Experiment configuration
+
+        Returns:
+            Fitness function that takes parameters and returns BPS score
+        """
+        base_config = exp_config['base_config']
+        target_model = exp_config['target_model']
+        backtest_config = exp_config['backtest']
+        opt_config = exp_config['optimization']
+
+        # Initialize backtest runner
+        runner = BacktestRunner(base_config, logger=self.logger)
+
+        def fitness_function(params: Dict[str, Any]) -> float:
+            """Run backtest and return fitness score."""
+            try:
+                # Instantiate model with parameters
+                if target_model == "SectorRotationModel_v1":
+                    model = SectorRotationModel_v1(**params)
+                elif target_model == "EquityTrendModel_v1":
+                    model = EquityTrendModel_v1(**params)
+                elif target_model == "EquityTrendModel_v1_Daily":
+                    model = EquityTrendModel_v1_Daily(**params)
+                elif target_model == "EquityTrendModel_v2_Daily":
+                    model = EquityTrendModel_v2_Daily(**params)
+                else:
+                    raise ValueError(f"Unknown model: {target_model}")
+
+                # Run backtest
+                results = runner.run(
+                    model=model,
+                    start_date=backtest_config['start_date'],
+                    end_date=backtest_config['end_date']
+                )
+
+                # Extract fitness metric (default: BPS)
+                metric = opt_config.get('metric', 'bps')
+                fitness = results['metrics'].get(metric, 0.0)
+
+                return fitness
+
+            except Exception as e:
+                # If backtest fails, return very low fitness
+                print(f"  ⚠️  Backtest failed for {params}: {e}")
+                return -999.0
+
+        return fitness_function
+
     def run_evolutionary(self, exp_config: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Run evolutionary algorithm optimization.
@@ -263,21 +321,18 @@ class OptimizationCLI:
 
         print(f"\nInitial population: {len(initial_population)} individuals")
 
-        # Mock fitness function for now
-        # TODO: Replace with actual backtest execution
-        def mock_fitness(params: Dict[str, Any]) -> float:
-            """Mock fitness function (to be replaced with backtest)."""
-            # Placeholder: random fitness
-            import random
-            return random.uniform(0.5, 1.0)
+        # Create real fitness function that runs backtests
+        print("\nCreating backtest fitness function...")
+        fitness_function = self.create_backtest_fitness_function(exp_config)
 
         # Run optimization
-        print("\nRunning evolutionary optimization...")
-        print("(Note: Using mock fitness function - backtest integration pending)")
+        print("\nRunning evolutionary optimization with REAL backtests...")
+        print(f"This will run ~{ea_config['population_size'] * ea_config['num_generations']} backtests.")
+        print("(This may take a while...)\n")
 
         final_population, final_fitness = optimizer.optimize(
             initial_population,
-            mock_fitness,
+            fitness_function,
             simple_ranges
         )
 

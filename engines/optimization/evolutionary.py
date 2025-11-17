@@ -286,17 +286,32 @@ class EvolutionaryOptimizer:
     ) -> Tuple[List[Dict[str, Any]], List[float]]:
         """
         Run full evolutionary optimization.
-        
+
         Args:
             initial_population: Starting population (seeded from grid search)
             fitness_function: Function that evaluates parameter dict → BPS score
             param_ranges: Parameter ranges for mutation
-            
+
         Returns:
             Tuple of (final_population, fitness_scores)
         """
+        import time
+
         population = initial_population
-        
+
+        # Track progress
+        total_backtests = self.num_generations * self.population_size
+        completed_backtests = 0
+        start_time = time.time()
+
+        print(f"\n{'='*80}", flush=True)
+        print(f"EVOLUTIONARY OPTIMIZATION - PROGRESS TRACKING", flush=True)
+        print(f"{'='*80}", flush=True)
+        print(f"Total backtests to run: {total_backtests}", flush=True)
+        print(f"Population size: {self.population_size}", flush=True)
+        print(f"Generations: {self.num_generations}", flush=True)
+        print(f"{'='*80}\n", flush=True)
+
         self.logger.info(
             f"Starting evolutionary optimization",
             extra={
@@ -307,15 +322,54 @@ class EvolutionaryOptimizer:
                 "elitism_count": self.elitism_count
             }
         )
-        
+
         for generation in range(self.num_generations):
-            # Evaluate fitness for entire population
-            fitness_scores = [fitness_function(individual) for individual in population]
+            gen_start_time = time.time()
+
+            # Evaluate fitness for entire population with progress tracking
+            fitness_scores = []
+            for i, individual in enumerate(population):
+                # Run backtest
+                fitness = fitness_function(individual)
+                fitness_scores.append(fitness)
+
+                # Update progress
+                completed_backtests += 1
+                progress_pct = (completed_backtests / total_backtests) * 100
+
+                # Calculate time estimates
+                elapsed_time = time.time() - start_time
+                avg_time_per_backtest = elapsed_time / completed_backtests
+                remaining_backtests = total_backtests - completed_backtests
+                estimated_time_remaining = avg_time_per_backtest * remaining_backtests
+
+                # Print progress every backtest
+                print(f"  Gen {generation+1}/{self.num_generations} | "
+                      f"Individual {i+1}/{self.population_size} | "
+                      f"Progress: {progress_pct:.1f}% | "
+                      f"Est. remaining: {estimated_time_remaining/60:.1f} min | "
+                      f"BPS: {fitness:.3f}", flush=True)
+
+            # Print generation summary
+            gen_time = time.time() - gen_start_time
             
             # Get statistics
             best_fitness = max(fitness_scores)
             avg_fitness = sum(fitness_scores) / len(fitness_scores)
             
+            # Print generation summary
+            print(f"\n{'─'*80}", flush=True)
+            print(f"GENERATION {generation+1}/{self.num_generations} COMPLETE", flush=True)
+            print(f"{'─'*80}", flush=True)
+            print(f"  Time: {gen_time:.1f}s", flush=True)
+            print(f"  Best BPS: {best_fitness:.4f}", flush=True)
+            print(f"  Avg BPS: {avg_fitness:.4f}", flush=True)
+            print(f"  Overall Progress: {progress_pct:.1f}%", flush=True)
+            elapsed_min = (time.time() - start_time) / 60
+            remaining_min = estimated_time_remaining / 60
+            print(f"  Elapsed: {elapsed_min:.1f} min | Remaining: {remaining_min:.1f} min", flush=True)
+            print(f"{'─'*80}\n", flush=True)
+
             self.logger.info(
                 f"Generation {generation + 1}/{self.num_generations}",
                 extra={
@@ -325,7 +379,7 @@ class EvolutionaryOptimizer:
                     "fitness_std": round(_std(fitness_scores), 4)
                 }
             )
-            
+
             # Evolve to next generation
             if generation < self.num_generations - 1:
                 population = self.evolve_generation(population, fitness_scores, param_ranges)
@@ -395,7 +449,7 @@ if __name__ == "__main__":
     print("Initial population (random):")
     for i, ind in enumerate(initial_population, 1):
         fitness = mock_fitness(ind)
-        print(f"  {i}. {ind} → fitness={fitness:.3f}")
+        print(f"  {i}. {ind} → fitness={fitness:.3f}", flush=True)
     
     # Run optimization
     print("\nRunning evolutionary optimization...")
@@ -409,12 +463,12 @@ if __name__ == "__main__":
     print("\nFinal population:")
     sorted_indices = sorted(range(len(final_population)), key=lambda i: final_fitness[i], reverse=True)
     for i, idx in enumerate(sorted_indices, 1):
-        print(f"  {i}. {final_population[idx]} → fitness={final_fitness[idx]:.3f}")
+        print(f"  {i}. {final_population[idx]} → fitness={final_fitness[idx]:.3f}", flush=True)
     
     best_params = final_population[sorted_indices[0]]
-    print(f"\nBest solution: {best_params}")
-    print(f"Fitness: {final_fitness[sorted_indices[0]]:.3f}")
-    print(f"Expected optimum: {{'ma_period': 100, 'rsi_period': 20}}")
+    print(f"\nBest solution: {best_params}", flush=True)
+    print(f"Fitness: {final_fitness[sorted_indices[0]]:.3f}", flush=True)
+    print(f"Expected optimum: {{'ma_period': 100, 'rsi_period': 20}}", flush=True)
     
     print("\n" + "=" * 80)
     print("✓ Evolutionary Algorithm test complete")

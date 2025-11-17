@@ -702,15 +702,17 @@ def run_backtest(args):
         end_date = datetime.now().strftime('%Y-%m-%d')
         print(f"📅 Using default end date: {end_date}")
 
-    # Initialize model
+    # Initialize model with parameters from profile (if available)
+    model_params = parameters if 'parameters' in locals() else {}
+
     if model_name == "EquityTrendModel_v1":
-        model = EquityTrendModel_v1()
+        model = EquityTrendModel_v1(**model_params)
     elif model_name == "EquityTrendModel_v1_Daily":
-        model = EquityTrendModel_v1_Daily()
+        model = EquityTrendModel_v1_Daily(**model_params)
     elif model_name == "EquityTrendModel_v2_Daily":
-        model = EquityTrendModel_v2_Daily()
+        model = EquityTrendModel_v2_Daily(**model_params)
     elif model_name == "SectorRotationModel_v1":
-        model = SectorRotationModel_v1()
+        model = SectorRotationModel_v1(**model_params)
     else:
         raise ValueError(
             f"Unknown model: {model_name}. "
