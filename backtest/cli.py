@@ -21,11 +21,131 @@ import json
 import yaml
 from pathlib import Path
 from datetime import datetime, timedelta
+import pandas as pd
+import numpy as np
 sys.path.append('..')
 from backtest.runner import BacktestRunner
 from models.equity_trend_v1 import EquityTrendModel_v1
+from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
+from models.equity_trend_v2_daily import EquityTrendModel_v2_Daily
+from models.sector_rotation_v1 import SectorRotationModel_v1
 from utils.logging import StructuredLogger
 from utils.config import ConfigLoader
+
+
+# ANSI color codes
+class Colors:
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BLUE = '\033[94m'
+    BOLD = '\033[1m'
+    RESET = '\033[0m'
+
+
+def colorize(value, threshold_good, threshold_bad, reverse=False, percentage=False):
+    """
+    Colorize a metric value based on thresholds.
+
+    Args:
+        value: The value to colorize
+        threshold_good: Threshold for green (good)
+        threshold_bad: Threshold for red (bad)
+        reverse: If True, lower is better (like drawdown)
+        percentage: If True, format as percentage
+
+    Returns:
+        Colored string
+    """
+    if percentage:
+        formatted = f"{value:>10.2%}"
+    else:
+        formatted = f"{value:>10.2f}"
+
+    if reverse:
+        # Lower is better (e.g., drawdown)
+        if value <= threshold_good:
+            color = Colors.GREEN
+        elif value <= threshold_bad:
+            color = Colors.YELLOW
+        else:
+            color = Colors.RED
+    else:
+        # Higher is better (e.g., returns, Sharpe)
+        if value >= threshold_good:
+            color = Colors.GREEN
+        elif value >= threshold_bad:
+            color = Colors.YELLOW
+        else:
+            color = Colors.RED
+
+    return f"{color}{formatted}{Colors.RESET}"
+
+
+def calculate_spy_benchmark(start_date: str, end_date: str) -> dict:
+    """
+    Calculate SPY benchmark returns for comparison.
+
+    Args:
+        start_date: Start date (YYYY-MM-DD)
+        end_date: End date (YYYY-MM-DD)
+
+    Returns:
+        Dictionary with SPY metrics
+    """
+    try:
+        # Try to load SPY data from our data directory
+        spy_file = Path("data/equities/SPY_1D.parquet")
+
+        if not spy_file.exists():
+            return None
+
+        spy_data = pd.read_parquet(spy_file)
+        spy_data['timestamp'] = pd.to_datetime(spy_data['timestamp'], utc=True)
+        spy_data = spy_data.set_index('timestamp')
+
+        # Filter to backtest period
+        start_ts = pd.Timestamp(start_date, tz='UTC')
+        end_ts = pd.Timestamp(end_date, tz='UTC')
+
+        spy_period = spy_data[(spy_data.index >= start_ts) & (spy_data.index <= end_ts)]
+
+        if len(spy_period) < 2:
+            return None
+
+        # Calculate SPY metrics
+        initial_price = spy_period['close'].iloc[0]
+        final_price = spy_period['close'].iloc[-1]
+
+        total_return = (final_price - initial_price) / initial_price
+
+        # Calculate CAGR
+        days = (spy_period.index[-1] - spy_period.index[0]).days
+        years = days / 365.25
+        cagr = (final_price / initial_price) ** (1 / years) - 1 if years > 0 else 0
+
+        # Calculate max drawdown
+        cumulative = (1 + spy_period['close'].pct_change()).cumprod()
+        running_max = cumulative.expanding().max()
+        drawdown = (cumulative - running_max) / running_max
+        max_dd = drawdown.min()
+
+        # Calculate Sharpe (simplified - using daily returns)
+        daily_returns = spy_period['close'].pct_change().dropna()
+        sharpe = (daily_returns.mean() / daily_returns.std()) * np.sqrt(252) if daily_returns.std() > 0 else 0
+
+        return {
+            'total_return': total_return,
+            'cagr': cagr,
+            'max_drawdown': abs(max_dd),
+            'sharpe': sharpe,
+            'initial_price': initial_price,
+            'final_price': final_price
+        }
+
+    except Exception as e:
+        print(f"Warning: Could not calculate SPY benchmark: {e}")
+        return None
 
 
 def load_profile(profile_name: str) -> dict:
@@ -152,11 +272,22 @@ def save_last_run(results: dict, config_info: dict):
     if isinstance(model_names, list):
         model_names = ', '.join(model_names)
 
+    # Get actual backtest period from NAV series
+    nav_series = results.get('nav_series')
+    if nav_series is not None and len(nav_series) > 0:
+        actual_start = nav_series.index[0].strftime('%Y-%m-%d')
+        actual_end = nav_series.index[-1].strftime('%Y-%m-%d')
+    else:
+        actual_start = results.get('start_date', 'N/A')
+        actual_end = results.get('end_date', 'N/A')
+
     last_run = {
         "timestamp": datetime.now().isoformat(),
         "model": model_names,
-        "start_date": results.get('start_date', 'N/A'),
+        "start_date": results.get('start_date', 'N/A'),  # Requested period
         "end_date": results.get('end_date', 'N/A'),
+        "actual_start_date": actual_start,  # Actual period (may be shorter due to data availability)
+        "actual_end_date": actual_end,
         "config": config_info,
         "metrics": results.get('metrics', {}),
         "trade_count": len(results.get('trade_log', [])),
@@ -188,7 +319,18 @@ def show_last_run():
 
     print(f"\nRun Time:    {last_run.get('timestamp', 'N/A')}")
     print(f"Model:       {last_run.get('model', 'N/A')}")
-    print(f"Period:      {last_run.get('start_date', 'N/A')} to {last_run.get('end_date', 'N/A')}")
+
+    # Show both requested and actual periods if different
+    requested_start = last_run.get('start_date', 'N/A')
+    requested_end = last_run.get('end_date', 'N/A')
+    actual_start = last_run.get('actual_start_date', requested_start)
+    actual_end = last_run.get('actual_end_date', requested_end)
+
+    if actual_start != requested_start or actual_end != requested_end:
+        print(f"Period:      {requested_start} to {requested_end} (requested)")
+        print(f"             {actual_start} to {actual_end} (actual - limited by data)")
+    else:
+        print(f"Period:      {actual_start} to {actual_end}")
 
     # Config info
     config_info = last_run.get('config', {})
@@ -199,25 +341,69 @@ def show_last_run():
         if 'config_file' in config_info:
             print(f"  Config:    {config_info['config_file']}")
 
+    # Calculate SPY benchmark using ACTUAL backtest period
+    spy_bench = calculate_spy_benchmark(actual_start, actual_end)
+
     # Performance metrics
     print("\n" + "-" * 80)
     print("PERFORMANCE SUMMARY")
     print("-" * 80)
 
+    # Market Comparison (prominently displayed first)
+    if spy_bench:
+        print(f"\n{Colors.BOLD}📊 VS MARKET (SPY):{Colors.RESET}")
+        alpha = metrics.get('cagr', 0) - spy_bench['cagr']
+        outperformance = metrics.get('total_return', 0) - spy_bench['total_return']
+
+        # Color-code alpha
+        if alpha >= 0.05:  # Beat by 5%+
+            alpha_color = Colors.GREEN
+        elif alpha >= 0:  # Beat market
+            alpha_color = Colors.YELLOW
+        else:  # Underperformed
+            alpha_color = Colors.RED
+
+        print(f"  Alpha (CAGR):        {alpha_color}{alpha:>9.2%}{Colors.RESET}  (Strategy: {metrics.get('cagr', 0):.2%} vs SPY: {spy_bench['cagr']:.2%})")
+        print(f"  Outperformance:      {alpha_color}{outperformance:>9.2%}{Colors.RESET}  (Strategy: {metrics.get('total_return', 0):.2%} vs SPY: {spy_bench['total_return']:.2%})")
+
+        # Risk-adjusted comparison
+        sharpe_diff = metrics.get('sharpe_ratio', 0) - spy_bench['sharpe']
+        if sharpe_diff >= 0.5:
+            sharpe_color = Colors.GREEN
+        elif sharpe_diff >= 0:
+            sharpe_color = Colors.YELLOW
+        else:
+            sharpe_color = Colors.RED
+        print(f"  Sharpe Advantage:    {sharpe_color}{sharpe_diff:>9.2f}{Colors.RESET}  (Strategy: {metrics.get('sharpe_ratio', 0):.2f} vs SPY: {spy_bench['sharpe']:.2f})")
+        print()
+
     print(f"\nReturns:")
-    print(f"  Total Return:     {metrics.get('total_return', 0):>10.2%}")
-    print(f"  CAGR:             {metrics.get('cagr', 0):>10.2%}")
+    # Color-code returns
+    if spy_bench:
+        total_ret_color = colorize(metrics.get('total_return', 0), spy_bench['total_return'], spy_bench['total_return'] * 0.8, percentage=True)
+        cagr_color = colorize(metrics.get('cagr', 0), spy_bench['cagr'], spy_bench['cagr'] * 0.8, percentage=True)
+    else:
+        total_ret_color = colorize(metrics.get('total_return', 0), 0.15, 0.05, percentage=True)
+        cagr_color = colorize(metrics.get('cagr', 0), 0.12, 0.06, percentage=True)
+
+    print(f"  Total Return:     {total_ret_color}")
+    print(f"  CAGR:             {cagr_color}")
 
     print(f"\nRisk Metrics:")
-    print(f"  Max Drawdown:     {metrics.get('max_drawdown', 0):>10.2%}")
-    print(f"  Sharpe Ratio:     {metrics.get('sharpe_ratio', 0):>10.2f}")
+    dd_color = colorize(metrics.get('max_drawdown', 0), 0.15, 0.25, reverse=True, percentage=True)
+    sharpe_color = colorize(metrics.get('sharpe_ratio', 0), 1.5, 0.5, percentage=False)
+
+    print(f"  Max Drawdown:     {dd_color}")
+    print(f"  Sharpe Ratio:     {sharpe_color}")
 
     print(f"\nTrading Metrics:")
     print(f"  Total Trades:     {last_run.get('trade_count', 0):>10}")
-    print(f"  Win Rate:         {metrics.get('win_rate', 0):>10.2%}")
+    wr_color = colorize(metrics.get('win_rate', 0), 0.55, 0.45, percentage=True)
+    print(f"  Win Rate:         {wr_color}")
 
     print(f"\nBalanced Performance Score:")
-    print(f"  BPS:              {metrics.get('bps', 0):>10.4f}")
+    bps_color = colorize(metrics.get('bps', 0), 1.0, 0.5, percentage=False)
+    print(f"  BPS:              {bps_color}")
 
     print(f"\nNAV:")
     print(f"  Initial NAV:      ${metrics.get('initial_nav', 0):>10,.2f}")
@@ -226,6 +412,224 @@ def show_last_run():
     print("\n" + "=" * 80)
     print(f"\nFull results saved in: results/")
     print("=" * 80 + "\n")
+
+
+def create_profile(args):
+    """Create a new test profile in configs/profiles.yaml"""
+    profiles_file = Path("configs/profiles.yaml")
+
+    # Load existing profiles
+    with open(profiles_file) as f:
+        profiles_data = yaml.safe_load(f) or {}
+
+    if 'profiles' not in profiles_data:
+        profiles_data['profiles'] = {}
+
+    # Check if profile already exists
+    if args.name in profiles_data['profiles']:
+        print(f"❌ Profile '{args.name}' already exists!")
+        print("   Choose a different name or edit the existing profile manually.")
+        sys.exit(1)
+
+    # Parse parameters
+    params = {}
+    if args.params:
+        for param_str in args.params.split(','):
+            if '=' in param_str:
+                key, value = param_str.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+                # Try to convert to appropriate type
+                try:
+                    if '.' in value:
+                        value = float(value)
+                    else:
+                        value = int(value)
+                except ValueError:
+                    # Keep as string
+                    pass
+                params[key] = value
+
+    # Create new profile
+    new_profile = {
+        'description': args.description or f"Custom profile for {args.model}",
+        'model': args.model,
+        'universe': args.universe.split(',') if args.universe else [],
+        'start_date': args.start_date or "2020-01-01",
+        'end_date': args.end_date or "2024-12-31"
+    }
+
+    if args.lookback_bars:
+        new_profile['lookback_bars'] = args.lookback_bars
+
+    if params:
+        new_profile['parameters'] = params
+
+    # Add to profiles
+    profiles_data['profiles'][args.name] = new_profile
+
+    # Save back to file
+    with open(profiles_file, 'w') as f:
+        yaml.safe_dump(profiles_data, f, default_flow_style=False, sort_keys=False)
+
+    print(f"\n✅ Created profile '{args.name}' in {profiles_file}")
+    print(f"\nProfile details:")
+    print(f"  Model: {new_profile['model']}")
+    print(f"  Universe: {', '.join(new_profile['universe'])}")
+    print(f"  Period: {new_profile['start_date']} to {new_profile['end_date']}")
+    if params:
+        print(f"  Parameters:")
+        for k, v in params.items():
+            print(f"    {k}: {v}")
+
+    print(f"\n🚀 Run it with:")
+    print(f"   python3 -m backtest.cli run --profile {args.name}")
+
+
+def list_profiles():
+    """List all available profiles in configs/profiles.yaml"""
+    profiles_file = Path("configs/profiles.yaml")
+
+    if not profiles_file.exists():
+        print("❌ No profiles file found at configs/profiles.yaml")
+        return
+
+    with open(profiles_file) as f:
+        profiles_data = yaml.safe_load(f) or {}
+
+    profiles = profiles_data.get('profiles', {})
+
+    if not profiles:
+        print("No profiles found in configs/profiles.yaml")
+        return
+
+    print("\n" + "=" * 80)
+    print("AVAILABLE PROFILES")
+    print("=" * 80 + "\n")
+
+    for profile_name, profile_config in profiles.items():
+        desc = profile_config.get('description', 'No description')
+        model = profile_config.get('model', 'Unknown')
+        universe = profile_config.get('universe', [])
+
+        print(f"📋 {profile_name}")
+        print(f"   Model: {model}")
+        print(f"   Description: {desc}")
+        print(f"   Universe: {', '.join(universe[:5])}{'...' if len(universe) > 5 else ''}")
+        print()
+
+    print(f"Total: {len(profiles)} profiles")
+    print("\n💡 Run with: python3 -m backtest.cli run --profile <name>")
+    print("=" * 80 + "\n")
+
+
+def create_model(args):
+    """Create a new model from a template."""
+    # Template mapping
+    templates = {
+        'sector_rotation': 'sector_rotation_template.py',
+        'trend_following': 'trend_following_template.py',
+        'mean_reversion': 'mean_reversion_template.py'
+    }
+
+    if args.template not in templates:
+        print(f"❌ Unknown template: {args.template}")
+        print(f"Available templates: {', '.join(templates.keys())}")
+        sys.exit(1)
+
+    # Default parameters by template
+    defaults = {
+        'sector_rotation': {
+            'MOMENTUM_PERIOD': 126,
+            'TOP_N': 3,
+            'MIN_MOMENTUM': 0.0,
+            'DESCRIPTION': 'Momentum-based sector rotation strategy'
+        },
+        'trend_following': {
+            'MA_PERIOD': 200,
+            'MOMENTUM_PERIOD': 120,
+            'MOMENTUM_THRESHOLD': 0.0,
+            'DESCRIPTION': 'Trend-following strategy with MA and momentum'
+        },
+        'mean_reversion': {
+            'RSI_PERIOD': 14,
+            'RSI_OVERSOLD': 30,
+            'RSI_OVERBOUGHT': 70,
+            'BB_PERIOD': 20,
+            'BB_STD': 2.0,
+            'DESCRIPTION': 'Mean reversion using RSI and Bollinger Bands'
+        }
+    }
+
+    # Load template
+    template_path = Path(f"templates/models/{templates[args.template]}")
+    if not template_path.exists():
+        print(f"❌ Template file not found: {template_path}")
+        sys.exit(1)
+
+    with open(template_path) as f:
+        template_code = f.read()
+
+    # Parse custom parameters
+    params = defaults[args.template].copy()
+    if args.params:
+        for param_str in args.params.split(','):
+            if '=' in param_str:
+                key, value = param_str.split('=', 1)
+                key = key.strip().upper()
+                value = value.strip()
+                # Try to convert to appropriate type
+                try:
+                    if '.' in value:
+                        value = float(value)
+                    else:
+                        value = int(value)
+                except ValueError:
+                    # Keep as string
+                    pass
+                params[key] = value
+
+    # Replace placeholders
+    model_class_name = args.name
+    model_id = args.name
+    if args.description:
+        params['DESCRIPTION'] = args.description
+
+    replacements = {
+        '{MODEL_NAME}': model_class_name,
+        '{MODEL_ID}': model_id,
+        **{f'{{{key}}}': str(value) for key, value in params.items()}
+    }
+
+    for placeholder, value in replacements.items():
+        template_code = template_code.replace(placeholder, value)
+
+    # Save new model
+    output_path = Path(f"models/{args.name.lower()}.py")
+    if output_path.exists() and not args.force:
+        print(f"❌ Model file already exists: {output_path}")
+        print("   Use --force to overwrite")
+        sys.exit(1)
+
+    with open(output_path, 'w') as f:
+        f.write(template_code)
+
+    print(f"\n✅ Created model '{model_class_name}' at {output_path}")
+    print(f"\nModel details:")
+    print(f"  Class: {model_class_name}")
+    print(f"  Template: {args.template}")
+    print(f"  Parameters:")
+    for key, value in params.items():
+        print(f"    {key}: {value}")
+
+    print(f"\n📝 Next steps:")
+    print(f"1. Register model in backtest/cli.py:")
+    print(f"   Add import: from models.{args.name.lower()} import {model_class_name}")
+    print(f"   Add to model initialization:")
+    print(f"   elif model_name == \"{model_class_name}\":")
+    print(f"       model = {model_class_name}()")
+    print(f"\n2. Create a profile in configs/profiles.yaml to test it")
+    print(f"\n3. Run: python3 -m backtest.cli run --profile <your_profile>")
 
 
 def run_backtest(args):
@@ -249,6 +653,7 @@ def run_backtest(args):
         start_date = args.start or profile.get('start_date')
         end_date = args.end or profile.get('end_date')
         parameters = profile.get('parameters', {})
+        lookback_bars = profile.get('lookback_bars')
 
         # Check for data and auto-download if needed
         if universe and start_date and not args.no_download:
@@ -274,6 +679,7 @@ def run_backtest(args):
         model_name = args.model
         start_date = args.start
         end_date = args.end
+        lookback_bars = None  # Not supported in config-based mode (yet)
 
         # Load config to extract universe for data checking
         config = ConfigLoader.load_yaml(config_path)
@@ -299,10 +705,17 @@ def run_backtest(args):
     # Initialize model
     if model_name == "EquityTrendModel_v1":
         model = EquityTrendModel_v1()
+    elif model_name == "EquityTrendModel_v1_Daily":
+        model = EquityTrendModel_v1_Daily()
+    elif model_name == "EquityTrendModel_v2_Daily":
+        model = EquityTrendModel_v2_Daily()
+    elif model_name == "SectorRotationModel_v1":
+        model = SectorRotationModel_v1()
     else:
         raise ValueError(
             f"Unknown model: {model_name}. "
-            f"Available models: EquityTrendModel_v1"
+            f"Available models: EquityTrendModel_v1, EquityTrendModel_v1_Daily, "
+            f"EquityTrendModel_v2_Daily, SectorRotationModel_v1"
         )
 
     # Create runner
@@ -312,12 +725,60 @@ def run_backtest(args):
     try:
         print(f"\n🚀 Starting backtest...")
 
+        # Build backtest config overrides
+        backtest_config_overrides = {}
+        if lookback_bars is not None:
+            backtest_config_overrides['lookback_bars'] = lookback_bars
+
         results = runner.run(
             model=model,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            backtest_config_overrides=backtest_config_overrides if backtest_config_overrides else None
         )
 
+        # Handle JSON output format
+        if hasattr(args, 'format') and args.format == 'json':
+            # Get actual backtest period
+            nav_series = results.get('nav_series')
+            if nav_series is not None and len(nav_series) > 0:
+                actual_start = nav_series.index[0].strftime('%Y-%m-%d')
+                actual_end = nav_series.index[-1].strftime('%Y-%m-%d')
+            else:
+                actual_start = results['start_date']
+                actual_end = results['end_date']
+
+            # Calculate SPY benchmark
+            spy_bench = calculate_spy_benchmark(actual_start, actual_end)
+
+            # Build JSON output
+            json_output = {
+                "status": "success",
+                "model": results.get('model_ids', results.get('model_id', 'Unknown')),
+                "period": {
+                    "requested_start": results['start_date'],
+                    "requested_end": results['end_date'],
+                    "actual_start": actual_start,
+                    "actual_end": actual_end
+                },
+                "metrics": results['metrics'],
+                "vs_spy": {
+                    "spy_cagr": spy_bench['cagr'] if spy_bench else None,
+                    "spy_total_return": spy_bench['total_return'] if spy_bench else None,
+                    "spy_sharpe": spy_bench['sharpe'] if spy_bench else None,
+                    "alpha": results['metrics']['cagr'] - spy_bench['cagr'] if spy_bench else None,
+                    "outperformance": results['metrics']['total_return'] - spy_bench['total_return'] if spy_bench else None,
+                    "sharpe_advantage": results['metrics']['sharpe_ratio'] - spy_bench['sharpe'] if spy_bench else None,
+                    "beats_spy": results['metrics']['cagr'] > spy_bench['cagr'] if spy_bench else None
+                },
+                "trade_count": len(results.get('trade_log', [])),
+                "config": config_info
+            }
+
+            print(json.dumps(json_output, indent=2))
+            return
+
+        # Text output (default)
         # Print results
         print("\n" + "=" * 70)
         print("BACKTEST RESULTS")
@@ -329,7 +790,28 @@ def run_backtest(args):
             model_names = ', '.join(model_names)
 
         print(f"\nModel(s): {model_names}")
-        print(f"Period: {results['start_date']} to {results['end_date']}")
+
+        # Get actual backtest period from NAV series (may differ from requested due to data availability)
+        nav_series = results.get('nav_series')
+        if nav_series is not None and len(nav_series) > 0:
+            actual_start = nav_series.index[0].strftime('%Y-%m-%d')
+            actual_end = nav_series.index[-1].strftime('%Y-%m-%d')
+        else:
+            actual_start = results['start_date']
+            actual_end = results['end_date']
+
+        # Show both requested and actual periods if different
+        requested_start = results['start_date']
+        requested_end = results['end_date']
+
+        if actual_start != requested_start or actual_end != requested_end:
+            print(f"Period: {requested_start} to {requested_end} (requested)")
+            print(f"        {actual_start} to {actual_end} (actual - limited by data)")
+        else:
+            print(f"Period: {actual_start} to {actual_end}")
+
+        # Calculate SPY benchmark using ACTUAL period (not requested)
+        spy_bench = calculate_spy_benchmark(actual_start, actual_end)
 
         # Performance metrics
         print("\n" + "-" * 70)
@@ -338,20 +820,67 @@ def run_backtest(args):
 
         metrics = results['metrics']
 
+        # Market Comparison (prominently displayed first)
+        if spy_bench:
+            print(f"\n{Colors.BOLD}📊 VS MARKET (SPY):{Colors.RESET}")
+            alpha = metrics['cagr'] - spy_bench['cagr']
+            outperformance = metrics['total_return'] - spy_bench['total_return']
+
+            # Color-code alpha
+            if alpha >= 0.05:  # Beat by 5%+
+                alpha_color = Colors.GREEN
+            elif alpha >= 0:  # Beat market
+                alpha_color = Colors.YELLOW
+            else:  # Underperformed
+                alpha_color = Colors.RED
+
+            print(f"  Alpha (CAGR):        {alpha_color}{alpha:>9.2%}{Colors.RESET}  (Strategy: {metrics['cagr']:.2%} vs SPY: {spy_bench['cagr']:.2%})")
+            print(f"  Outperformance:      {alpha_color}{outperformance:>9.2%}{Colors.RESET}  (Strategy: {metrics['total_return']:.2%} vs SPY: {spy_bench['total_return']:.2%})")
+
+            # Risk-adjusted comparison
+            sharpe_diff = metrics['sharpe_ratio'] - spy_bench['sharpe']
+            if sharpe_diff >= 0.5:
+                sharpe_color = Colors.GREEN
+            elif sharpe_diff >= 0:
+                sharpe_color = Colors.YELLOW
+            else:
+                sharpe_color = Colors.RED
+            print(f"  Sharpe Advantage:    {sharpe_color}{sharpe_diff:>9.2f}{Colors.RESET}  (Strategy: {metrics['sharpe_ratio']:.2f} vs SPY: {spy_bench['sharpe']:.2f})")
+            print()
+
         print(f"\nReturns:")
-        print(f"  Total Return:     {metrics['total_return']:>10.2%}")
-        print(f"  CAGR:             {metrics['cagr']:>10.2%}")
+        # Color-code returns based on SPY comparison if available
+        if spy_bench:
+            total_ret_color = colorize(metrics['total_return'], spy_bench['total_return'], spy_bench['total_return'] * 0.8, percentage=True)
+            cagr_color = colorize(metrics['cagr'], spy_bench['cagr'], spy_bench['cagr'] * 0.8, percentage=True)
+        else:
+            # Fallback to absolute thresholds
+            total_ret_color = colorize(metrics['total_return'], 0.15, 0.05, percentage=True)
+            cagr_color = colorize(metrics['cagr'], 0.12, 0.06, percentage=True)
+
+        print(f"  Total Return:     {total_ret_color}")
+        print(f"  CAGR:             {cagr_color}")
 
         print(f"\nRisk Metrics:")
-        print(f"  Max Drawdown:     {metrics['max_drawdown']:>10.2%}")
-        print(f"  Sharpe Ratio:     {metrics['sharpe_ratio']:>10.2f}")
+        # Max Drawdown: green < 15%, yellow 15-25%, red > 25%
+        dd_color = colorize(metrics['max_drawdown'], 0.15, 0.25, reverse=True, percentage=True)
+        # Sharpe: green > 1.5, yellow 0.5-1.5, red < 0.5
+        sharpe_color = colorize(metrics['sharpe_ratio'], 1.5, 0.5, percentage=False)
+
+        print(f"  Max Drawdown:     {dd_color}")
+        print(f"  Sharpe Ratio:     {sharpe_color}")
 
         print(f"\nTrading Metrics:")
         print(f"  Total Trades:     {metrics['total_trades']:>10}")
-        print(f"  Win Rate:         {metrics['win_rate']:>10.2%}")
+
+        # Win Rate: green > 55%, yellow 45-55%, red < 45%
+        wr_color = colorize(metrics['win_rate'], 0.55, 0.45, percentage=True)
+        print(f"  Win Rate:         {wr_color}")
 
         print(f"\nBalanced Performance Score (BPS):")
-        print(f"  BPS:              {metrics['bps']:>10.4f}")
+        # BPS: green > 1.0, yellow 0.5-1.0, red < 0.5
+        bps_color = colorize(metrics['bps'], 1.0, 0.5, percentage=False)
+        print(f"  BPS:              {bps_color}")
 
         print(f"\nNAV:")
         print(f"  Initial NAV:      ${metrics['initial_nav']:>10,.2f}")
@@ -417,28 +946,26 @@ def run_backtest(args):
 
         print("\n" + "=" * 70)
 
-        # Save results if requested
+        # Always save results to results/ directory for audit purposes
+        output_dir = Path(args.output) if args.output else Path("results")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save NAV series
+        nav_path = output_dir / "nav_series.csv"
+        nav_series.to_csv(nav_path)
+
+        # Save trade log
+        if len(trade_log) > 0:
+            trade_path = output_dir / "trade_log.csv"
+            trade_log.to_csv(trade_path, index=False)
+
+        # Save metrics
+        metrics_path = output_dir / "metrics.json"
+        with open(metrics_path, 'w') as f:
+            json.dump(metrics, f, indent=2)
+
         if args.output:
-            output_dir = Path(args.output)
-            output_dir.mkdir(parents=True, exist_ok=True)
-
-            # Save NAV series
-            nav_path = output_dir / "nav_series.csv"
-            nav_series.to_csv(nav_path)
-            print(f"\nSaved NAV series to {nav_path}")
-
-            # Save trade log
-            if len(trade_log) > 0:
-                trade_path = output_dir / "trade_log.csv"
-                trade_log.to_csv(trade_path, index=False)
-                print(f"Saved trade log to {trade_path}")
-
-            # Save metrics
-            import json
-            metrics_path = output_dir / "metrics.json"
-            with open(metrics_path, 'w') as f:
-                json.dump(metrics, f, indent=2)
-            print(f"Saved metrics to {metrics_path}")
+            print(f"\nSaved results to {output_dir}/")
 
         # Save last run info for quick viewing
         save_last_run(results, config_info)
@@ -792,6 +1319,12 @@ Workflow Tips:
         help='Output directory for results'
     )
     run_parser.add_argument(
+        '--format',
+        choices=['text', 'json'],
+        default='text',
+        help='Output format: text (human-readable) or json (machine-readable)'
+    )
+    run_parser.add_argument(
         '--verbose',
         action='store_true',
         help='Verbose output'
@@ -835,6 +1368,30 @@ Workflow Tips:
     # Show last run command
     show_last_parser = subparsers.add_parser('show-last', help='View results from last backtest run')
 
+    # Create profile command
+    create_profile_parser = subparsers.add_parser('create-profile', help='Create a new test profile')
+    create_profile_parser.add_argument('--name', required=True, help='Profile name')
+    create_profile_parser.add_argument('--model', required=True, help='Model name (e.g., SectorRotationModel_v1)')
+    create_profile_parser.add_argument('--universe', required=True, help='Comma-separated ticker list (e.g., XLK,XLF,XLE)')
+    create_profile_parser.add_argument('--params', help='Comma-separated parameters (e.g., momentum_period=90,top_n=4)')
+    create_profile_parser.add_argument('--description', help='Profile description')
+    create_profile_parser.add_argument('--start-date', help='Start date (default: 2020-01-01)')
+    create_profile_parser.add_argument('--end-date', help='End date (default: 2024-12-31)')
+    create_profile_parser.add_argument('--lookback-bars', type=int, help='Lookback bars for historical data')
+
+    # List profiles command
+    list_profiles_parser = subparsers.add_parser('list-profiles', help='List all available profiles')
+
+    # Create model command
+    create_model_parser = subparsers.add_parser('create-model', help='Create a new model from template')
+    create_model_parser.add_argument('--template', required=True,
+                                     choices=['sector_rotation', 'trend_following', 'mean_reversion'],
+                                     help='Template to use')
+    create_model_parser.add_argument('--name', required=True, help='Model class name (e.g., MySectorRotation)')
+    create_model_parser.add_argument('--params', help='Comma-separated parameters (e.g., momentum_period=90,top_n=4)')
+    create_model_parser.add_argument('--description', help='Model description')
+    create_model_parser.add_argument('--force', action='store_true', help='Overwrite existing model file')
+
     args = parser.parse_args()
 
     if args.command == 'run':
@@ -847,6 +1404,12 @@ Workflow Tips:
         list_models(args)
     elif args.command == 'show-last':
         show_last_run()
+    elif args.command == 'create-profile':
+        create_profile(args)
+    elif args.command == 'list-profiles':
+        list_profiles()
+    elif args.command == 'create-model':
+        create_model(args)
     else:
         parser.print_help()
         sys.exit(1)

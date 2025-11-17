@@ -94,9 +94,9 @@ class Context:
         # Timestamp must be timezone-aware UTC
         assert self.timestamp.tz is not None, "timestamp must be timezone-aware"
 
-        # Timestamp must be aligned to H4 boundary (00, 04, 08, 12, 16, 20)
-        assert self.timestamp.hour in [0, 4, 8, 12, 16, 20], \
-            f"timestamp must be H4-aligned, got hour={self.timestamp.hour}"
+        # Timestamp must be at exact hour (supports both daily and 4H data)
+        # Daily data typically at 00:00 or market close hour
+        # 4H data at 00, 04, 08, 12, 16, 20
         assert self.timestamp.minute == 0 and self.timestamp.second == 0, \
             f"timestamp must be at :00:00, got {self.timestamp}"
 

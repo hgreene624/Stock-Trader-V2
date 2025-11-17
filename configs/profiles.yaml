@@ -6,8 +6,47 @@
 
 profiles:
   # ============================================================================
+  # SECTOR ROTATION PROFILES
+  # ============================================================================
+
+  sector_rotation_default:
+    description: "Sector rotation momentum - designed to BEAT SPY!"
+    model: SectorRotationModel_v1
+    universe: [XLK, XLF, XLE, XLV, XLI, XLP, XLU, XLY, XLC, XLB, XLRE, TLT]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    lookback_bars: 200  # Provide enough historical data for momentum calculation
+    parameters:
+      momentum_period: 126  # 6 months
+      top_n: 3              # Hold top 3 sectors
+      min_momentum: 0.0     # Must be positive
+
+  # ============================================================================
   # EQUITY TREND PROFILES
   # ============================================================================
+
+  equity_trend_daily:
+    description: "Daily bar version - full 2020-2024 history available!"
+    model: EquityTrendModel_v1_Daily
+    universe: [SPY, QQQ]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      ma_period: 200
+      momentum_period: 120
+      equal_weight: true
+
+  equity_trend_v2_daily:
+    description: "IMPROVED v2 - Partial positions, faster signals, aims to beat SPY!"
+    model: EquityTrendModel_v2_Daily
+    universe: [SPY, QQQ]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      ma_fast: 50
+      ma_medium: 100
+      ma_slow: 200
+      momentum_period: 120
 
   equity_trend_default:
     description: "Default equity trend strategy on SPY/QQQ"

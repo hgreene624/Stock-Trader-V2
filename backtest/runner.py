@@ -82,7 +82,8 @@ class BacktestRunner:
         model: Optional[BaseModel] = None,
         models: Optional[List[BaseModel]] = None,
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
+        backtest_config_overrides: Optional[Dict] = None
     ) -> Dict:
         """
         Run backtest.
@@ -92,6 +93,7 @@ class BacktestRunner:
             models: List of model instances to backtest (for multi-model mode)
             start_date: Start date (YYYY-MM-DD), defaults to config
             end_date: End date (YYYY-MM-DD), defaults to config
+            backtest_config_overrides: Optional dict to override backtest config settings (e.g., {'lookback_bars': 200})
 
         Returns:
             Dict with backtest results:
@@ -131,6 +133,10 @@ class BacktestRunner:
             self.models = models
             self.multi_model_mode = True
 
+        # Apply backtest config overrides if provided
+        if backtest_config_overrides:
+            self.backtest_config.update(backtest_config_overrides)
+
         start_date = start_date or self.backtest_config.get('start_date')
         end_date = end_date or self.backtest_config.get('end_date')
 
@@ -168,11 +174,19 @@ class BacktestRunner:
             symbols = set(self.backtest_config.get('symbols', ['SPY', 'QQQ']))
         symbols = list(symbols)
 
+        # Check if using daily-only model
+        # Daily models or sector rotation models use daily data only
+        daily_only = any(
+            'Daily' in mdl.__class__.__name__ or 'Sector' in mdl.__class__.__name__
+            for mdl in self.models
+        )
+
         asset_data = self.pipeline.load_and_prepare(
             symbols=symbols,
             h4_timeframe=self.backtest_config.get('h4_timeframe', '4H'),
             daily_timeframe=self.backtest_config.get('daily_timeframe', '1D'),
-            asset_class=self.backtest_config.get('asset_class', 'equity')
+            asset_class=self.backtest_config.get('asset_class', 'equity'),
+            daily_only=daily_only
         )
 
         # Filter data to backtest period (avoid future data in lookback validation)

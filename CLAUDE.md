@@ -1,6 +1,52 @@
-# CLAUDE.md
+# CLAUDE.md - Agent-First Trading Platform
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**🤖 This is an AI-agent-first project.** You are expected to drive trading research autonomously.
+
+---
+
+## ⚡ Quick Start for Agents
+
+**READ FIRST**: `/AGENT_README.md` - Comprehensive agent guide
+
+**Your Role**: Autonomously propose, test, and iterate on trading strategies to beat SPY
+
+**Current Goal**: Beat SPY's 14.63% CAGR (2020-2024)
+
+**Best Model So Far**: SectorRotationModel_v1 @ 11.69% CAGR (still underperforms SPY)
+
+**Your Workflow**:
+1. User provides goal → 2. You propose approach → 3. You test → 4. You analyze → 5. You iterate → 6. You report
+
+**Key Commands**:
+```bash
+# Run test
+python3 -m backtest.cli run --profile sector_rotation_default
+
+# View results
+python3 -m backtest.cli show-last
+
+# Download data
+python3 -m engines.data.cli download --symbols SPY,QQQ --start-date 2020-01-01 --timeframe 1D
+
+# Optimize parameters
+python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.yaml
+```
+
+**When to Check In**:
+- ✅ Found strategy that beats SPY
+- ✅ Hit dead end after 10+ iterations
+- ✅ Need strategic direction (multiple paths)
+- ✅ Major architecture changes planned
+
+**What You Can Do Autonomously**:
+- ✅ Create/modify models
+- ✅ Add profiles to `configs/profiles.yaml`
+- ✅ Run backtests and analyze results
+- ✅ Iterate on parameters
+- ✅ Troubleshoot issues
+- ✅ Document findings
+
+---
 
 ## Project Overview
 
