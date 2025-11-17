@@ -340,6 +340,9 @@ class BacktestRunner:
             # Get current NAV
             current_nav = self.executor.get_nav()
 
+            # Track whether we're holding (for executor)
+            is_holding = False
+
             if self.multi_model_mode:
                 # Multi-model mode: run all models and aggregate
 
@@ -350,6 +353,12 @@ class BacktestRunner:
                 )
 
                 model_outputs = []
+
+                # Get current positions for context
+                current_exposures = {}
+                for symbol, position in self.executor.get_positions().items():
+                    position_value = position.market_value
+                    current_exposures[symbol] = float(position_value / current_nav)
 
                 for mdl in self.models:
                     # Use effective budgets (regime-adjusted)
@@ -363,7 +372,8 @@ class BacktestRunner:
                         regime=regime,
                         model_budget_fraction=model_budget_fraction,
                         model_budget_value=model_budget_value,
-                        lookback_bars=lookback_bars
+                        lookback_bars=lookback_bars,
+                        current_exposures=current_exposures
                     )
 
                     # Generate model output
@@ -401,6 +411,12 @@ class BacktestRunner:
                 model_budget_fraction = model_budgets[mdl.model_id]
                 model_budget_value = current_nav * Decimal(str(model_budget_fraction))
 
+                # Get current positions for context
+                current_exposures = {}
+                for symbol, position in self.executor.get_positions().items():
+                    position_value = position.market_value
+                    current_exposures[symbol] = float(position_value / current_nav)
+
                 # Create context
                 context = self.pipeline.create_context(
                     timestamp=timestamp,
@@ -408,41 +424,64 @@ class BacktestRunner:
                     regime=regime,
                     model_budget_fraction=model_budget_fraction,
                     model_budget_value=model_budget_value,
-                    lookback_bars=lookback_bars
+                    lookback_bars=lookback_bars,
+                    current_exposures=current_exposures
                 )
 
                 # Generate model output
                 model_output = mdl.generate_target_weights(context)
 
-                # Convert model-relative weights to NAV-relative weights
-                nav_weights = {
-                    symbol: weight * model_budget_fraction
-                    for symbol, weight in model_output.weights.items()
-                }
+                # Track hold_current flag for executor
+                is_holding = model_output.hold_current
 
-                # Apply system-level leverage (single-model mode)
-                portfolio_config = self.config.get('portfolio', {})
-                leverage_multiplier = portfolio_config.get('leverage_multiplier', 1.0)
-
-                if leverage_multiplier != 1.0:
-                    pre_leverage_exposure = sum(abs(w) for w in nav_weights.values())
-                    nav_weights = {
-                        symbol: weight * leverage_multiplier
-                        for symbol, weight in nav_weights.items()
-                    }
-                    post_leverage_exposure = sum(abs(w) for w in nav_weights.values())
+                # Check if model is holding current positions
+                if model_output.hold_current:
+                    # Model holding current positions - use weights as-is (already NAV-relative)
+                    nav_weights = model_output.weights.copy()
 
                     self.logger.info(
-                        f"Applied {leverage_multiplier}x leverage (single-model mode)",
+                        f"Model holding current positions - skipping leverage application",
                         extra={
-                            "pre_leverage_exposure": f"{pre_leverage_exposure:.2%}",
-                            "post_leverage_exposure": f"{post_leverage_exposure:.2%}",
-                            "leverage_multiplier": leverage_multiplier
+                            "model": model_output.model_name,
+                            "timestamp": str(model_output.timestamp),
+                            "total_exposure": f"{sum(nav_weights.values()):.4f}"
                         }
                     )
+                else:
+                    # Model generated new weights - apply budget fraction and leverage
+                    nav_weights = {
+                        symbol: weight * model_budget_fraction
+                        for symbol, weight in model_output.weights.items()
+                    }
 
-            # Submit to executor
-            orders = self.executor.submit_target_weights(nav_weights, timestamp)
+                    # Apply system-level leverage (single-model mode)
+                    portfolio_config = self.config.get('portfolio', {})
+                    leverage_multiplier = portfolio_config.get('leverage_multiplier', 1.0)
+
+                    if leverage_multiplier != 1.0:
+                        pre_leverage_exposure = sum(abs(w) for w in nav_weights.values())
+                        nav_weights = {
+                            symbol: weight * leverage_multiplier
+                            for symbol, weight in nav_weights.items()
+                        }
+                        post_leverage_exposure = sum(abs(w) for w in nav_weights.values())
+
+                        self.logger.info(
+                            f"Applied {leverage_multiplier}x leverage (single-model mode)",
+                            extra={
+                                "model": model_output.model_name,
+                                "pre_leverage_exposure": f"{pre_leverage_exposure:.2%}",
+                                "post_leverage_exposure": f"{post_leverage_exposure:.2%}",
+                                "leverage_multiplier": leverage_multiplier
+                            }
+                        )
+
+            # Submit to executor (pass hold_current flag to skip unnecessary trades)
+            orders = self.executor.submit_target_weights(
+                nav_weights,
+                timestamp,
+                hold_current=is_holding
+            )
 
             # Record NAV
             self.executor.record_nav(timestamp)

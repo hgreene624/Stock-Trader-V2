@@ -112,21 +112,14 @@ class SectorRotationModel_v1(BaseModel):
         if self.last_rebalance is not None:
             last_month = (self.last_rebalance.year, self.last_rebalance.month)
             if current_month == last_month:
-                # Not time to rebalance yet - return current positions
-                # Convert NAV-relative exposures to model-relative weights
-                model_relative_weights = {}
-                for symbol in self.all_assets:
-                    nav_exposure = context.current_exposures.get(symbol, 0.0)
-                    # Convert from NAV-relative to model-budget-relative
-                    if context.model_budget_fraction > 0:
-                        model_relative_weights[symbol] = nav_exposure / context.model_budget_fraction
-                    else:
-                        model_relative_weights[symbol] = 0.0
-
+                # Not time to rebalance yet - hold current positions
+                # Return current NAV-relative exposures directly with hold_current=True
+                # The system will skip leverage application since positions are already leveraged
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,
-                    weights=model_relative_weights
+                    weights=context.current_exposures,  # NAV exposures as-is
+                    hold_current=True  # Signal: don't apply leverage again
                 )
 
         self.last_rebalance = context.timestamp

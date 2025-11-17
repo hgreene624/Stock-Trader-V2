@@ -173,41 +173,79 @@ class PortfolioEngine:
             if sum(output.weights.values()) > 0:
                 active_models.add(model_name)
 
-            # Convert model-relative weights to NAV-relative
-            for symbol, model_weight in output.weights.items():
-                # Convert to NAV-relative
-                nav_weight = budget_fraction * model_weight
+            # Convert to NAV-relative based on hold_current flag
+            if output.hold_current:
+                # Model is holding - weights are already NAV-relative, use as-is
+                for symbol, nav_weight in output.weights.items():
+                    if symbol not in aggregated_weights:
+                        aggregated_weights[symbol] = 0.0
+                        attribution[symbol] = {}
 
-                # Add to aggregated weights
-                if symbol not in aggregated_weights:
-                    aggregated_weights[symbol] = 0.0
-                    attribution[symbol] = {}
+                    aggregated_weights[symbol] += nav_weight
 
-                aggregated_weights[symbol] += nav_weight
+                    # Track attribution
+                    if nav_weight != 0:
+                        attribution[symbol][model_name] = nav_weight
 
-                # Track attribution
-                if nav_weight != 0:
-                    attribution[symbol][model_name] = nav_weight
+                self.logger.info(
+                    f"Model {model_name} holding current positions - using NAV weights as-is",
+                    extra={
+                        "model": model_name,
+                        "symbols": list(output.weights.keys()),
+                        "total_exposure": f"{sum(output.weights.values()):.4f}"
+                    }
+                )
+            else:
+                # Model generated new weights - apply budget fraction (leverage applied later)
+                for symbol, model_weight in output.weights.items():
+                    # Convert to NAV-relative
+                    nav_weight = budget_fraction * model_weight
 
-        # Apply leverage multiplier (system-wide scaling)
+                    # Add to aggregated weights
+                    if symbol not in aggregated_weights:
+                        aggregated_weights[symbol] = 0.0
+                        attribution[symbol] = {}
+
+                    aggregated_weights[symbol] += nav_weight
+
+                    # Track attribution
+                    if nav_weight != 0:
+                        attribution[symbol][model_name] = nav_weight
+
+        # Apply leverage multiplier ONLY to models with hold_current=False
         if self.leverage_multiplier != 1.0:
+            # Identify symbols from holding models
+            holding_symbols = set()
+            for output in model_outputs:
+                if output.hold_current:
+                    holding_symbols.update(output.weights.keys())
+
             pre_leverage_exposure = sum(abs(w) for w in aggregated_weights.values())
 
             for symbol in aggregated_weights:
-                aggregated_weights[symbol] *= self.leverage_multiplier
-                # Scale attribution proportionally
-                if symbol in attribution:
-                    for model_name in attribution[symbol]:
-                        attribution[symbol][model_name] *= self.leverage_multiplier
+                if symbol not in holding_symbols:
+                    # Only apply leverage to new positions
+                    aggregated_weights[symbol] *= self.leverage_multiplier
+                    # Scale attribution proportionally for non-holding models only
+                    if symbol in attribution:
+                        for model_name in attribution[symbol]:
+                            # Check if this model was holding
+                            model_is_holding = any(
+                                o.model_name == model_name and o.hold_current
+                                for o in model_outputs
+                            )
+                            if not model_is_holding:
+                                attribution[symbol][model_name] *= self.leverage_multiplier
 
             post_leverage_exposure = sum(abs(w) for w in aggregated_weights.values())
 
             self.logger.info(
-                f"Applied {self.leverage_multiplier}x leverage",
+                f"Applied {self.leverage_multiplier}x leverage (excluding held positions)",
                 extra={
                     "pre_leverage_exposure": f"{pre_leverage_exposure:.2%}",
                     "post_leverage_exposure": f"{post_leverage_exposure:.2%}",
-                    "leverage_multiplier": self.leverage_multiplier
+                    "leverage_multiplier": self.leverage_multiplier,
+                    "holding_symbols": list(holding_symbols)
                 }
             )
 

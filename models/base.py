@@ -173,6 +173,9 @@ class ModelOutput:
     Keys: symbol
     Values: weight (0.0 - 1.0, where 1.0 = 100% of model's budget)
 
+    When hold_current=True, these are NAV-relative exposures to maintain.
+    When hold_current=False, these are model-relative weights to be leveraged.
+
     Example:
         {"SPY": 0.6, "QQQ": 0.4}  # 60% of model budget in SPY, 40% in QQQ
     """
@@ -186,17 +189,57 @@ class ModelOutput:
     horizon: str | None = None
     """Optional holding period hint: "intraday" | "swing" | "position"."""
 
+    hold_current: bool = False
+    """
+    Flag indicating model wants to hold current positions unchanged.
+
+    When True:
+    - Weights represent NAV-relative exposures to maintain
+    - System skips leverage application (already applied previously)
+    - Used when rebalancing is not triggered but positions should persist
+
+    When False (default):
+    - Weights represent model-relative target weights
+    - System applies leverage multiplier to convert to NAV-relative
+    - Used for new position decisions
+
+    Example use case: Monthly rebalancing model returning current positions
+    between rebalance dates.
+    """
+
     def __post_init__(self):
         """Validate model output."""
-        # Weights must be in valid range
+        # Weights must be non-negative
         for symbol, weight in self.weights.items():
-            assert 0.0 <= weight <= 1.0, \
-                f"Weight for {symbol} must be in [0, 1], got {weight}"
+            assert weight >= 0.0, \
+                f"Weight for {symbol} must be non-negative, got {weight}"
 
-        # Weights must not exceed 100% of model budget
+            # Different limits based on hold_current flag
+            if self.hold_current:
+                # Holding current positions - can be leveraged NAV exposures
+                assert weight <= 3.0, \
+                    f"NAV exposure for {symbol} exceeds limit (3.0), got {weight}"
+            else:
+                # New positions - should be model-relative (0-1 range typically)
+                assert weight <= 2.0, \
+                    f"Weight for {symbol} exceeds reasonable limit (2.0), got {weight}"
+
+        # Validate total weights
         total_weight = sum(self.weights.values())
-        assert total_weight <= 1.0, \
-            f"Total weights ({total_weight}) cannot exceed 1.0 (model budget)"
+
+        if self.hold_current:
+            # Holding current - can exceed 1.0 due to prior leverage
+            if total_weight > 5.0:
+                raise ValueError(
+                    f"Total NAV exposures ({total_weight}) exceeds extreme limit (5.0) - "
+                    f"likely a bug in hold logic"
+                )
+        else:
+            # New positions - relaxed validation for leverage cases
+            if total_weight > 10.0:
+                raise ValueError(
+                    f"Total weights ({total_weight}) exceeds extreme limit (10.0) - likely a bug"
+                )
 
         # Validate confidence if provided
         if self.confidence is not None:

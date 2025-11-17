@@ -68,7 +68,8 @@ class BacktestExecutor(ExecutionInterface):
     def submit_target_weights(
         self,
         target_weights: Dict[str, float],
-        timestamp: pd.Timestamp
+        timestamp: pd.Timestamp,
+        hold_current: bool = False
     ) -> List[OrderResult]:
         """
         Submit target portfolio weights and execute necessary trades.
@@ -76,6 +77,7 @@ class BacktestExecutor(ExecutionInterface):
         Args:
             target_weights: Target weights as fraction of NAV (e.g., {"SPY": 0.5, "QQQ": 0.3})
             timestamp: Execution timestamp
+            hold_current: If True, skip all trades (model is holding current positions)
 
         Returns:
             List of order results
@@ -87,6 +89,14 @@ class BacktestExecutor(ExecutionInterface):
         4. Execute trades to achieve target portfolio
         5. Update positions and cash
         """
+        # If holding current positions, skip all trading
+        if hold_current:
+            self.logger.info(
+                f"Holding current positions - skipping rebalance",
+                extra={"timestamp": str(timestamp)}
+            )
+            return []
+
         current_nav = self.get_nav()
         orders = []
 
