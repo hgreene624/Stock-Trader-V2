@@ -14,7 +14,13 @@ A production-ready algorithmic trading platform that combines multiple strategy 
 
 ## Quick Start
 
-See [quickstart.md](specs/001-trading-platform/quickstart.md) for detailed setup instructions.
+See **[QUICKSTART.md](QUICKSTART.md)** for a detailed 5-minute guide to running your first backtest.
+
+**Phase 3 MVP is now complete!** ✅ You can:
+- Download historical data (SPY, QQQ, crypto)
+- Run backtests with EquityTrendModel_v1
+- Analyze results with metrics and charts
+- Validate no look-ahead bias enforcement
 
 ### Prerequisites
 
@@ -39,7 +45,34 @@ pip install -r requirements.txt
 # Copy environment template
 cp .env.example .env
 # Edit .env with your API keys (optional for backtest-only usage)
+
+# Validate installation (recommended)
+python validate_pipeline.py
 ```
+
+### Validate Your Installation
+
+**Recommended**: Run the comprehensive validation script to ensure everything works:
+
+```bash
+# Test all components
+python validate_pipeline.py
+
+# Verbose output with detailed logging
+python validate_pipeline.py --verbose
+```
+
+This tests 16 components including:
+- Import dependencies
+- Utilities (logging, config, time, metrics)
+- Data layer (validator, alignment, features, pipeline)
+- Model layer (Context, EquityTrendModel_v1)
+- Backtest engine (executor, full workflow)
+- Results layer (DuckDB database)
+
+**Expected output**: `✓ ALL TESTS PASSED - PLATFORM READY`
+
+See **[VALIDATION_GUIDE.md](VALIDATION_GUIDE.md)** for details.
 
 ### Run Your First Backtest
 

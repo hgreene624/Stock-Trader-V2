@@ -48,28 +48,28 @@ Based on plan.md, this is a single Python project with structure:
 
 ### Utilities & Configuration
 
-- [ ] T007 [P] Implement structured JSON logger in utils/logging.py with separate streams (trades, orders, performance, errors)
-- [ ] T008 [P] Implement YAML config loader with merge semantics in utils/config.py
-- [ ] T009 [P] Implement time utilities in utils/time_utils.py (UTC normalization, H4 boundary detection, timezone conversion)
-- [ ] T010 [P] Implement performance metrics calculator in utils/metrics.py (Sharpe, CAGR, MaxDD, WinRate, BPS)
+- [x] T007 [P] Implement structured JSON logger in utils/logging.py with separate streams (trades, orders, performance, errors)
+- [x] T008 [P] Implement YAML config loader with merge semantics in utils/config.py
+- [x] T009 [P] Implement time utilities in utils/time_utils.py (UTC normalization, H4 boundary detection, timezone conversion)
+- [x] T010 [P] Implement performance metrics calculator in utils/metrics.py (Sharpe, CAGR, MaxDD, WinRate, BPS)
 
 ### Base Contracts & Interfaces
 
-- [ ] T011 [P] Copy Context dataclass from specs/001-trading-platform/contracts/context.py to models/base.py
-- [ ] T012 [P] Copy ExecutionInterface from specs/001-trading-platform/contracts/execution.py to engines/execution/interface.py
-- [ ] T013 [P] Create BaseModel abstract class in models/base.py (defines generate_target_weights interface)
+- [x] T011 [P] Copy Context dataclass from specs/001-trading-platform/contracts/context.py to models/base.py
+- [x] T012 [P] Copy ExecutionInterface from specs/001-trading-platform/contracts/execution.py to engines/execution/interface.py
+- [x] T013 [P] Create BaseModel abstract class in models/base.py (defines generate_target_weights interface)
 
 ### Configuration Files
 
-- [ ] T014 [P] Create base system config template in configs/base/system.yaml per contracts/config_schemas.yaml
-- [ ] T015 [P] Create base models config template in configs/base/models.yaml per contracts/config_schemas.yaml
-- [ ] T016 [P] Create regime budgets config template in configs/base/regime_budgets.yaml per contracts/config_schemas.yaml
+- [x] T014 [P] Create base system config template in configs/base/system.yaml per contracts/config_schemas.yaml
+- [x] T015 [P] Create base models config template in configs/base/models.yaml per contracts/config_schemas.yaml
+- [x] T016 [P] Create regime budgets config template in configs/base/regime_budgets.yaml per contracts/config_schemas.yaml
 
 ### Data Pipeline Foundation
 
-- [ ] T017 Implement data validator in engines/data/validator.py (OHLC consistency, gap detection, timestamp validation)
-- [ ] T018 Implement time alignment module in engines/data/alignment.py (daily → H4 alignment, no look-ahead enforcement)
-- [ ] T019 Implement feature computation in engines/data/features.py (MA, RSI, ATR, Bollinger Bands, returns)
+- [x] T017 Implement data validator in engines/data/validator.py (OHLC consistency, gap detection, timestamp validation)
+- [x] T018 Implement time alignment module in engines/data/alignment.py (daily → H4 alignment, no look-ahead enforcement)
+- [x] T019 Implement feature computation in engines/data/features.py (MA, RSI, ATR, Bollinger Bands, returns)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -83,16 +83,16 @@ Based on plan.md, this is a single Python project with structure:
 
 ### Implementation for User Story 1
 
-- [ ] T020 [P] [US1] Implement data downloader for equities in engines/data/downloader.py (Yahoo Finance via yfinance, save to Parquet)
-- [ ] T021 [P] [US1] Create EquityTrendModel_v1 in models/equity_trend_v1.py (200D MA + momentum logic)
-- [ ] T022 [US1] Implement data pipeline loader in engines/data/__init__.py (load Parquet, construct Context, enforce no look-ahead)
-- [ ] T023 [US1] Implement BacktestExecutor in engines/execution/backtest.py (OHLC simulation, slippage, fees)
-- [ ] T024 [US1] Implement backtest runner in backtest/runner.py (orchestrate: load config → run model → log results)
-- [ ] T025 [US1] Implement backtest CLI in backtest/cli.py (argparse interface for running backtests)
-- [ ] T026 [US1] Create DuckDB schema for backtest results in results/ (backtests table, trades table)
-- [ ] T027 [US1] Implement equity curve generation in backtest/reporting.py (plot NAV over time, save to results/)
-- [ ] T028 [US1] Add validation: verify no look-ahead bias in unit test tests/unit/test_data_alignment.py
-- [ ] T029 [US1] Add integration test for full backtest run in tests/integration/test_backtest_e2e.py
+- [x] T020 [P] [US1] Implement data downloader for equities in engines/data/downloader.py (Yahoo Finance via yfinance, save to Parquet)
+- [x] T021 [P] [US1] Create EquityTrendModel_v1 in models/equity_trend_v1.py (200D MA + momentum logic)
+- [x] T022 [US1] Implement data pipeline loader in engines/data/pipeline.py (load Parquet, construct Context, enforce no look-ahead)
+- [x] T023 [US1] Implement BacktestExecutor in backtest/executor.py (OHLC simulation, slippage, fees)
+- [x] T024 [US1] Implement backtest runner in backtest/runner.py (orchestrate: load config → run model → log results)
+- [x] T025 [US1] Implement backtest CLI in backtest/cli.py (argparse interface for running backtests)
+- [x] T026 [US1] Create DuckDB schema for backtest results in results/schema.py (backtests table, trades table, nav_history, metrics)
+- [x] T027 [US1] Implement equity curve generation in results/visualize.py (plot NAV, drawdown, monthly returns, trade distribution)
+- [x] T028 [US1] Add validation: verify no look-ahead bias in tests/test_no_lookahead.py (6 comprehensive tests)
+- [x] T029 [US1] Add integration test for full backtest run in tests/test_integration.py (complete workflow + model signal validation)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - single model backtests work end-to-end
 
