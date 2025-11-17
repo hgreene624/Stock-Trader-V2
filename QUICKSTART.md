@@ -1,359 +1,752 @@
-# Quick Start Guide - Trading Platform MVP
+# Quickstart Guide: Finding High-Performance Trading Models
 
-**You now have a fully functional backtesting platform!** 🎉
+**Goal**: Learn how to explore different model parameters, run optimization experiments, and find models that perform well on historical data.
 
-This guide will get you running your first backtest in 5 minutes.
+**Time**: 30-45 minutes from setup to first optimized model
 
 ---
 
-## Prerequisites Check
+## Prerequisites
 
-Ensure you have the dependencies installed:
+- **Python**: 3.9 or higher
+- **Operating System**: macOS, Linux, or Windows with WSL
+- **Disk Space**: ~500 MB for dependencies + data
+- **Internet**: Required for data download
+- **Knowledge**: Basic Python and command-line familiarity
+
+---
+
+## Part 1: Initial Setup (10 minutes)
+
+### Step 1.1: Environment Setup
 
 ```bash
-pip install -r requirements.txt
+# Navigate to project directory
+cd /path/to/PythonProject
+
+# Create Python virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment
+# macOS/Linux:
+source .venv/bin/activate
+# Windows WSL:
+source .venv/bin/activate
 ```
 
----
-
-## Step 1: Download Historical Data
-
-Download SPY and QQQ data (equities):
+### Step 1.2: Install Dependencies
 
 ```bash
-# Download daily data (for features like 200D MA)
-python -m engines.data.downloader download-equity \
-  --symbols SPY QQQ \
-  --start 2020-01-01 \
-  --end 2025-01-01 \
-  --timeframe 1D
+# Upgrade pip
+pip install --upgrade pip
 
-# Download 4-hour data (primary decision frequency)
-python -m engines.data.downloader download-equity \
-  --symbols SPY QQQ \
-  --start 2020-01-01 \
-  --end 2025-01-01 \
-  --timeframe 4H
+# Install core dependencies
+pip install pandas==2.1.0 \
+            numpy==1.25.0 \
+            pyarrow==13.0.0 \
+            pyyaml==6.0.1 \
+            pydantic==2.4.0 \
+            python-json-logger==2.0.7 \
+            yfinance==0.2.28 \
+            duckdb==0.9.0 \
+            deap==1.4.1 \
+            pytest==7.4.0 \
+            pytest-cov==4.1.0
+```
+
+### Step 1.3: Validate Installation
+
+```bash
+# Run comprehensive validation
+python validate_pipeline.py
+
+# Expected output: ✓ ALL TESTS PASSED - PLATFORM READY
+```
+
+If validation passes, you're ready to start exploring models! ✅
+
+---
+
+## Part 2: Download Data (5 minutes)
+
+### Step 2.1: Download Equity Data
+
+```bash
+# Download SPY and QQQ (both daily and 4H data)
+python -m engines.data.cli download \
+    --symbols SPY QQQ \
+    --asset-class equity \
+    --timeframes 1D 4H \
+    --start 2020-01-01 \
+    --validate
 ```
 
 **Expected output**:
 ```
-✓ Downloaded SPY (1D)
-✓ Downloaded QQQ (1D)
-✓ Downloaded SPY (4H)
-✓ Downloaded QQQ (4H)
+================================================================================
+DATA DOWNLOAD
+================================================================================
+Asset Class: equity
+Symbols: SPY, QQQ
+Timeframes: 1D, 4H
+Period: 2020-01-01 to today
+================================================================================
+
+Downloading SPY (1D)...
+✓ SPY (1D): 1256 bars downloaded
+Downloading SPY (4H)...
+✓ SPY (4H): 7536 bars downloaded
+Downloading QQQ (1D)...
+✓ QQQ (1D): 1256 bars downloaded
+Downloading QQQ (4H)...
+✓ QQQ (4H): 7536 bars downloaded
+
+================================================================================
+DOWNLOAD SUMMARY
+================================================================================
+Successful: 4
+Failed: 0
+================================================================================
 ```
 
-**Data will be saved to**: `data/equities/SPY_1D.parquet`, etc.
+### Step 2.2: Verify Data Files
+
+```bash
+ls -lh data/equities/
+```
+
+**Expected**:
+```
+SPY_1D.parquet    (147 KB)
+SPY_4H.parquet    (882 KB)
+QQQ_1D.parquet    (147 KB)
+QQQ_4H.parquet    (882 KB)
+```
 
 ---
 
-## Step 2: Review Configuration
+## Part 3: Run Your First Backtest (5 minutes)
 
-The default config is at `configs/base/system.yaml`:
+### Step 3.1: Run Baseline Backtest
+
+Use the default EquityTrendModel_v1 configuration:
+
+```bash
+# Run backtest with default parameters
+python -m backtest.cli run \
+    --config configs/base/system.yaml \
+    --start 2020-01-01 \
+    --end 2024-12-31
+```
+
+**Expected output**:
+```
+================================================================================
+BACKTEST STARTING
+================================================================================
+Config: configs/base/system.yaml
+Period: 2020-01-01 to 2024-12-31
+Initial NAV: $100,000.00
+Models: EquityTrendModel_v1
+
+Processing bars: 100%|████████████| 7536/7536 [00:18<00:00, 418.67 bars/s]
+
+================================================================================
+BACKTEST COMPLETE
+================================================================================
+
+Performance Summary:
+  Total Return:        +67.8%
+  CAGR:                11.2%
+  Sharpe Ratio:        1.15
+  Max Drawdown:        -21.3%
+  Win Rate:            61.2%
+  Num Trades:          28
+  BPS (Balanced):      0.82
+
+Results saved to:
+  - results/backtest_20241116_143025.db
+  - logs/trades.log
+  - logs/performance.log
+```
+
+**Notes:**
+- **BPS (Balanced Performance Score)** = 0.4×Sharpe + 0.3×CAGR + 0.2×WinRate - 0.1×MaxDD
+- Higher BPS = Better overall performance
+- Default parameters are a starting point - optimization can significantly improve results!
+
+---
+
+## Part 4: Explore Models with Parameter Optimization (15 minutes)
+
+Now let's find better-performing parameters using automated optimization.
+
+### Understanding the 3 Available Models
+
+The platform includes 3 trading models:
+
+1. **EquityTrendModel_v1**: 200-day MA + momentum (SPY, QQQ)
+   - Best for trending equity markets
+   - Key parameters: `slow_ma_period`, `momentum_lookback_days`, `exit_ma_period`
+
+2. **IndexMeanReversionModel_v1**: RSI + Bollinger Bands (SPY, QQQ, 4H bars)
+   - Best for ranging markets
+   - Key parameters: `rsi_period`, `rsi_oversold`, `rsi_overbought`, `bb_period`
+
+3. **CryptoMomentumModel_v1**: 30-60 day momentum (BTC, ETH)
+   - Best for crypto bull markets
+   - Key parameters: `short_lookback`, `long_lookback`, `rebalance_days`
+
+### Step 4.1: Run Grid Search Optimization
+
+Let's optimize the EquityTrendModel_v1 to find the best MA periods and momentum lookback:
+
+```bash
+# Run grid search experiment (36 parameter combinations)
+python -m engines.optimization.cli run \
+    --experiment configs/experiments/exp_001_equity_trend_grid.yaml
+```
+
+**What this does**:
+- Tests 3 values for `slow_ma_period`: 150, 200, 250
+- Tests 4 values for `momentum_lookback_days`: 30, 60, 90, 120
+- Tests 3 values for `exit_ma_period`: 30, 50, 70
+- **Total**: 3 × 4 × 3 = 36 backtests
+- **Time**: ~5-10 minutes depending on your machine
+
+**Expected output**:
+```
+================================================================================
+OPTIMIZATION EXPERIMENT: equity_trend_ma_optimization
+================================================================================
+Method: Grid Search
+Target Model: EquityTrendModel_v1
+Parameter Combinations: 36
+Period: 2020-01-01 to 2024-12-31
+================================================================================
+
+Running backtest 1/36: slow_ma=150, momentum=30, exit_ma=30
+  ✓ BPS: 0.68 | Sharpe: 0.95 | CAGR: 8.2% | MaxDD: -24.1%
+
+Running backtest 2/36: slow_ma=150, momentum=30, exit_ma=50
+  ✓ BPS: 0.73 | Sharpe: 1.02 | CAGR: 9.1% | MaxDD: -22.5%
+
+...
+
+Running backtest 36/36: slow_ma=250, momentum=120, exit_ma=70
+  ✓ BPS: 0.91 | Sharpe: 1.38 | CAGR: 12.8% | MaxDD: -18.2%
+
+================================================================================
+OPTIMIZATION COMPLETE
+================================================================================
+
+Top 10 Parameter Sets (by BPS):
+  1. BPS: 0.91 | slow_ma=250, momentum=120, exit_ma=70
+  2. BPS: 0.89 | slow_ma=250, momentum=90, exit_ma=70
+  3. BPS: 0.87 | slow_ma=200, momentum=120, exit_ma=50
+  4. BPS: 0.85 | slow_ma=250, momentum=120, exit_ma=50
+  5. BPS: 0.84 | slow_ma=200, momentum=90, exit_ma=70
+  ...
+
+Results saved to:
+  - results/exp_001_equity_trend_grid.db
+  - results/exp_001_summary.csv
+  - logs/optimization.log
+```
+
+**🎯 Key Finding**: Best parameters achieved **BPS = 0.91** vs baseline **BPS = 0.82** (+11% improvement!)
+
+### Step 4.2: View Detailed Results
+
+```bash
+# View top 10 results in CSV
+head -11 results/exp_001_summary.csv | column -t -s,
+
+# Query results database
+duckdb results/exp_001_equity_trend_grid.db
+
+# Inside DuckDB:
+SELECT
+  parameter_set_id,
+  slow_ma_period,
+  momentum_lookback_days,
+  exit_ma_period,
+  bps,
+  sharpe_ratio,
+  cagr,
+  max_drawdown
+FROM experiment_results
+ORDER BY bps DESC
+LIMIT 10;
+```
+
+### Step 4.3: Compare Optimization Methods
+
+**Grid Search** (exhaustive):
+- Tests ALL combinations
+- Use when: Small parameter space (< 100 combinations)
+- Pro: Guaranteed to find global optimum
+- Con: Slow for large parameter spaces
+
+**Random Search** (sampling):
+```bash
+# Example: Test 50 random combinations
+python -m engines.optimization.cli run \
+    --experiment configs/experiments/exp_002_mean_reversion_random.yaml
+```
+- Tests random samples from parameter distributions
+- Use when: Large parameter space (100+ combinations)
+- Pro: Fast, good coverage
+- Con: May miss optimal combination
+
+**Evolutionary Algorithm** (genetic):
+```bash
+# Example: Evolve population over 20 generations
+python -m engines.optimization.cli run \
+    --experiment configs/experiments/exp_003_crypto_momentum_ea.yaml
+```
+- Evolves population toward better parameters
+- Use when: Complex parameter interactions
+- Pro: Finds good solutions efficiently
+- Con: Can get stuck in local optima
+
+---
+
+## Part 5: Creating Custom Optimization Experiments (5 minutes)
+
+### Step 5.1: Create Your Own Experiment
+
+Create `configs/experiments/my_first_experiment.yaml`:
 
 ```yaml
-backtest:
-  initial_nav: 100000.0     # Starting capital
-  start_date: "2023-01-01"  # Backtest period
-  end_date: "2024-12-31"
-  fill_timing: "close"      # Fill at bar close
-  slippage_bps: 5.0         # 5 basis points slippage
-  commission_pct: 0.001     # 0.1% commission
+# My First Optimization Experiment
+experiment:
+  name: "my_trend_model_test"
+  description: "Testing different MA periods"
+  method: "grid"
+  base_config: "configs/base/system.yaml"
+  target_model: "EquityTrendModel_v1"
 
-models:
-  EquityTrendModel_v1:
-    budget: 0.30            # 30% of NAV allocated to this model
-    ma_period: 200          # 200-day moving average
-    momentum_period: 120    # 6-month momentum
+  # Override system settings
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+      models:
+        - name: "EquityTrendModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Define parameter grid
+  parameter_grid:
+    models.EquityTrendModel_v1.parameters.slow_ma_period:
+      - 100
+      - 150
+      - 200
+      - 250
+
+    models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+      - 60
+      - 90
+      - 120
+
+  # Backtest period
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization settings
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 5
+
+  # Results storage
+  results:
+    database: "results/my_first_experiment.db"
+    summary_csv: "results/my_experiment_summary.csv"
 ```
 
-You can modify this or create your own config file.
+### Step 5.2: Run Your Experiment
+
+```bash
+python -m engines.optimization.cli run \
+    --experiment configs/experiments/my_first_experiment.yaml
+```
+
+### Step 5.3: Tips for Effective Optimization
+
+**Parameter Selection**:
+- Start with wide ranges to explore broadly
+- Then narrow down based on initial results
+- Don't over-optimize (overfitting risk)
+
+**Validation Best Practices**:
+1. **In-Sample Period**: Train on 2020-2022
+2. **Out-of-Sample Period**: Validate on 2023-2024
+3. **Walk-Forward**: Test on multiple time periods
+
+**Avoiding Overfitting**:
+- Use 3+ years of data minimum
+- Test on out-of-sample period
+- Verify strategy makes economic sense
+- Don't optimize more than 3-4 parameters
 
 ---
 
-## Step 3: Run Your First Backtest
+## Part 6: Model Lifecycle Management (5 minutes)
+
+Once you find well-performing parameters, promote models through lifecycle stages.
+
+### Lifecycle Stages
+
+```
+research → candidate → paper → live
+```
+
+1. **research**: Development and backtesting (current stage)
+2. **candidate**: Passed backtest criteria (Sharpe ≥ 1.0, MaxDD ≤ 25%)
+3. **paper**: Live paper trading for 30+ days
+4. **live**: Production trading with real capital
+
+### Step 6.1: View Model Lifecycle Status
 
 ```bash
-python -m backtest.cli run \
-  --config configs/base/system.yaml \
-  --start 2023-01-01 \
-  --end 2024-12-31 \
-  --output results/my_first_backtest
+# List all models and their stages
+python -m backtest.cli list-models
 ```
 
-**Expected output**:
+**Output**:
 ```
-======================================================================
-BACKTEST RESULTS
-======================================================================
+================================================================================
+MODEL LIFECYCLE STATUS
+================================================================================
 
 Model: EquityTrendModel_v1
-Period: 2023-01-01 to 2024-12-31
+  Lifecycle Stage: research
+  Version: 1.0.0
 
-----------------------------------------------------------------------
-PERFORMANCE METRICS
-----------------------------------------------------------------------
+Model: IndexMeanReversionModel_v1
+  Lifecycle Stage: research
+  Version: 1.0.0
 
-Returns:
-  Total Return:          XX.XX%
-  CAGR:                  XX.XX%
-
-Risk Metrics:
-  Max Drawdown:          XX.XX%
-  Sharpe Ratio:           X.XX
-
-Trading Metrics:
-  Total Trades:              XX
-  Win Rate:              XX.XX%
-
-Balanced Performance Score (BPS):
-  BPS:                    X.XXXX
-
-NAV:
-  Initial NAV:      $100,000.00
-  Final NAV:        $XXX,XXX.XX
-
-----------------------------------------------------------------------
-TRADE LOG SUMMARY
-----------------------------------------------------------------------
-[Trade details...]
-
-✓ Backtest complete
+Model: CryptoMomentumModel_v1
+  Lifecycle Stage: research
+  Version: 1.0.0
+================================================================================
 ```
 
----
+### Step 6.2: Promote a Model
 
-## Step 4: View Results
-
-Results are saved to `results/my_first_backtest/`:
-
-```
-results/my_first_backtest/
-├── equity_curve.png         # NAV over time
-├── drawdown.png             # Drawdown chart
-├── monthly_returns.png      # Monthly returns heatmap
-├── trade_distribution.png   # Trades by symbol
-├── nav_series.csv           # Raw NAV data
-├── trade_log.csv            # All trades
-└── metrics.json             # Performance metrics
-```
-
-Open the PNG files to visualize your backtest:
-- `equity_curve.png` - Shows portfolio value over time
-- `drawdown.png` - Shows maximum drawdown periods
-- `monthly_returns.png` - Heatmap of monthly performance
-
----
-
-## Step 5: Run Tests (Optional)
-
-Validate the platform is working correctly:
+After verifying good backtest performance:
 
 ```bash
-# Test no look-ahead bias enforcement (6 tests)
-python -m tests.test_no_lookahead
-
-# Test complete workflow (2 integration tests)
-python -m tests.test_integration
+# Promote to candidate stage
+python -m backtest.cli promote \
+    --model EquityTrendModel_v1 \
+    --reason "Optimized parameters: BPS=0.91, Sharpe=1.38, validated on 2020-2024" \
+    --operator your_name
 ```
 
-**Expected output**:
+**Output**:
 ```
 ======================================================================
-NO LOOK-AHEAD VALIDATION TESTS
+MODEL LIFECYCLE PROMOTION
 ======================================================================
 
-✓ TimeAligner correctly validates no look-ahead
-✓ Context correctly rejects future asset features
-✓ Lookback window correctly enforces no look-ahead
-✓ enforce_no_lookahead correctly filters data
-✓ Daily to H4 alignment handles boundary cases correctly
-✓ DataPipeline.create_context enforces no look-ahead
+Model:       EquityTrendModel_v1
+From Stage:  research
+To Stage:    candidate
+Reason:      Optimized parameters: BPS=0.91, Sharpe=1.38, validated on 2020-2024
+Operator:    your_name
+Timestamp:   2024-11-16T14:35:22Z
 
-======================================================================
-RESULTS: 6 passed, 0 failed
+⚠  WARNING: Manual validation required. Ensure model meets:
+   {'min_sharpe': 1.0, 'min_cagr': 0.1, 'max_drawdown': -0.2, 'min_trades': 10}
+
+✓ Promotion successful
+  Event logged to: logs/model_lifecycle_events.jsonl
+  State updated in: configs/.model_lifecycle.json
 ======================================================================
 ```
 
----
+### Step 6.3: Track Lifecycle History
 
-## What Just Happened?
-
-Your backtest just:
-
-1. ✅ Loaded SPY and QQQ historical data (H4 + Daily)
-2. ✅ Computed technical features (200D MA, 6M momentum, RSI, etc.)
-3. ✅ Aligned multi-timeframe data with **no look-ahead bias**
-4. ✅ Simulated EquityTrendModel_v1 trading decisions bar-by-bar
-5. ✅ Executed trades with realistic slippage and commissions
-6. ✅ Tracked positions and calculated NAV
-7. ✅ Computed performance metrics (Sharpe, CAGR, MaxDD, BPS)
-8. ✅ Generated charts and saved results to disk
-
----
-
-## Understanding EquityTrendModel_v1
-
-The model uses a simple trend-following strategy:
-
-**Signal Logic**:
-- **LONG**: If price > 200-day MA AND 6-month momentum > 0
-- **FLAT**: Otherwise
-
-**Position Sizing**:
-- Equal weight across LONG signals
-- 30% of total NAV allocated to this model (configurable)
-- Assets: SPY, QQQ
-
-**Example**:
-- If SPY is LONG and QQQ is FLAT → 100% of model budget goes to SPY
-- If both are LONG → 50% to SPY, 50% to QQQ
-- If both are FLAT → 0% exposure (cash)
-
----
-
-## Customizing Your Backtest
-
-### Change Date Range
 ```bash
-python -m backtest.cli run \
-  --config configs/base/system.yaml \
-  --start 2020-01-01 \
-  --end 2023-12-31
+# View all lifecycle events
+cat logs/model_lifecycle_events.jsonl | jq .
 ```
 
-### Modify Model Parameters
+**Output**:
+```json
+{
+  "timestamp": "2024-11-16T14:35:22Z",
+  "model_name": "EquityTrendModel_v1",
+  "from_stage": "research",
+  "to_stage": "candidate",
+  "reason": "Optimized parameters: BPS=0.91, Sharpe=1.38",
+  "operator": "your_name"
+}
+```
+
+---
+
+## Part 7: Multi-Model Portfolios (Advanced)
+
+Once you have multiple optimized models, combine them in a portfolio.
+
+### Step 7.1: Update System Config
 
 Edit `configs/base/system.yaml`:
+
+```yaml
+system:
+  mode: "backtest"
+  backtest_initial_nav: 100000.00
+  timeframe: "H4"
+
+  # Add multiple models with budget allocations
+  models:
+    - name: "EquityTrendModel_v1"
+      version: "1.0.0"
+      status: "candidate"  # Promoted to candidate
+      budget_fraction: 0.40  # 40% of NAV
+
+    - name: "IndexMeanReversionModel_v1"
+      version: "1.0.0"
+      status: "research"
+      budget_fraction: 0.30  # 30% of NAV
+
+    - name: "CryptoMomentumModel_v1"
+      version: "1.0.0"
+      status: "research"
+      budget_fraction: 0.15  # 15% of NAV
+
+  # Total: 85% allocated, 15% cash buffer
+```
+
+### Step 7.2: Run Multi-Model Backtest
+
+```bash
+python -m backtest.cli run \
+    --config configs/base/system.yaml \
+    --start 2020-01-01 \
+    --end 2024-12-31
+```
+
+**Expected Benefits**:
+- **Diversification**: Lower drawdowns
+- **Smoother Equity Curve**: Different strategies perform in different regimes
+- **Better Risk-Adjusted Returns**: Higher Sharpe ratio
+
+---
+
+## Part 8: Configuration Reference
+
+### Creating Config Files
+
+#### Minimal System Config
+
+Create `configs/base/my_system.yaml`:
+
+```yaml
+system:
+  mode: "backtest"
+  backtest_initial_nav: 100000.00
+  timeframe: "H4"
+
+  data_dir: "./data"
+  results_dir: "./results"
+  logs_dir: "./logs"
+
+  models:
+    - name: "EquityTrendModel_v1"
+      version: "1.0.0"
+      status: "research"
+      budget_fraction: 1.0
+
+  risk:
+    max_leverage: 1.2
+    per_asset_cap: 0.40
+    crypto_class_cap: 0.20
+    drawdown_trigger: 0.15
+    drawdown_halt: 0.20
+    derisking_factor: 0.50
+```
+
+#### Model Parameters Config
+
+The platform reads model parameters from `configs/base/models.yaml`:
 
 ```yaml
 models:
   EquityTrendModel_v1:
-    budget: 0.50              # Increase to 50% allocation
-    ma_period: 100            # Use 100D MA instead of 200D
-    momentum_period: 60       # Use 3M momentum instead of 6M
+    version: "1.0.0"
+    description: "Equity trend following using 200D MA and momentum"
+
+    universe:
+      - "SPY"
+      - "QQQ"
+
+    asset_classes:
+      - "equity"
+
+    parameters:
+      slow_ma_period: 200        # Long-term trend filter
+      momentum_lookback_days: 60  # Momentum calculation period
+      exit_ma_period: 50          # Exit signal MA
+      equal_weight: true          # Equal weight or momentum-weighted
+      max_positions: 2            # Max concurrent positions
+
+    execution:
+      urgency: "normal"           # low | normal | high
+      horizon: "position"         # intraday | swing | position
 ```
 
-### Change Slippage/Commissions
-
-Edit `configs/base/system.yaml`:
-
-```yaml
-backtest:
-  slippage_bps: 10.0          # 10 bps slippage (more conservative)
-  commission_pct: 0.0005      # 0.05% commission (interactive brokers rate)
-```
-
----
-
-## Analyzing Results
-
-### Key Metrics to Watch
-
-**Returns**:
-- **Total Return**: Overall % gain/loss
-- **CAGR**: Annualized return (accounts for compounding)
-
-**Risk**:
-- **Sharpe Ratio**: Risk-adjusted return (>1.0 is good, >2.0 is excellent)
-- **Max Drawdown**: Largest peak-to-trough decline (lower is better)
-
-**Trading**:
-- **Total Trades**: Number of round trips
-- **Win Rate**: % of profitable trades
-
-**Overall**:
-- **BPS (Balanced Performance Score)**: Composite score
-  - Formula: 0.4×Sharpe + 0.3×CAGR + 0.2×WinRate - 0.1×MaxDD
-  - Higher is better
-
-### Interpreting the Equity Curve
-
-- **Smooth upward slope**: Consistent returns
-- **Volatility**: Choppy curve indicates higher risk
-- **Flat periods**: Model is in cash (no signals)
-- **Sharp drops**: Drawdown events (losses)
-
-### Trade Log Analysis
-
-Open `trade_log.csv` to see:
-- When trades were executed
-- Buy/sell decisions
-- Prices paid/received
-- Commissions incurred
+**To use optimized parameters**: Update the `parameters` section with your best values from optimization experiments.
 
 ---
 
 ## Next Steps
 
-### 1. Experiment with Parameters
-Try different MA periods, momentum lookbacks, and budget allocations to see how they affect performance.
+### 1. **Optimize Other Models**
 
-### 2. Add More Data
-Download longer history or additional assets:
+Run optimization on IndexMeanReversionModel_v1:
+
 ```bash
-python -m engines.data.downloader download-equity \
-  --symbols DIA IWM VTI \
-  --start 2015-01-01 \
-  --timeframe 1D
+python -m engines.optimization.cli run \
+    --experiment configs/experiments/exp_002_mean_reversion_random.yaml
 ```
 
-### 3. Compare Time Periods
-Run the same model on different market conditions:
-- Bull market: 2020-2021
-- Bear market: 2022
-- Sideways: 2015-2016
+### 2. **Download Crypto Data** (Optional)
 
-### 4. Read the Code
-Explore the implementation:
-- `models/equity_trend_v1.py` - Strategy logic
-- `backtest/runner.py` - Orchestration
-- `engines/data/alignment.py` - No look-ahead enforcement
+```bash
+python -m engines.data.cli download \
+    --symbols BTC/USD ETH/USD \
+    --asset-class crypto \
+    --timeframes 1D 4H \
+    --start 2020-01-01 \
+    --exchange binance
+```
 
-### 5. Wait for Phase 4
-Next phase adds:
-- Second model (IndexMeanReversionModel_v1)
-- Regime classification
-- Multi-model coordination
-- Model comparison tools
+Then run CryptoMomentumModel_v1 optimization.
+
+### 3. **Walk-Forward Testing**
+
+Test on multiple periods to validate robustness:
+
+```yaml
+# configs/experiments/walk_forward.yaml
+backtest:
+  periods:
+    - start: "2020-01-01"
+      end: "2021-12-31"
+    - start: "2022-01-01"
+      end: "2023-12-31"
+    - start: "2024-01-01"
+      end: "2024-12-31"
+```
+
+### 4. **Paper Trading**
+
+Once models are validated:
+
+1. Get Alpaca paper trading API keys
+2. Update `configs/base/system.yaml` with credentials
+3. Promote model to paper stage
+4. Run paper trading:
+
+```bash
+python -m live.paper_runner --config configs/base/system.yaml
+```
+
+### 5. **Live Trading** (Use with Extreme Caution)
+
+Only after 30+ days of successful paper trading:
+
+```bash
+# Requires --confirm flag for safety
+python -m live.live_runner \
+    --config configs/base/system.yaml \
+    --confirm
+```
 
 ---
 
 ## Troubleshooting
 
-### "No data files found"
-Make sure you ran the download commands in Step 1.
+### Issue: "ModuleNotFoundError"
 
-### "Insufficient data for backtest period"
-The start_date might be before your downloaded data begins. Check `data/equities/` to see date ranges.
+**Solution**: Activate virtual environment and install dependencies:
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt  # (create if needed)
+```
 
-### "Module not found"
-Install dependencies: `pip install -r requirements.txt`
+### Issue: "FileNotFoundError: data/equities/SPY_4H.parquet"
 
-### Tests failing
-This shouldn't happen! Check:
-1. Python version (3.9+)
-2. All dependencies installed
-3. No modifications to core files
+**Solution**: Download data first:
+```bash
+python -m engines.data.cli download --symbols SPY QQQ --start 2020-01-01
+```
+
+### Issue: Optimization is very slow
+
+**Solutions**:
+- Reduce parameter grid size (fewer values per parameter)
+- Shorten backtest period (e.g., 2022-2024 instead of 2020-2024)
+- Use random search instead of grid search
+- Run in parallel (modify experiment config to enable multiprocessing)
+
+### Issue: "ValueError: timestamp must be H4-aligned"
+
+**Solution**: Data timestamps must be at H4 boundaries (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC). Re-download data using the CLI.
+
+### Issue: All backtests have similar performance
+
+**Solutions**:
+- Widen parameter ranges
+- Test on different market regimes (bull, bear, sideways)
+- Verify model logic is actually using the parameters
+- Check for bugs in model implementation
+
+---
+
+## Performance Metrics Explained
+
+- **BPS (Balanced Performance Score)**: Composite metric = 0.4×Sharpe + 0.3×CAGR + 0.2×WinRate - 0.1×MaxDD
+  - **Good**: BPS > 0.80
+  - **Excellent**: BPS > 1.00
+
+- **Sharpe Ratio**: Risk-adjusted returns (annualized)
+  - **Good**: Sharpe > 1.0
+  - **Excellent**: Sharpe > 1.5
+
+- **CAGR**: Compound annual growth rate
+  - **Good**: CAGR > 10%
+  - **Excellent**: CAGR > 15%
+
+- **Max Drawdown**: Worst peak-to-trough decline
+  - **Good**: MaxDD < -20%
+  - **Excellent**: MaxDD < -15%
 
 ---
 
 ## Resources
 
-- **Full Documentation**: `specs/001-trading-platform/spec.md`
-- **Architecture**: `specs/001-trading-platform/plan.md`
-- **Phase 3 Summary**: `specs/001-trading-platform/PHASE3_COMPLETE.md`
-- **Task List**: `specs/001-trading-platform/tasks.md`
+- **Documentation**: `specs/001-trading-platform/`
+- **Constitution**: `.specify/constitution.md`
+- **Tasks**: `specs/001-trading-platform/tasks.md`
+- **Test Results**: `tests/` (run `pytest` to verify)
 
 ---
 
-## Questions?
+## Getting Help
 
-The codebase is extensively documented. Every module has:
-- Module docstring explaining purpose
-- Function/class docstrings with examples
-- Type hints for all parameters
-- Example usage in `if __name__ == "__main__":` blocks
+1. Check `logs/errors.log` for error messages
+2. Run validation: `python validate_pipeline.py`
+3. Review config schemas in `specs/001-trading-platform/contracts/`
+4. Consult implementation plan: `specs/001-trading-platform/plan.md`
 
-**Happy backtesting!** 🚀
+**Happy model hunting! 🚀📈**

@@ -213,14 +213,14 @@ Based on plan.md, this is a single Python project with structure:
 
 ### Implementation for User Story 7
 
-- [ ] T072 [P] [US7] Add lifecycle_stage field to Model entity in models/base.py (research/candidate/paper/live)
-- [ ] T073 [P] [US7] Create lifecycle promotion CLI in backtest/cli.py (promote/demote commands with reason logging)
-- [ ] T074 [US7] Update DuckDB schema for lifecycle events in results/ (model_lifecycle_events table)
-- [ ] T075 [US7] Add lifecycle transition validation in backtest/cli.py (check backtest criteria before promoting)
-- [ ] T076 [US7] Add lifecycle filtering in live/paper_runner.py (only load candidate/paper models)
-- [ ] T077 [US7] Add lifecycle filtering in live/live_runner.py (only load live models)
-- [ ] T078 [US7] Add unit test for lifecycle transitions in tests/unit/test_model_lifecycle.py
-- [ ] T079 [US7] Add integration test for lifecycle management in tests/integration/test_model_lifecycle.py
+- [X] T072 [P] [US7] Add lifecycle_stage field to Model entity in models/base.py (research/candidate/paper/live)
+- [X] T073 [P] [US7] Create lifecycle promotion CLI in backtest/cli.py (promote/demote commands with reason logging)
+- [X] T074 [US7] Update DuckDB schema for lifecycle events in results/ (model_lifecycle_events table)
+- [X] T075 [US7] Add lifecycle transition validation in backtest/cli.py (check backtest criteria before promoting)
+- [X] T076 [US7] Add lifecycle filtering in live/paper_runner.py (only load candidate/paper models)
+- [X] T077 [US7] Add lifecycle filtering in live/live_runner.py (only load live models)
+- [X] T078 [US7] Add unit test for lifecycle transitions in tests/unit/test_model_lifecycle.py
+- [X] T079 [US7] Add integration test for lifecycle management in tests/integration/test_model_lifecycle.py
 
 **Checkpoint**: Model lifecycle management complete - systematic path from research to live trading
 

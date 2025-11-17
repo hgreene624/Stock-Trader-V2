@@ -223,9 +223,22 @@ class BaseModel(ABC):
 
     All models must implement generate_target_weights() which receives
     a Context and returns target weight allocations.
+
+    Lifecycle Stages:
+    - research: Initial development, backtesting only
+    - candidate: Passed backtest criteria, ready for paper trading
+    - paper: Live paper trading with simulated execution
+    - live: Production trading with real capital
     """
 
-    def __init__(self, name: str, version: str, universe: list[str], **params):
+    def __init__(
+        self,
+        name: str,
+        version: str,
+        universe: list[str],
+        lifecycle_stage: str = "research",
+        **params
+    ):
         """
         Initialize base model.
 
@@ -233,12 +246,22 @@ class BaseModel(ABC):
             name: Model identifier (e.g., "EquityTrendModel_v1")
             version: Semantic version (e.g., "1.0.0")
             universe: List of asset symbols this model trades
+            lifecycle_stage: Current lifecycle stage (research/candidate/paper/live)
             **params: Model-specific parameters
         """
         self.name = name
         self.version = version
         self.universe = universe
+        self.lifecycle_stage = lifecycle_stage
         self.params = params
+
+        # Validate lifecycle stage
+        valid_stages = ["research", "candidate", "paper", "live"]
+        if self.lifecycle_stage not in valid_stages:
+            raise ValueError(
+                f"Invalid lifecycle_stage '{self.lifecycle_stage}'. "
+                f"Must be one of: {', '.join(valid_stages)}"
+            )
 
     @abstractmethod
     def generate_target_weights(self, context: Context) -> ModelOutput:
