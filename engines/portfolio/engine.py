@@ -87,6 +87,7 @@ class PortfolioEngine:
         self,
         risk_engine: Optional['RiskEngine'] = None,
         regime_budgets: Optional[Dict] = None,
+        leverage_multiplier: float = 1.0,
         logger: Optional[StructuredLogger] = None
     ):
         """
@@ -95,10 +96,19 @@ class PortfolioEngine:
         Args:
             risk_engine: Optional Risk Engine for constraint enforcement
             regime_budgets: Optional regime-based budget overrides (from regime_budgets.yaml)
+            leverage_multiplier: System-wide leverage multiplier (1.0=no leverage, 1.25=25% leverage, 2.0=2x leverage)
             logger: Optional logger instance
         """
         self.risk_engine = risk_engine
+        self.leverage_multiplier = leverage_multiplier
         self.logger = logger or StructuredLogger()
+
+        # Log leverage setting
+        if leverage_multiplier != 1.0:
+            self.logger.info(
+                f"Portfolio Engine initialized with {leverage_multiplier}x leverage",
+                extra={"leverage_multiplier": leverage_multiplier}
+            )
 
         # Initialize regime risk scaler if regime budgets provided
         if regime_budgets:
@@ -178,6 +188,28 @@ class PortfolioEngine:
                 # Track attribution
                 if nav_weight != 0:
                     attribution[symbol][model_name] = nav_weight
+
+        # Apply leverage multiplier (system-wide scaling)
+        if self.leverage_multiplier != 1.0:
+            pre_leverage_exposure = sum(abs(w) for w in aggregated_weights.values())
+
+            for symbol in aggregated_weights:
+                aggregated_weights[symbol] *= self.leverage_multiplier
+                # Scale attribution proportionally
+                if symbol in attribution:
+                    for model_name in attribution[symbol]:
+                        attribution[symbol][model_name] *= self.leverage_multiplier
+
+            post_leverage_exposure = sum(abs(w) for w in aggregated_weights.values())
+
+            self.logger.info(
+                f"Applied {self.leverage_multiplier}x leverage",
+                extra={
+                    "pre_leverage_exposure": f"{pre_leverage_exposure:.2%}",
+                    "post_leverage_exposure": f"{post_leverage_exposure:.2%}",
+                    "leverage_multiplier": self.leverage_multiplier
+                }
+            )
 
         # Apply risk constraints if risk engine provided
         risk_violations = []

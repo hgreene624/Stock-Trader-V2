@@ -242,9 +242,14 @@ class BacktestRunner:
             # Get regime budget overrides if configured
             regime_budgets = self.config.get('regime_budgets', {})
 
+            # Get leverage multiplier from portfolio config (default: 1.0 = no leverage)
+            portfolio_config = self.config.get('portfolio', {})
+            leverage_multiplier = portfolio_config.get('leverage_multiplier', 1.0)
+
             self.portfolio_engine = PortfolioEngine(
                 risk_engine=risk_engine,
                 regime_budgets=regime_budgets,
+                leverage_multiplier=leverage_multiplier,
                 logger=self.logger
             )
             self.attribution_tracker = AttributionTracker(logger=self.logger)
@@ -414,6 +419,27 @@ class BacktestRunner:
                     symbol: weight * model_budget_fraction
                     for symbol, weight in model_output.weights.items()
                 }
+
+                # Apply system-level leverage (single-model mode)
+                portfolio_config = self.config.get('portfolio', {})
+                leverage_multiplier = portfolio_config.get('leverage_multiplier', 1.0)
+
+                if leverage_multiplier != 1.0:
+                    pre_leverage_exposure = sum(abs(w) for w in nav_weights.values())
+                    nav_weights = {
+                        symbol: weight * leverage_multiplier
+                        for symbol, weight in nav_weights.items()
+                    }
+                    post_leverage_exposure = sum(abs(w) for w in nav_weights.values())
+
+                    self.logger.info(
+                        f"Applied {leverage_multiplier}x leverage (single-model mode)",
+                        extra={
+                            "pre_leverage_exposure": f"{pre_leverage_exposure:.2%}",
+                            "post_leverage_exposure": f"{post_leverage_exposure:.2%}",
+                            "leverage_multiplier": leverage_multiplier
+                        }
+                    )
 
             # Submit to executor
             orders = self.executor.submit_target_weights(nav_weights, timestamp)

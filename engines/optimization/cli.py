@@ -39,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from engines.optimization.grid_search import GridSearchOptimizer, RandomSearchOptimizer
 from engines.optimization.evolutionary import EvolutionaryOptimizer
 from utils.logging import StructuredLogger
+from utils.optimization_tracker import OptimizationTracker
 from backtest.runner import BacktestRunner
 from models.sector_rotation_v1 import SectorRotationModel_v1
 from models.equity_trend_v1 import EquityTrendModel_v1
@@ -206,12 +207,13 @@ class OptimizationCLI:
 
         return parameter_sets
 
-    def create_backtest_fitness_function(self, exp_config: Dict[str, Any]):
+    def create_backtest_fitness_function(self, exp_config: Dict[str, Any], collect_full_results: bool = False):
         """
         Create a fitness function that runs actual backtests.
 
         Args:
             exp_config: Experiment configuration
+            collect_full_results: If True, store full results in self.full_results
 
         Returns:
             Fitness function that takes parameters and returns BPS score
@@ -223,6 +225,10 @@ class OptimizationCLI:
 
         # Initialize backtest runner
         runner = BacktestRunner(base_config, logger=self.logger)
+
+        # Storage for full results (if requested)
+        if collect_full_results:
+            self.full_results = []
 
         def fitness_function(params: Dict[str, Any]) -> float:
             """Run backtest and return fitness score."""
@@ -250,11 +256,27 @@ class OptimizationCLI:
                 metric = opt_config.get('metric', 'bps')
                 fitness = results['metrics'].get(metric, 0.0)
 
+                # Store full results if requested
+                if collect_full_results:
+                    self.full_results.append({
+                        'parameters': params.copy(),
+                        'metrics': results['metrics'].copy()
+                    })
+
                 return fitness
 
             except Exception as e:
                 # If backtest fails, return very low fitness
                 print(f"  ⚠️  Backtest failed for {params}: {e}")
+
+                # Store failure if collecting results
+                if collect_full_results:
+                    self.full_results.append({
+                        'parameters': params.copy(),
+                        'metrics': {'error': str(e)},
+                        'failed': True
+                    })
+
                 return -999.0
 
         return fitness_function
@@ -323,7 +345,7 @@ class OptimizationCLI:
 
         # Create real fitness function that runs backtests
         print("\nCreating backtest fitness function...")
-        fitness_function = self.create_backtest_fitness_function(exp_config)
+        fitness_function = self.create_backtest_fitness_function(exp_config, collect_full_results=True)
 
         # Run optimization
         print("\nRunning evolutionary optimization with REAL backtests...")
@@ -342,6 +364,12 @@ class OptimizationCLI:
         print("\nTop 5 solutions:")
         for i, idx in enumerate(sorted_indices[:5], 1):
             print(f"  {i}. {final_population[idx]} → fitness={final_fitness[idx]:.4f}")
+
+        # Save results to optimization tracker
+        print("\n" + "=" * 80)
+        print("SAVING TO OPTIMIZATION TRACKER")
+        print("=" * 80)
+        self._save_to_tracker(exp_config, self.full_results)
 
         return final_population
 
@@ -386,6 +414,64 @@ class OptimizationCLI:
 
         print(f"  Parameter sets saved to: {json_path}")
         print("\n✓ Results saved successfully")
+
+    def _save_to_tracker(self, exp_config: Dict[str, Any], full_results: List[Dict[str, Any]]):
+        """
+        Save experiment results to optimization tracker.
+
+        Args:
+            exp_config: Experiment configuration
+            full_results: List of dicts with 'parameters' and 'metrics' keys
+        """
+        tracker = OptimizationTracker()
+
+        try:
+            # Calculate best metric
+            valid_results = [r for r in full_results if not r.get('failed', False)]
+            if not valid_results:
+                print("⚠️  No valid results to save")
+                return
+
+            metric_name = exp_config['optimization'].get('metric', 'bps')
+            best_metric = max(r['metrics'].get(metric_name, -999) for r in valid_results)
+
+            # Log experiment
+            backtest_period = f"{exp_config['backtest']['start_date']} to {exp_config['backtest']['end_date']}"
+            exp_id = tracker.log_experiment(
+                name=exp_config['name'],
+                method=exp_config['method'],
+                model=exp_config['target_model'],
+                backtest_period=backtest_period,
+                total_runs=len(full_results),
+                best_metric=best_metric,
+                metric_name=metric_name
+            )
+
+            print(f"✓ Experiment logged (ID: {exp_id})")
+
+            # Log each result
+            for result in valid_results:
+                tracker.log_result(
+                    experiment_id=exp_id,
+                    parameters=result['parameters'],
+                    metrics=result['metrics'],
+                    validation_period="in-sample",
+                    notes=f"EA optimization run"
+                )
+
+            print(f"✓ Saved {len(valid_results)} results to tracker")
+
+            # Show leaderboard snippet
+            print("\n📊 Top 3 from this run:")
+            sorted_results = sorted(valid_results, key=lambda r: r['metrics'].get(metric_name, -999), reverse=True)
+            for i, r in enumerate(sorted_results[:3], 1):
+                params_str = ', '.join(f"{k}={v}" for k, v in r['parameters'].items())
+                metric_val = r['metrics'].get(metric_name, 0)
+                cagr = r['metrics'].get('cagr', 0)
+                print(f"  {i}. {metric_name.upper()}={metric_val:.3f}, CAGR={cagr:.2%} | {params_str}")
+
+        finally:
+            tracker.close()
 
     def run_experiment(self, config_path: str):
         """

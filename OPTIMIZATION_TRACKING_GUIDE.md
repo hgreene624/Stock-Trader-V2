@@ -133,9 +133,33 @@ SELECT * FROM results WHERE cagr > 0.15;
 
 ## Integration with Optimization CLI
 
-**FUTURE**: The optimization CLI will automatically log results to this tracker.
+✅ **AUTO-SAVING IS NOW ENABLED!**
 
-For now, you can manually log results after running optimizations.
+Every optimization run automatically saves to the tracker:
+- Full experiment metadata
+- All parameter sets tested
+- Complete performance metrics (CAGR, Sharpe, Max DD, etc.)
+- Automatically added to leaderboard
+
+**Just run your optimization and results are saved automatically:**
+
+```bash
+python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.yaml
+```
+
+At the end, you'll see:
+```
+================================================================================
+SAVING TO OPTIMIZATION TRACKER
+================================================================================
+✓ Experiment logged (ID: 2)
+✓ Saved 300 results to tracker
+
+📊 Top 3 from this run:
+  1. BPS=1.173, CAGR=17.82% | momentum_period=77, top_n=3, min_momentum=0.044
+  2. BPS=1.126, CAGR=16.95% | momentum_period=78, top_n=3, min_momentum=0.039
+  3. BPS=1.097, CAGR=16.21% | momentum_period=77, top_n=3, min_momentum=0.042
+```
 
 ---
 

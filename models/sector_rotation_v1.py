@@ -113,9 +113,21 @@ class SectorRotationModel_v1(BaseModel):
             last_month = (self.last_rebalance.year, self.last_rebalance.month)
             if current_month == last_month:
                 # Not time to rebalance yet - return current positions
-                # For simplicity, we'll rebalance every time in this implementation
-                # In production, you'd track current positions and return them here
-                pass
+                # Convert NAV-relative exposures to model-relative weights
+                model_relative_weights = {}
+                for symbol in self.all_assets:
+                    nav_exposure = context.current_exposures.get(symbol, 0.0)
+                    # Convert from NAV-relative to model-budget-relative
+                    if context.model_budget_fraction > 0:
+                        model_relative_weights[symbol] = nav_exposure / context.model_budget_fraction
+                    else:
+                        model_relative_weights[symbol] = 0.0
+
+                return ModelOutput(
+                    model_name=self.model_id,
+                    timestamp=context.timestamp,
+                    weights=model_relative_weights
+                )
 
         self.last_rebalance = context.timestamp
 
@@ -178,9 +190,8 @@ class SectorRotationModel_v1(BaseModel):
                 # All negative - go defensive
                 weights[self.defensive_asset] = 1.0
 
-        # Apply leverage multiplier to all weights
-        if self.target_leverage != 1.0:
-            weights = {asset: weight * self.target_leverage for asset, weight in weights.items()}
+        # Note: leverage is now applied at the system level (PortfolioEngine/BacktestRunner)
+        # Models should return weights that sum to 1.0
 
         return ModelOutput(
             model_name=self.model_id,
