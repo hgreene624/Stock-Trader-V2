@@ -82,96 +82,112 @@ python -c "import pandas, pyarrow, yaml, pydantic; print('All dependencies insta
 
 ## Step 2: Download Sample Data
 
-### 2.1 Create Data Directory Structure
+### 2.1 Download Historical Data (Using CLI)
+
+The platform includes a data download CLI for easy data management. Use it to download equity and crypto data:
 
 ```bash
-mkdir -p data/equities
-mkdir -p data/crypto
-mkdir -p data/macro
-```
-
-### 2.2 Download Historical Data (Manual for v1)
-
-Create a data download script `scripts/download_data.py`:
-
-```python
-"""
-Download historical H4 and daily data for backtesting.
-Run once to populate data/ directory.
-"""
-
-import yfinance as yf
-import pandas as pd
-from pathlib import Path
-
-def download_equity_data(symbol: str, start: str = "2020-01-01", end: str = "2025-01-15"):
-    """Download H4 and daily data for equity symbol."""
-
-    print(f"Downloading {symbol}...")
-
-    # Download daily data
-    ticker = yf.Ticker(symbol)
-    daily = ticker.history(start=start, end=end, interval="1d")
-
-    # Save daily data
-    daily_path = f"data/equities/{symbol}_daily.parquet"
-    daily.to_parquet(daily_path)
-    print(f"  Saved {len(daily)} daily bars to {daily_path}")
-
-    # Download 1-hour data (resample to H4)
-    # Note: yfinance limits 1h data to ~730 days, download in chunks for longer history
-    hourly = ticker.history(start=start, end=end, interval="1h")
-
-    # Resample to H4 (4-hour bars at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
-    h4 = hourly.resample('4H', origin='start').agg({
-        'Open': 'first',
-        'High': 'max',
-        'Low': 'min',
-        'Close': 'last',
-        'Volume': 'sum'
-    }).dropna()
-
-    # Filter to H4 alignment (keep only 00, 04, 08, 12, 16, 20 hours)
-    h4 = h4[h4.index.hour.isin([0, 4, 8, 12, 16, 20])]
-
-    # Save H4 data
-    h4_path = f"data/equities/{symbol}_h4.parquet"
-    h4.to_parquet(h4_path)
-    print(f"  Saved {len(h4)} H4 bars to {h4_path}")
-
-def main():
-    # Download equity data
-    symbols = ["SPY", "QQQ"]  # Start with 2 symbols for quickstart
-
-    for symbol in symbols:
-        download_equity_data(symbol)
-
-    print("\nData download complete!")
-    print("Next step: Run your first backtest with `python backtest/run_backtest.py`")
-
-if __name__ == "__main__":
-    main()
-```
-
-Run the download script:
-
-```bash
-python scripts/download_data.py
+# Download equity data for SPY and QQQ (both 1D and 4H timeframes)
+python -m engines.data.cli download \
+    --symbols SPY QQQ \
+    --asset-class equity \
+    --timeframes 1D 4H \
+    --start 2024-01-01 \
+    --validate \
+    --continue-on-error
 ```
 
 **Expected output**:
 ```
-Downloading SPY...
-  Saved 1258 daily bars to data/equities/SPY_daily.parquet
-  Saved 3521 H4 bars to data/equities/SPY_h4.parquet
-Downloading QQQ...
-  Saved 1258 daily bars to data/equities/QQQ_daily.parquet
-  Saved 3521 H4 bars to data/equities/QQQ_h4.parquet
+================================================================================
+DATA DOWNLOAD
+================================================================================
+Asset Class: equity
+Symbols: SPY, QQQ
+Timeframes: 1D, 4H
+Period: 2024-01-01 to today
+================================================================================
 
-Data download complete!
+Downloading SPY (1D)...
+✓ SPY (1D): 235 bars downloaded
+Downloading SPY (4H)...
+✓ SPY (4H): 1410 bars downloaded
+Downloading QQQ (1D)...
+✓ QQQ (1D): 235 bars downloaded
+Downloading QQQ (4H)...
+✓ QQQ (4H): 1410 bars downloaded
+
+================================================================================
+DOWNLOAD SUMMARY
+================================================================================
+Successful: 4
+Failed: 0
+================================================================================
+
+Running data validation...
+Validating SPY (1D)...
+  ✓ 235 bars validated
+    Period: 2024-01-02 to 2024-11-15
+Validating SPY (4H)...
+  ✓ 1410 bars validated
+    Period: 2024-01-02 to 2024-11-15
+...
 ```
 
-### 2.3 Verify Data Files
+### 2.2 Update Existing Data (Incremental)
+
+To update your data with new bars without re-downloading everything:
+
+```bash
+# Update all equity data
+python -m engines.data.cli update \
+    --asset-class equity \
+    --validate
+```
+
+**Expected output**:
+```
+================================================================================
+DATA UPDATE (Incremental)
+================================================================================
+Asset Class: equity
+================================================================================
+
+Found 4 existing data files
+
+Updating SPY (1D)...
+  Last bar: 2024-11-15 (1 days ago)
+  Fetching: 2024-11-14 to 2024-11-16
+  ✓ Added 1 new bars (total: 236)
+Updating SPY (4H)...
+  ℹ Already up to date (last bar: 2024-11-16)
+...
+
+================================================================================
+UPDATE SUMMARY
+================================================================================
+Updated: 2
+Skipped: 2
+Failed: 0
+================================================================================
+```
+
+### 2.3 Download Crypto Data (Optional)
+
+For crypto strategies:
+
+```bash
+# Download BTC and ETH data
+python -m engines.data.cli download \
+    --symbols BTC/USD ETH/USD \
+    --asset-class crypto \
+    --timeframes 1D 4H \
+    --start 2024-01-01 \
+    --exchange binance \
+    --validate
+```
+
+### 2.4 Verify Data Files
 
 ```bash
 ls -lh data/equities/
@@ -179,11 +195,28 @@ ls -lh data/equities/
 
 **Expected**:
 ```
-SPY_daily.parquet
-SPY_h4.parquet
-QQQ_daily.parquet
-QQQ_h4.parquet
+SPY_1D.parquet
+SPY_4H.parquet
+QQQ_1D.parquet
+QQQ_4H.parquet
 ```
+
+### 2.5 Validate Data Quality
+
+To manually validate data:
+
+```bash
+python -m engines.data.cli validate \
+    --symbols SPY QQQ \
+    --asset-class equity
+```
+
+**Data Download CLI Options**:
+- `download`: Download historical data for new symbols
+- `update`: Incrementally update existing data with new bars
+- `validate`: Check data quality and completeness
+- `--continue-on-error`: Continue with other symbols if one fails
+- `--force`: Force update even if data is recent (for `update` command)
 
 ---
 

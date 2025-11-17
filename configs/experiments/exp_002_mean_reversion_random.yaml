@@ -1,0 +1,75 @@
+# Experiment: Mean Reversion Model - Random Search
+# Optimize RSI and Bollinger Band parameters using random sampling
+
+experiment:
+  name: "mean_reversion_rsi_bb_random_search"
+  description: "Random search over RSI and Bollinger Band parameters"
+
+  # Optimization method
+  method: "random"
+
+  # Base configuration
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "IndexMeanReversionModel_v1"
+
+  # Configuration overrides
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      models:
+        - name: "IndexMeanReversionModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter distributions for random sampling
+  parameter_distributions:
+    models.IndexMeanReversionModel_v1.parameters.rsi_period:
+      type: "choice"  # Discrete choice
+      values: [10, 12, 14, 16, 18, 20]
+
+    models.IndexMeanReversionModel_v1.parameters.rsi_oversold:
+      type: "uniform"  # Continuous uniform
+      min: 20.0
+      max: 35.0
+
+    models.IndexMeanReversionModel_v1.parameters.rsi_overbought:
+      type: "uniform"
+      min: 65.0
+      max: 80.0
+
+    models.IndexMeanReversionModel_v1.parameters.bb_period:
+      type: "randint"  # Random integer
+      min: 15
+      max: 30
+
+    models.IndexMeanReversionModel_v1.parameters.bb_std:
+      type: "uniform"
+      min: 1.5
+      max: 2.5
+
+  # Random search settings
+  random_search:
+    n_samples: 100  # Run 100 random parameter combinations
+    seed: 42  # For reproducibility
+    estimate_coverage: true  # Report expected coverage of discrete parameters
+
+  # Backtest period
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization objective
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 20  # Save top 20 for potential EA seeding
+
+  # Results storage
+  results:
+    database: "results/exp_002_mean_reversion_random.db"
+    summary_csv: "results/exp_002_summary.csv"

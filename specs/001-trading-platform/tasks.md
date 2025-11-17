@@ -171,8 +171,15 @@ Based on plan.md, this is a single Python project with structure:
 **Independent Test**: Define parameter grid in YAML experiment file (fast_ma: [20, 30, 50], slow_ma: [100, 150, 200]), run optimizer, verify 9 backtests execute, ranks by BPS, logs to database
 
 ### Implementation for User Story 5
-063 [US5] Generate comparison reports in backtest/reporting.py (side-by-side metrics for experiments)
-- [ ] T064 [US5] Add integration test for optimization pipeline in tests/integration/test_optimization_pipeline.py
+
+- [X] T057 [US5] Create optimization module structure in engines/optimization/ (__init__.py with exports)
+- [X] T058 [US5] Implement grid search in engines/optimization/grid_search.py (exhaustive parameter combinations)
+- [X] T059 [US5] Implement random search in engines/optimization/grid_search.py (random sampling from distributions)
+- [X] T060 [US5] Implement evolutionary algorithm in engines/optimization/evolutionary.py (GA with selection, crossover, mutation)
+- [X] T061 [US5] Create experiment configuration schema in specs/001-trading-platform/contracts/experiment_schemas.yaml (YAML format for parameter grids)
+- [X] T062 [US5] Create optimization CLI in engines/optimization/cli.py (run/list/compare commands)
+- [X] T063 [US5] Generate comparison reports in engines/optimization/reporting.py (side-by-side metrics for experiments)
+- [X] T064 [US5] Add integration test for optimization pipeline in tests/integration/test_optimization_pipeline.py
 
 **Checkpoint**: Parameter optimization functional - can search large parameter spaces efficiently
 
@@ -186,13 +193,13 @@ Based on plan.md, this is a single Python project with structure:
 
 ### Implementation for User Story 6
 
-- [ ] T065 [P] [US6] Create data download CLI script in engines/data/cli.py (argparse interface for download/update commands)
-- [ ] T066 [US6] Implement incremental update logic in engines/data/downloader.py (detect last timestamp, fetch only new bars, avoid duplicates)
-- [ ] T067 [US6] Add timezone normalization for equity data in engines/data/downloader.py (Alpaca US/Eastern → UTC)
-- [ ] T068 [US6] Add H4 bar alignment logic in engines/data/downloader.py (resample 1H → H4 at correct boundaries)
-- [ ] T069 [US6] Add data validation after download in engines/data/cli.py (call validator, report gaps/errors)
-- [ ] T070 [US6] Add error handling for API failures in engines/data/downloader.py (log error, continue with other symbols)
-- [ ] T071 [US6] Update quickstart.md with data download instructions
+- [X] T065 [P] [US6] Create data download CLI script in engines/data/cli.py (argparse interface for download/update commands)
+- [X] T066 [US6] Implement incremental update logic in engines/data/downloader.py (detect last timestamp, fetch only new bars, avoid duplicates)
+- [X] T067 [US6] Add timezone normalization for equity data in engines/data/downloader.py (Alpaca US/Eastern → UTC)
+- [X] T068 [US6] Add H4 bar alignment logic in engines/data/downloader.py (resample 1H → H4 at correct boundaries)
+- [X] T069 [US6] Add data validation after download in engines/data/cli.py (call validator, report gaps/errors)
+- [X] T070 [US6] Add error handling for API failures in engines/data/downloader.py (log error, continue with other symbols)
+- [X] T071 [US6] Update quickstart.md with data download instructions
 
 **Checkpoint**: Data download and update workflow complete - platform is self-sufficient for data management
 

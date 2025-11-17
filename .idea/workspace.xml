@@ -4,15 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="validation script troubleshooted">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backtest/runner.py" beforeDir="false" afterPath="$PROJECT_DIR$/backtest/runner.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engines/regime/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/regime/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engines/risk/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/risk/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/specs/001-trading-platform/tasks.md" beforeDir="false" afterPath="$PROJECT_DIR$/specs/001-trading-platform/tasks.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/validate_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/validate_pipeline.py" afterDir="false" />
-    </list>
+    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="phase 6 finished and test results all pass" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -110,7 +102,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763344729200</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="phase 6 finished and test results all pass">
+      <option name="closed" value="true" />
+      <created>1763350698185</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1763350698185</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -119,6 +119,7 @@
     <MESSAGE value="Phase 0 run" />
     <MESSAGE value="Phase 3 done. test script created" />
     <MESSAGE value="validation script troubleshooted" />
-    <option name="LAST_COMMIT_MESSAGE" value="validation script troubleshooted" />
+    <MESSAGE value="phase 6 finished and test results all pass" />
+    <option name="LAST_COMMIT_MESSAGE" value="phase 6 finished and test results all pass" />
   </component>
 </project>
