@@ -52,7 +52,8 @@ class SectorRotationModel_v1(BaseModel):
         defensive_asset: str = "TLT",
         momentum_period: int = 126,  # ~6 months
         top_n: int = 3,
-        min_momentum: float = 0.0
+        min_momentum: float = 0.0,
+        target_leverage: float = 1.0  # 1.0 = no leverage, 1.25 = 25% leverage
     ):
         """
         Initialize SectorRotationModel_v1.
@@ -64,6 +65,7 @@ class SectorRotationModel_v1(BaseModel):
             momentum_period: Lookback period for momentum (default: 126 days = 6 months)
             top_n: Number of top sectors to hold (default: 3)
             min_momentum: Minimum momentum to be invested (default: 0.0)
+            target_leverage: Target leverage multiplier (default: 1.0 = no leverage)
         """
         self.sectors = sectors or [
             'XLK',   # Technology
@@ -86,6 +88,7 @@ class SectorRotationModel_v1(BaseModel):
         self.momentum_period = momentum_period
         self.top_n = top_n
         self.min_momentum = min_momentum
+        self.target_leverage = target_leverage
 
         super().__init__(
             name=model_id,
@@ -174,6 +177,10 @@ class SectorRotationModel_v1(BaseModel):
             else:
                 # All negative - go defensive
                 weights[self.defensive_asset] = 1.0
+
+        # Apply leverage multiplier to all weights
+        if self.target_leverage != 1.0:
+            weights = {asset: weight * self.target_leverage for asset, weight in weights.items()}
 
         return ModelOutput(
             model_name=self.model_id,
