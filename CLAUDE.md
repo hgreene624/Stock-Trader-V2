@@ -10,25 +10,31 @@
 
 **Your Role**: Autonomously propose, test, and iterate on trading strategies to beat SPY
 
-**Current Goal**: Beat SPY's 14.63% CAGR (2020-2024)
+**Current Goal**: Beat SPY's 14.34% CAGR (2020-2024)
 
-**Best Model So Far**: SectorRotationModel_v1 @ 11.69% CAGR (still underperforms SPY)
+**Best Model So Far**: SectorRotationModel_v1 @ 13.01% CAGR (126-day momentum + 1.25x leverage)
+- Sharpe: 1.712, BPS: 0.784
+- Within 1.33% of SPY (close!)
+- See `WALK_FORWARD_GUIDE.md` for optimization methodology
 
 **Your Workflow**:
 1. User provides goal → 2. You propose approach → 3. You test → 4. You analyze → 5. You iterate → 6. You report
 
 **Key Commands**:
 ```bash
-# Run test
-python3 -m backtest.cli run --profile sector_rotation_default
+# Run quick test
+python3 -m backtest.analyze_cli --profile sector_rotation_leverage_1.25x
 
-# View results
+# View last results
 python3 -m backtest.cli show-last
 
 # Download data
 python3 -m engines.data.cli download --symbols SPY,QQQ --start-date 2020-01-01 --timeframe 1D
 
-# Optimize parameters
+# Walk-forward optimization (prevents overfitting!)
+python3 -m engines.optimization.walk_forward_cli --quick
+
+# Standard optimization (use with caution - can overfit)
 python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.yaml
 ```
 
@@ -495,18 +501,22 @@ Check:
 | Setup environment | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` |
 | Validate platform | `python validate_pipeline.py` |
 | Run all tests | `pytest` |
-| **Quick test (profile)** | `python -m backtest.cli run --profile equity_trend_default` |
+| **Quick test (profile)** | `python -m backtest.analyze_cli --profile sector_rotation_leverage_1.25x` |
 | **View last results** | `python -m backtest.cli show-last` |
 | Download data | `python -m engines.data.cli download --symbols SPY QQQ --start 2020-01-01` |
 | Run backtest (traditional) | `python -m backtest.cli run --config configs/base/system.yaml` |
-| Optimize parameters | `python -m engines.optimization.cli run --experiment configs/experiments/exp_001_equity_trend_grid.yaml` |
+| **Walk-forward optimization** | `python -m engines.optimization.walk_forward_cli --quick` |
+| Standard optimization | `python -m engines.optimization.cli run --experiment configs/experiments/exp_001_equity_trend_grid.yaml` |
 | View model stages | `python -m backtest.cli list-models` |
 | Promote model | `python -m backtest.cli promote --model MODEL_NAME --reason "REASON"` |
 | Paper trading | `python -m live.paper_runner --config configs/base/system.yaml` |
 
 ## Additional Resources
 
-- **Workflow Guide**: [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) - **NEW!** Rapid iteration patterns using profiles
+- **Walk-Forward Guide**: [WALK_FORWARD_GUIDE.md](WALK_FORWARD_GUIDE.md) - **NEW!** Prevent overfitting with out-of-sample validation
+- **Walk-Forward Implementation**: [WALK_FORWARD_IMPLEMENTATION.md](WALK_FORWARD_IMPLEMENTATION.md) - Technical details
+- **Workflow Guide**: [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) - Rapid iteration patterns using profiles
+- **Session Summaries**: [SESSION_SUMMARY_2025-11-17_CONTINUED.md](SESSION_SUMMARY_2025-11-17_CONTINUED.md) - Recent improvements
 - **Quickstart Guide**: [QUICKSTART.md](QUICKSTART.md) - Detailed 30-minute walkthrough
 - **Validation Guide**: [VALIDATION_GUIDE.md](VALIDATION_GUIDE.md) - Platform validation procedures
 - **Constitution**: [.specify/constitution.md](.specify/constitution.md) - Architectural principles

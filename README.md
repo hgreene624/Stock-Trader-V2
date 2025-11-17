@@ -5,6 +5,7 @@ A production-ready algorithmic trading platform that combines multiple strategy 
 ## Features
 
 - ✅ **Multi-Model Architecture**: Run multiple trading strategies simultaneously with independent budgets
+- ✅ **Walk-Forward Optimization**: Out-of-sample validation prevents overfitting and gives realistic performance estimates
 - ✅ **Parameter Optimization**: Grid search, random search, and evolutionary algorithms to find best-performing models
 - ✅ **Model Lifecycle Management**: Systematic progression from research → candidate → paper → live
 - ✅ **Risk-First Design**: Hard limits on exposures, leverage, and automatic drawdown enforcement

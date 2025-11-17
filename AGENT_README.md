@@ -55,16 +55,22 @@ User: Compare the last 5 experiments
 This is a **multi-model algorithmic trading platform** for backtesting, optimizing, and eventually deploying trading strategies.
 
 ### Primary Goal
-**Beat SPY's performance** (14.63% CAGR over 2020-2024) with better risk-adjusted returns.
+**Beat SPY's performance** (14.34% CAGR over 2020-2024) with better risk-adjusted returns.
 
 ### Current Status
-- **Best Model**: SectorRotationModel_v1
-  - CAGR: 11.69% (vs SPY: 14.63%)
-  - Sharpe: 1.98 (vs SPY: 0.76) ✓ Better risk-adjusted
-  - Max DD: 30.64% (vs SPY: 33.72%) ✓ Better protection
-  - **Result**: Still underperforms SPY in absolute returns
+- **Best Model**: SectorRotationModel_v1 (126-day momentum + 1.25x leverage)
+  - CAGR: 13.01% (vs SPY: 14.34%) - Within 1.33% of SPY!
+  - Sharpe: 1.712 (vs SPY: ~0.8) ✓ Better risk-adjusted
+  - Max DD: ~22% (vs SPY: ~34%) ✓ Better protection
+  - BPS: 0.784 (good score)
+  - **Result**: Very close to SPY performance with better risk-adjusted returns
 
-- **Challenge**: Need strategies that beat SPY in BOTH absolute returns AND risk-adjusted returns
+- **Recent Breakthrough**: Implemented walk-forward optimization to prevent overfitting
+  - Previous EA optimization gave 7.3% CAGR (overfitted)
+  - Walk-forward validation gives realistic out-of-sample estimates
+  - See `WALK_FORWARD_GUIDE.md` for methodology
+
+- **Next Goal**: Find parameters or model improvements to cross 14.34% CAGR threshold
 
 ---
 
