@@ -1,0 +1,220 @@
+# Quick Test Profiles for Iterative Model Development
+# Usage: python -m backtest.cli run --profile <profile_name>
+#
+# These profiles provide pre-configured test scenarios for rapid iteration.
+# Edit the parameters below and re-run to test different configurations.
+
+profiles:
+  # ============================================================================
+  # EQUITY TREND PROFILES
+  # ============================================================================
+
+  equity_trend_default:
+    description: "Default equity trend strategy on SPY/QQQ"
+    model: EquityTrendModel_v1
+    universe: [SPY, QQQ]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      slow_ma_period: 200
+      momentum_lookback_days: 60
+      exit_ma_period: 50
+      equal_weight: true
+      max_positions: 2
+
+  equity_trend_aggressive:
+    description: "Faster MA periods for more responsive signals"
+    model: EquityTrendModel_v1
+    universe: [SPY, QQQ]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      slow_ma_period: 150
+      momentum_lookback_days: 40
+      exit_ma_period: 30
+      equal_weight: true
+      max_positions: 2
+
+  equity_trend_conservative:
+    description: "Slower MA periods for smoother signals"
+    model: EquityTrendModel_v1
+    universe: [SPY, QQQ]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      slow_ma_period: 250
+      momentum_lookback_days: 90
+      exit_ma_period: 70
+      equal_weight: true
+      max_positions: 2
+
+  equity_trend_recent:
+    description: "Test on recent data only (2023-2024)"
+    model: EquityTrendModel_v1
+    universe: [SPY, QQQ]
+    start_date: "2023-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      slow_ma_period: 200
+      momentum_lookback_days: 60
+      exit_ma_period: 50
+      equal_weight: true
+      max_positions: 2
+
+  # ============================================================================
+  # MEAN REVERSION PROFILES
+  # ============================================================================
+
+  mean_rev_default:
+    description: "Default mean reversion on SPY/QQQ/DIA"
+    model: IndexMeanReversionModel_v1
+    universe: [SPY, QQQ, DIA]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      rsi_period: 14
+      rsi_oversold: 30
+      rsi_overbought: 70
+      bb_period: 20
+      bb_std: 2.0
+      equal_weight: true
+      max_positions: 3
+
+  mean_rev_extreme:
+    description: "More extreme RSI thresholds for rare signals"
+    model: IndexMeanReversionModel_v1
+    universe: [SPY, QQQ, DIA]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      rsi_period: 14
+      rsi_oversold: 20
+      rsi_overbought: 80
+      bb_period: 20
+      bb_std: 2.5
+      equal_weight: true
+      max_positions: 3
+
+  mean_rev_short_term:
+    description: "Short-term mean reversion with tight bands"
+    model: IndexMeanReversionModel_v1
+    universe: [SPY, QQQ]
+    start_date: "2023-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      rsi_period: 7
+      rsi_oversold: 25
+      rsi_overbought: 75
+      bb_period: 10
+      bb_std: 1.5
+      equal_weight: true
+      max_positions: 2
+
+  # ============================================================================
+  # CRYPTO MOMENTUM PROFILES
+  # ============================================================================
+
+  crypto_momentum_default:
+    description: "Default crypto momentum on BTC/ETH"
+    model: CryptoMomentumModel_v1
+    universe: [BTC-USD, ETH-USD]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      momentum_short_days: 30
+      momentum_long_days: 60
+      only_in_crypto_bull: true
+      equal_weight: false
+      max_positions: 2
+
+  crypto_momentum_fast:
+    description: "Faster momentum signals for crypto"
+    model: CryptoMomentumModel_v1
+    universe: [BTC-USD, ETH-USD]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      momentum_short_days: 14
+      momentum_long_days: 30
+      only_in_crypto_bull: true
+      equal_weight: false
+      max_positions: 2
+
+  crypto_momentum_no_regime:
+    description: "Crypto momentum without regime gating"
+    model: CryptoMomentumModel_v1
+    universe: [BTC-USD, ETH-USD]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      momentum_short_days: 30
+      momentum_long_days: 60
+      only_in_crypto_bull: false
+      equal_weight: false
+      max_positions: 2
+
+  # ============================================================================
+  # CUSTOM TEST PROFILES (Edit these for your experiments)
+  # ============================================================================
+
+  my_test_1:
+    description: "Custom test profile 1 - edit this for your experiments"
+    model: EquityTrendModel_v1
+    universe: [SPY, QQQ]
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      slow_ma_period: 200
+      momentum_lookback_days: 60
+      exit_ma_period: 50
+      equal_weight: true
+      max_positions: 2
+
+  my_test_2:
+    description: "Custom test profile 2 - another test slot"
+    model: IndexMeanReversionModel_v1
+    universe: [SPY, QQQ]
+    start_date: "2023-01-01"
+    end_date: "2024-12-31"
+    parameters:
+      rsi_period: 14
+      rsi_oversold: 30
+      rsi_overbought: 70
+      bb_period: 20
+      bb_std: 2.0
+      equal_weight: true
+      max_positions: 2
+
+# ============================================================================
+# UNIVERSES (Reusable ticker sets)
+# ============================================================================
+
+universes:
+  major_indices:
+    - SPY    # S&P 500
+    - QQQ    # Nasdaq 100
+    - DIA    # Dow Jones
+    - IWM    # Russell 2000
+
+  tech_etfs:
+    - QQQ    # Nasdaq 100
+    - XLK    # Technology Select Sector
+    - SMH    # Semiconductors
+    - SOXX   # Semiconductor ETF
+
+  sector_rotation:
+    - XLF    # Financials
+    - XLE    # Energy
+    - XLK    # Technology
+    - XLV    # Healthcare
+    - XLY    # Consumer Discretionary
+
+  crypto_majors:
+    - BTC-USD
+    - ETH-USD
+    - SOL-USD
+
+  my_custom_universe:
+    - SPY
+    - QQQ
+    # Add your custom tickers here

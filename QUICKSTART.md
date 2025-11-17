@@ -2,7 +2,31 @@
 
 **Goal**: Learn how to explore different model parameters, run optimization experiments, and find models that perform well on historical data.
 
-**Time**: 30-45 minutes from setup to first optimized model
+**Time**:
+- **Express Path**: 10 minutes to first backtest using profiles (NEW!)
+- **Full Path**: 30-45 minutes from setup to first optimized model
+
+---
+
+## Two Paths: Choose Your Adventure
+
+### 🚀 **Express Path** (NEW!)
+**For rapid iteration and testing**
+- Use pre-configured profiles
+- Auto-downloads data
+- Simple commands
+- Best for: Quick experiments and parameter tuning
+
+👉 **Jump to [Express Quickstart](#express-quickstart-10-minutes)**
+
+### 📚 **Full Path**
+**For understanding the complete workflow**
+- Detailed step-by-step setup
+- Learn optimization methods
+- Understand all components
+- Best for: First-time users and comprehensive testing
+
+👉 **Continue to [Full Setup](#part-1-initial-setup-10-minutes)**
 
 ---
 
@@ -13,6 +37,121 @@
 - **Disk Space**: ~500 MB for dependencies + data
 - **Internet**: Required for data download
 - **Knowledge**: Basic Python and command-line familiarity
+
+---
+
+## Express Quickstart (10 minutes)
+
+**Perfect for rapid model testing and iteration!**
+
+### Express Step 1: Setup (5 minutes)
+
+```bash
+# Navigate to project directory
+cd /path/to/PythonProject
+
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Validate installation
+python validate_pipeline.py
+# Expected: ✓ ALL TESTS PASSED - PLATFORM READY
+```
+
+### Express Step 2: Run Your First Test (2 minutes)
+
+```bash
+# Run a pre-configured test (auto-downloads data if needed)
+python -m backtest.cli run --profile equity_trend_default
+```
+
+**What happens:**
+- ✅ Loads configuration from profile
+- ✅ Checks for SPY/QQQ data
+- ✅ Auto-downloads missing data
+- ✅ Runs 5-year backtest (2019-2024)
+- ✅ Shows performance results
+- ✅ Saves results for later viewing
+
+**Expected output:**
+```
+📋 Loading profile: equity_trend_default
+   Model: EquityTrendModel_v1
+   Universe: SPY, QQQ
+   Period: 2020-01-01 to 2024-12-31
+
+✓ Data already available for: SPY, QQQ
+🚀 Starting backtest...
+
+================================================================================
+BACKTEST RESULTS
+================================================================================
+
+Performance Metrics:
+  Total Return:         +67.8%
+  CAGR:                  11.2%
+  Sharpe Ratio:           1.15
+  Max Drawdown:         -21.3%
+  Win Rate:              61.2%
+  BPS:                   0.82
+
+✓ Backtest complete
+💡 View this run anytime with: python -m backtest.cli show-last
+```
+
+### Express Step 3: Iterate and Improve (3 minutes)
+
+```bash
+# 1. Edit the profile to test different parameters
+vim configs/profiles.yaml  # or your preferred editor
+
+# Find "my_test_1" and modify parameters:
+#   slow_ma_period: 250      # Change from 200 to 250
+#   momentum_lookback_days: 90
+
+# 2. Re-run with new parameters
+python -m backtest.cli run --profile my_test_1
+
+# 3. Compare results - did BPS improve?
+
+# 4. View last run details anytime
+python -m backtest.cli show-last
+```
+
+### Express Step 4: Next Steps
+
+**Try different profiles:**
+```bash
+# More aggressive parameters
+python -m backtest.cli run --profile equity_trend_aggressive
+
+# More conservative parameters
+python -m backtest.cli run --profile equity_trend_conservative
+
+# Test on recent data only
+python -m backtest.cli run --profile equity_trend_recent
+
+# Mean reversion strategy
+python -m backtest.cli run --profile mean_rev_default
+```
+
+**Customize your own:**
+- Edit `configs/profiles.yaml`
+- Modify `my_test_1` or `my_test_2` profiles
+- Change parameters, universes, date ranges
+- Re-run and compare results
+
+**Learn more:**
+- See [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) for iteration patterns
+- Continue to [Full Path](#part-1-initial-setup-10-minutes) for optimization
+
+---
+
+## Full Quickstart Path
 
 ---
 
@@ -610,7 +749,26 @@ models:
 
 ## Next Steps
 
-### 1. **Optimize Other Models**
+### 1. **Quick Parameter Testing with Profiles** (NEW!)
+
+The fastest way to test different parameters:
+
+```bash
+# Edit a test profile
+vim configs/profiles.yaml  # Modify my_test_1 parameters
+
+# Run test (auto-downloads data)
+python -m backtest.cli run --profile my_test_1
+
+# View results
+python -m backtest.cli show-last
+
+# Iterate: change parameters and re-run
+```
+
+See [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) for iteration patterns and tips.
+
+### 2. **Optimize Other Models**
 
 Run optimization on IndexMeanReversionModel_v1:
 
@@ -619,7 +777,7 @@ python -m engines.optimization.cli run \
     --experiment configs/experiments/exp_002_mean_reversion_random.yaml
 ```
 
-### 2. **Download Crypto Data** (Optional)
+### 3. **Download Crypto Data** (Optional)
 
 ```bash
 python -m engines.data.cli download \
@@ -632,7 +790,7 @@ python -m engines.data.cli download \
 
 Then run CryptoMomentumModel_v1 optimization.
 
-### 3. **Walk-Forward Testing**
+### 4. **Walk-Forward Testing**
 
 Test on multiple periods to validate robustness:
 
@@ -648,7 +806,7 @@ backtest:
       end: "2024-12-31"
 ```
 
-### 4. **Paper Trading**
+### 5. **Paper Trading**
 
 Once models are validated:
 
@@ -661,7 +819,7 @@ Once models are validated:
 python -m live.paper_runner --config configs/base/system.yaml
 ```
 
-### 5. **Live Trading** (Use with Extreme Caution)
+### 6. **Live Trading** (Use with Extreme Caution)
 
 Only after 30+ days of successful paper trading:
 
@@ -686,7 +844,12 @@ pip install -r requirements.txt  # (create if needed)
 
 ### Issue: "FileNotFoundError: data/equities/SPY_4H.parquet"
 
-**Solution**: Download data first:
+**Solution 1** (Automatic): Use profile-based workflow which auto-downloads:
+```bash
+python -m backtest.cli run --profile equity_trend_default
+```
+
+**Solution 2** (Manual): Download data explicitly:
 ```bash
 python -m engines.data.cli download --symbols SPY QQQ --start 2020-01-01
 ```
@@ -735,6 +898,8 @@ python -m engines.data.cli download --symbols SPY QQQ --start 2020-01-01
 
 ## Resources
 
+- **Workflow Guide**: [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) - **NEW!** Rapid iteration patterns
+- **CLAUDE.md**: [CLAUDE.md](CLAUDE.md) - Updated with quick iteration workflow
 - **Documentation**: `specs/001-trading-platform/`
 - **Constitution**: `.specify/constitution.md`
 - **Tasks**: `specs/001-trading-platform/tasks.md`

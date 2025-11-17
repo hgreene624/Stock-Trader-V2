@@ -18,36 +18,304 @@ Example:
 import argparse
 import sys
 import json
+import yaml
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 sys.path.append('..')
 from backtest.runner import BacktestRunner
 from models.equity_trend_v1 import EquityTrendModel_v1
 from utils.logging import StructuredLogger
+from utils.config import ConfigLoader
+
+
+def load_profile(profile_name: str) -> dict:
+    """
+    Load a test profile from configs/profiles.yaml.
+
+    Args:
+        profile_name: Name of the profile to load
+
+    Returns:
+        Dictionary with profile configuration
+    """
+    profiles_path = Path("configs/profiles.yaml")
+
+    if not profiles_path.exists():
+        raise FileNotFoundError(
+            f"Profiles file not found: {profiles_path}\n"
+            f"Create it with pre-configured test scenarios."
+        )
+
+    with open(profiles_path) as f:
+        config = yaml.safe_load(f)
+
+    profiles = config.get('profiles', {})
+
+    if profile_name not in profiles:
+        available = ', '.join(profiles.keys())
+        raise ValueError(
+            f"Profile '{profile_name}' not found.\n"
+            f"Available profiles: {available}"
+        )
+
+    return profiles[profile_name]
+
+
+def check_and_download_data(symbols: list, start_date: str, asset_class: str = "equity"):
+    """
+    Check if data exists for symbols, download if missing.
+
+    Args:
+        symbols: List of ticker symbols
+        start_date: Start date (YYYY-MM-DD)
+        asset_class: Asset class (equity or crypto)
+    """
+    # Map to plural directory names
+    dir_map = {"equity": "equities", "crypto": "cryptos"}
+    data_dir = Path("data") / dir_map.get(asset_class, asset_class + "s")
+
+    if not data_dir.exists():
+        print(f"\n📦 Data directory not found, creating: {data_dir}")
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+    missing_symbols = []
+
+    for symbol in symbols:
+        # Check for both 1D and 4H data files
+        symbol_safe = symbol.replace('/', '-')
+        daily_file = data_dir / f"{symbol_safe}_1D.parquet"
+        h4_file = data_dir / f"{symbol_safe}_4H.parquet"
+
+        if not daily_file.exists() or not h4_file.exists():
+            missing_symbols.append(symbol)
+
+    if missing_symbols:
+        print(f"\n📥 Missing data for: {', '.join(missing_symbols)}")
+        print(f"   Attempting auto-download...")
+
+        try:
+            # Try to import and use data CLI
+            import subprocess
+
+            cmd = [
+                sys.executable, "-m", "engines.data.cli", "download",
+                "--symbols"] + missing_symbols + [
+                "--asset-class", asset_class,
+                "--timeframes", "1D", "4H",
+                "--start", start_date
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                print(f"\n⚠️  Auto-download failed. Please download manually:")
+                print(f"   {sys.executable} -m engines.data.cli download \\")
+                print(f"       --symbols {' '.join(missing_symbols)} \\")
+                print(f"       --asset-class {asset_class} \\")
+                print(f"       --timeframes 1D 4H \\")
+                print(f"       --start {start_date}")
+                print(f"\n   Error: {result.stderr}")
+                print(f"\n   NOTE: The data CLI stub needs full implementation.")
+                print(f"   See engines/data/cli.py")
+                sys.exit(1)
+            else:
+                print(f"   ✓ Data downloaded successfully")
+
+        except Exception as e:
+            print(f"\n⚠️  Auto-download not available: {e}")
+            print(f"   Please download data manually:")
+            print(f"   {sys.executable} -m engines.data.cli download \\")
+            print(f"       --symbols {' '.join(missing_symbols)} \\")
+            print(f"       --asset-class {asset_class} \\")
+            print(f"       --timeframes 1D 4H \\")
+            print(f"       --start {start_date}")
+            print(f"\n   NOTE: The data CLI needs to be fully implemented.")
+            print(f"   See engines/data/cli.py for the stub.")
+            sys.exit(1)
+    else:
+        print(f"✓ Data already available for: {', '.join(symbols)}")
+
+
+def save_last_run(results: dict, config_info: dict):
+    """
+    Save information about the last backtest run for quick viewing.
+
+    Args:
+        results: Backtest results dictionary
+        config_info: Configuration information
+    """
+    last_run_file = Path("results/.last_run.json")
+    last_run_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Handle both single and multi-model results
+    model_names = results.get('model_ids', results.get('model_id', 'Unknown'))
+    if isinstance(model_names, list):
+        model_names = ', '.join(model_names)
+
+    last_run = {
+        "timestamp": datetime.now().isoformat(),
+        "model": model_names,
+        "start_date": results.get('start_date', 'N/A'),
+        "end_date": results.get('end_date', 'N/A'),
+        "config": config_info,
+        "metrics": results.get('metrics', {}),
+        "trade_count": len(results.get('trade_log', [])),
+        "nav_series_path": str(Path("results") / "nav_series.csv"),
+        "trade_log_path": str(Path("results") / "trade_log.csv")
+    }
+
+    with open(last_run_file, 'w') as f:
+        json.dump(last_run, f, indent=2)
+
+
+def show_last_run():
+    """Display results from the last backtest run."""
+    last_run_file = Path("results/.last_run.json")
+
+    if not last_run_file.exists():
+        print("No previous backtest run found.")
+        print("Run a backtest first with: python -m backtest.cli run ...")
+        return
+
+    with open(last_run_file) as f:
+        last_run = json.load(f)
+
+    metrics = last_run.get('metrics', {})
+
+    print("\n" + "=" * 80)
+    print("LAST BACKTEST RUN")
+    print("=" * 80)
+
+    print(f"\nRun Time:    {last_run.get('timestamp', 'N/A')}")
+    print(f"Model:       {last_run.get('model', 'N/A')}")
+    print(f"Period:      {last_run.get('start_date', 'N/A')} to {last_run.get('end_date', 'N/A')}")
+
+    # Config info
+    config_info = last_run.get('config', {})
+    if config_info:
+        print(f"\nConfiguration:")
+        if 'profile' in config_info:
+            print(f"  Profile:   {config_info['profile']}")
+        if 'config_file' in config_info:
+            print(f"  Config:    {config_info['config_file']}")
+
+    # Performance metrics
+    print("\n" + "-" * 80)
+    print("PERFORMANCE SUMMARY")
+    print("-" * 80)
+
+    print(f"\nReturns:")
+    print(f"  Total Return:     {metrics.get('total_return', 0):>10.2%}")
+    print(f"  CAGR:             {metrics.get('cagr', 0):>10.2%}")
+
+    print(f"\nRisk Metrics:")
+    print(f"  Max Drawdown:     {metrics.get('max_drawdown', 0):>10.2%}")
+    print(f"  Sharpe Ratio:     {metrics.get('sharpe_ratio', 0):>10.2f}")
+
+    print(f"\nTrading Metrics:")
+    print(f"  Total Trades:     {last_run.get('trade_count', 0):>10}")
+    print(f"  Win Rate:         {metrics.get('win_rate', 0):>10.2%}")
+
+    print(f"\nBalanced Performance Score:")
+    print(f"  BPS:              {metrics.get('bps', 0):>10.4f}")
+
+    print(f"\nNAV:")
+    print(f"  Initial NAV:      ${metrics.get('initial_nav', 0):>10,.2f}")
+    print(f"  Final NAV:        ${metrics.get('final_nav', 0):>10,.2f}")
+
+    print("\n" + "=" * 80)
+    print(f"\nFull results saved in: results/")
+    print("=" * 80 + "\n")
 
 
 def run_backtest(args):
     """Run a backtest."""
     logger = StructuredLogger()
 
+    # Track configuration for saving
+    config_info = {}
+
+    # Handle profile-based configuration
+    if hasattr(args, 'profile') and args.profile:
+        print(f"\n📋 Loading profile: {args.profile}")
+        profile = load_profile(args.profile)
+
+        config_info['profile'] = args.profile
+        config_info['profile_description'] = profile.get('description', '')
+
+        # Extract profile settings
+        model_name = profile.get('model', 'EquityTrendModel_v1')
+        universe = profile.get('universe', [])
+        start_date = args.start or profile.get('start_date')
+        end_date = args.end or profile.get('end_date')
+        parameters = profile.get('parameters', {})
+
+        # Check for data and auto-download if needed
+        if universe and start_date and not args.no_download:
+            asset_class = "crypto" if any('-' in s or '/' in s for s in universe) else "equity"
+            check_and_download_data(universe, start_date, asset_class)
+
+        # Use profile's config or fall back to provided config
+        config_path = args.config or "configs/base/system.yaml"
+
+        print(f"   Model: {model_name}")
+        print(f"   Universe: {', '.join(universe)}")
+        print(f"   Period: {start_date} to {end_date}")
+
+    else:
+        # Traditional config-based approach
+        if not args.config:
+            print("Error: Either --profile or --config must be specified")
+            sys.exit(1)
+
+        config_path = args.config
+        config_info['config_file'] = config_path
+
+        model_name = args.model
+        start_date = args.start
+        end_date = args.end
+
+        # Load config to extract universe for data checking
+        config = ConfigLoader.load_yaml(config_path)
+        models_config = config.get('models', {})
+
+        if model_name in models_config:
+            universe = models_config[model_name].get('universe', [])
+            if universe and start_date and not args.no_download:
+                asset_class = "crypto" if any('-' in s or '/' in s for s in universe) else "equity"
+                check_and_download_data(universe, start_date, asset_class)
+
+    # Set smart defaults for dates if not specified
+    if not start_date:
+        # Default to 5 years back
+        start_date = (datetime.now() - timedelta(days=5*365)).strftime('%Y-%m-%d')
+        print(f"\n📅 Using default start date: {start_date}")
+
+    if not end_date:
+        # Default to today
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        print(f"📅 Using default end date: {end_date}")
+
     # Initialize model
-    if args.model == "EquityTrendModel_v1":
+    if model_name == "EquityTrendModel_v1":
         model = EquityTrendModel_v1()
     else:
         raise ValueError(
-            f"Unknown model: {args.model}. "
+            f"Unknown model: {model_name}. "
             f"Available models: EquityTrendModel_v1"
         )
 
     # Create runner
-    runner = BacktestRunner(args.config, logger=logger)
+    runner = BacktestRunner(config_path, logger=logger)
 
     # Run backtest
     try:
+        print(f"\n🚀 Starting backtest...")
+
         results = runner.run(
             model=model,
-            start_date=args.start,
-            end_date=args.end
+            start_date=start_date,
+            end_date=end_date
         )
 
         # Print results
@@ -55,7 +323,12 @@ def run_backtest(args):
         print("BACKTEST RESULTS")
         print("=" * 70)
 
-        print(f"\nModel: {results['model_id']}")
+        # Handle both single and multi-model results
+        model_names = results.get('model_ids', results.get('model_id', 'Unknown'))
+        if isinstance(model_names, list):
+            model_names = ', '.join(model_names)
+
+        print(f"\nModel(s): {model_names}")
         print(f"Period: {results['start_date']} to {results['end_date']}")
 
         # Performance metrics
@@ -132,7 +405,7 @@ def run_backtest(args):
 
         # Show monthly stats if available
         if len(nav_series) > 0:
-            monthly = nav_series.resample('M').last()
+            monthly = nav_series.resample('ME').last()
             monthly_returns = monthly.pct_change().dropna()
 
             if len(monthly_returns) > 0:
@@ -167,7 +440,11 @@ def run_backtest(args):
                 json.dump(metrics, f, indent=2)
             print(f"Saved metrics to {metrics_path}")
 
+        # Save last run info for quick viewing
+        save_last_run(results, config_info)
+
         print("\n✓ Backtest complete")
+        print(f"\n💡 View this run anytime with: python -m backtest.cli show-last")
 
     except Exception as e:
         print(f"\n✗ Backtest failed: {e}", file=sys.stderr)
@@ -451,8 +728,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run backtest
+  # Quick run using profile (easiest for iteration)
+  python -m backtest.cli run --profile equity_trend_default
+
+  # Run profile with different dates
+  python -m backtest.cli run --profile equity_trend_default --start 2023-01-01
+
+  # Traditional config-based run
   python -m backtest.cli run --config configs/base/system.yaml
+
+  # View last backtest results
+  python -m backtest.cli show-last
 
   # Promote model to next stage
   python -m backtest.cli promote --model EquityTrendModel_v1 --reason "Passed backtest criteria"
@@ -462,6 +748,12 @@ Examples:
 
   # List all models
   python -m backtest.cli list-models
+
+Workflow Tips:
+  1. Edit a profile in configs/profiles.yaml
+  2. Run: python -m backtest.cli run --profile <name>
+  3. Review results immediately or later with: python -m backtest.cli show-last
+  4. Iterate: edit profile parameters and re-run
         """
     )
 
@@ -470,22 +762,30 @@ Examples:
     # Run command
     run_parser = subparsers.add_parser('run', help='Run a backtest')
     run_parser.add_argument(
+        '--profile',
+        help='Profile name from configs/profiles.yaml (e.g., equity_trend_default)'
+    )
+    run_parser.add_argument(
         '--config',
-        required=True,
-        help='Path to config file (e.g., configs/base/system.yaml)'
+        help='Path to config file (e.g., configs/base/system.yaml). Required if --profile not used.'
     )
     run_parser.add_argument(
         '--model',
         default='EquityTrendModel_v1',
-        help='Model to backtest (default: EquityTrendModel_v1)'
+        help='Model to backtest (default: EquityTrendModel_v1). Ignored if --profile is used.'
     )
     run_parser.add_argument(
         '--start',
-        help='Start date (YYYY-MM-DD), overrides config'
+        help='Start date (YYYY-MM-DD), overrides config/profile. Defaults to 5 years ago.'
     )
     run_parser.add_argument(
         '--end',
-        help='End date (YYYY-MM-DD), overrides config'
+        help='End date (YYYY-MM-DD), overrides config/profile. Defaults to today.'
+    )
+    run_parser.add_argument(
+        '--no-download',
+        action='store_true',
+        help='Skip automatic data download check'
     )
     run_parser.add_argument(
         '--output',
@@ -532,6 +832,9 @@ Examples:
     # List models command
     list_parser = subparsers.add_parser('list-models', help='List all models with lifecycle stages')
 
+    # Show last run command
+    show_last_parser = subparsers.add_parser('show-last', help='View results from last backtest run')
+
     args = parser.parse_args()
 
     if args.command == 'run':
@@ -542,6 +845,8 @@ Examples:
         demote_model(args)
     elif args.command == 'list-models':
         list_models(args)
+    elif args.command == 'show-last':
+        show_last_run()
     else:
         parser.print_help()
         sys.exit(1)

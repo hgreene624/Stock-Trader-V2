@@ -89,7 +89,7 @@ class EquityTrendModel_v1(BaseModel):
         Example:
             Context has:
             - SPY: price=450, ma_200=440, momentum_120=0.08 → LONG
-            - QQQ: price=380, ma_200=390, momentum_120=-0.05 → FLAT
+            - QQQ: price=380, ma_390=390, momentum_120=-0.05 → FLAT
 
             Output weights (relative to model budget):
             - SPY: 1.0 (100% of model budget to SPY)
