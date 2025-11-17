@@ -32,7 +32,7 @@ class RegimeState:
             f"Invalid equity_regime: {self.equity_regime}"
         assert self.vol_regime in ["low", "normal", "high"], \
             f"Invalid vol_regime: {self.vol_regime}"
-        assert self.crypto_regime in ["bull", "bear", "neutral"], \
+        assert self.crypto_regime in ["bull", "bear", "neutral", "risk_on", "RISK_ON", "risk_off", "RISK_OFF"], \
             f"Invalid crypto_regime: {self.crypto_regime}"
         assert self.macro_regime in ["expansion", "contraction", "neutral"], \
             f"Invalid macro_regime: {self.macro_regime}"

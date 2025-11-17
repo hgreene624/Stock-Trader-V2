@@ -19,6 +19,8 @@ sys.path.append('..')
 from engines.data.pipeline import DataPipeline
 from models.base import BaseModel, RegimeState
 from backtest.executor import BacktestExecutor, BacktestConfig
+from engines.portfolio.engine import PortfolioEngine
+from engines.portfolio.attribution import AttributionTracker
 from utils.config import ConfigLoader
 from utils.logging import StructuredLogger
 from utils.metrics import calculate_sharpe_ratio, calculate_cagr, calculate_max_drawdown, calculate_bps
@@ -26,15 +28,19 @@ from utils.metrics import calculate_sharpe_ratio, calculate_cagr, calculate_max_
 
 class BacktestRunner:
     """
-    Runs backtests for a single model.
+    Runs backtests for single or multiple models.
 
     Workflow:
     1. Load configuration
     2. Prepare data via DataPipeline
-    3. Initialize model and executor
+    3. Initialize model(s) and executor
     4. Simulate bar-by-bar execution
     5. Calculate performance metrics
     6. Save results
+
+    Supports:
+    - Single model mode: run(model=model_instance)
+    - Multi-model mode: run(models=[model1, model2, model3])
     """
 
     def __init__(
@@ -62,12 +68,19 @@ class BacktestRunner:
 
         # Initialize components (will be set in run())
         self.pipeline: Optional[DataPipeline] = None
-        self.model: Optional[BaseModel] = None
+        self.models: List[BaseModel] = []
         self.executor: Optional[BacktestExecutor] = None
+        self.portfolio_engine: Optional[PortfolioEngine] = None
+        self.attribution_tracker: Optional[AttributionTracker] = None
+
+        # Regime tracking
+        self.last_regime: Optional[RegimeState] = None
+        self.regime_data_loaded: bool = False
 
     def run(
         self,
-        model: BaseModel,
+        model: Optional[BaseModel] = None,
+        models: Optional[List[BaseModel]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None
     ) -> Dict:
@@ -75,7 +88,8 @@ class BacktestRunner:
         Run backtest.
 
         Args:
-            model: Model instance to backtest
+            model: Single model instance to backtest (for single-model mode)
+            models: List of model instances to backtest (for multi-model mode)
             start_date: Start date (YYYY-MM-DD), defaults to config
             end_date: End date (YYYY-MM-DD), defaults to config
 
@@ -84,23 +98,51 @@ class BacktestRunner:
             - nav_series: NAV time series
             - trade_log: Trade history
             - metrics: Performance metrics
+            - attribution: Attribution history (if multi-model)
             - config: Backtest configuration
 
-        Example:
+        Example (single model):
             >>> from models.equity_trend_v1 import EquityTrendModel_v1
             >>> runner = BacktestRunner("configs/base/system.yaml")
             >>> model = EquityTrendModel_v1()
-            >>> results = runner.run(model, start_date="2023-01-01", end_date="2024-01-01")
-            >>> print(f"Sharpe: {results['metrics']['sharpe_ratio']:.2f}")
+            >>> results = runner.run(model=model, start_date="2023-01-01", end_date="2024-01-01")
+
+        Example (multi-model):
+            >>> from models.equity_trend_v1 import EquityTrendModel_v1
+            >>> from models.index_mean_rev_v1 import IndexMeanReversionModel_v1
+            >>> runner = BacktestRunner("configs/base/system.yaml")
+            >>> models = [EquityTrendModel_v1(), IndexMeanReversionModel_v1()]
+            >>> results = runner.run(models=models, start_date="2023-01-01", end_date="2024-01-01")
         """
-        self.model = model
+        # Determine mode and validate inputs
+        if model is not None and models is not None:
+            raise ValueError("Specify either 'model' (single) OR 'models' (multi), not both")
+
+        if model is None and models is None:
+            raise ValueError("Must specify either 'model' or 'models'")
+
+        # Set up models
+        if model is not None:
+            # Single model mode
+            self.models = [model]
+            self.multi_model_mode = False
+        else:
+            # Multi-model mode
+            self.models = models
+            self.multi_model_mode = True
+
         start_date = start_date or self.backtest_config.get('start_date')
         end_date = end_date or self.backtest_config.get('end_date')
 
+        # Log mode and models
+        model_names = [m.model_id for m in self.models]
+        mode = "multi-model" if self.multi_model_mode else "single-model"
+
         self.logger.info(
-            f"Starting backtest: {model.model_id}",
+            f"Starting backtest ({mode}): {', '.join(model_names)}",
             extra={
-                "model": model.model_id,
+                "mode": mode,
+                "models": model_names,
                 "start_date": start_date,
                 "end_date": end_date
             }
@@ -108,13 +150,23 @@ class BacktestRunner:
 
         # Step 1: Prepare data
         self.logger.info("Step 1: Loading and preparing data...")
+
+        # Get regime configuration if available
+        regime_config = self.config.get('regime', {})
+
         self.pipeline = DataPipeline(
             data_dir=self.backtest_config.get('data_dir', 'data'),
+            regime_config=regime_config,
             logger=self.logger
         )
 
-        # Get symbols from model or config
-        symbols = getattr(model, 'assets', None) or self.backtest_config.get('symbols', ['SPY', 'QQQ'])
+        # Get symbols from all models or config
+        symbols = set()
+        for mdl in self.models:
+            symbols.update(getattr(mdl, 'assets', []))
+        if not symbols:
+            symbols = set(self.backtest_config.get('symbols', ['SPY', 'QQQ']))
+        symbols = list(symbols)
 
         asset_data = self.pipeline.load_and_prepare(
             symbols=symbols,
@@ -140,8 +192,8 @@ class BacktestRunner:
 
         self.logger.info(f"Backtest period: {len(timestamps)} bars from {timestamps[0]} to {timestamps[-1]}")
 
-        # Step 3: Initialize executor
-        self.logger.info("Step 2: Initializing backtest executor...")
+        # Step 3: Initialize executor and engines
+        self.logger.info("Step 2: Initializing backtest executor and engines...")
 
         executor_config = BacktestConfig(
             initial_nav=Decimal(str(self.backtest_config.get('initial_nav', 100000.0))),
@@ -157,6 +209,41 @@ class BacktestRunner:
             logger=self.logger
         )
 
+        # Initialize portfolio engine for multi-model mode
+        if self.multi_model_mode:
+            # Initialize Risk Engine with config
+            from engines.risk.engine import RiskEngine, RiskLimits
+
+            risk_limits = RiskLimits(
+                max_position_size=self.risk_config.get('max_position_size', 0.40),
+                max_crypto_exposure=self.risk_config.get('max_crypto_exposure', 0.20),
+                max_total_leverage=self.risk_config.get('max_total_leverage', 1.20),
+                max_drawdown_threshold=self.risk_config.get('max_drawdown_threshold', 0.15),
+                max_drawdown_halt=self.risk_config.get('max_drawdown_halt', 0.20),
+                drawdown_derisk_factor=self.risk_config.get('drawdown_derisk_factor', 0.50)
+            )
+
+            risk_engine = RiskEngine(limits=risk_limits, logger=self.logger)
+
+            # Get regime budget overrides if configured
+            regime_budgets = self.config.get('regime_budgets', {})
+
+            self.portfolio_engine = PortfolioEngine(
+                risk_engine=risk_engine,
+                regime_budgets=regime_budgets,
+                logger=self.logger
+            )
+            self.attribution_tracker = AttributionTracker(logger=self.logger)
+            self.logger.info(
+                "Initialized Portfolio Engine, Risk Engine, and Attribution Tracker",
+                extra={
+                    "max_position_size": risk_limits.max_position_size,
+                    "max_crypto_exposure": risk_limits.max_crypto_exposure,
+                    "max_total_leverage": risk_limits.max_total_leverage,
+                    "max_drawdown_threshold": risk_limits.max_drawdown_threshold
+                }
+            )
+
         # Step 4: Run simulation
         self.logger.info("Step 3: Running simulation...")
         self._run_simulation(timestamps, asset_data)
@@ -170,7 +257,7 @@ class BacktestRunner:
 
         # Step 6: Compile results
         results = {
-            "model_id": model.model_id,
+            "model_ids": model_names,
             "start_date": start_date,
             "end_date": end_date,
             "nav_series": nav_series,
@@ -178,14 +265,18 @@ class BacktestRunner:
             "metrics": metrics,
             "config": {
                 "backtest": self.backtest_config,
-                "model": self.model_config.get(model.model_id, {})
+                "models": {m.model_id: self.model_config.get(m.model_id, {}) for m in self.models}
             }
         }
+
+        # Add attribution if multi-model
+        if self.multi_model_mode and self.attribution_tracker:
+            results["attribution_history"] = self.attribution_tracker.history
 
         self.logger.info(
             "Backtest complete",
             extra={
-                "model": model.model_id,
+                "models": model_names,
                 "bars": len(timestamps),
                 "trades": len(trade_log),
                 "final_nav": float(nav_series.iloc[-1]),
@@ -204,6 +295,8 @@ class BacktestRunner:
         """
         Run bar-by-bar simulation.
 
+        Supports both single-model and multi-model modes.
+
         Args:
             timestamps: Timestamps to simulate
             asset_data: Asset OHLCV data
@@ -211,10 +304,11 @@ class BacktestRunner:
         total_bars = len(timestamps)
         lookback_bars = self.backtest_config.get('lookback_bars', 100)
 
-        # Get model budget from config
-        model_budget_fraction = self.model_config.get(
-            self.model.model_id, {}
-        ).get('budget', 0.30)
+        # Get model budgets from config
+        model_budgets = {}
+        for mdl in self.models:
+            budget = self.model_config.get(mdl.model_id, {}).get('budget', 1.0 / len(self.models))
+            model_budgets[mdl.model_id] = budget
 
         for i, timestamp in enumerate(timestamps):
             # Progress logging
@@ -224,28 +318,88 @@ class BacktestRunner:
             # Create regime (simplified - will be enhanced in Phase 4)
             regime = self._get_regime(timestamp, asset_data)
 
-            # Calculate model budget
+            # Get current NAV
             current_nav = self.executor.get_nav()
-            model_budget_value = current_nav * Decimal(str(model_budget_fraction))
 
-            # Create context
-            context = self.pipeline.create_context(
-                timestamp=timestamp,
-                asset_data=asset_data,
-                regime=regime,
-                model_budget_fraction=model_budget_fraction,
-                model_budget_value=model_budget_value,
-                lookback_bars=lookback_bars
-            )
+            if self.multi_model_mode:
+                # Multi-model mode: run all models and aggregate
 
-            # Generate model output
-            model_output = self.model.generate_target_weights(context)
+                # Apply regime-based budget scaling if configured
+                effective_budgets = self.portfolio_engine.apply_regime_budget_scaling(
+                    base_budgets=model_budgets,
+                    regime=regime
+                )
 
-            # Convert model-relative weights to NAV-relative weights
-            nav_weights = {
-                symbol: weight * model_budget_fraction
-                for symbol, weight in model_output.weights.items()
-            }
+                model_outputs = []
+
+                for mdl in self.models:
+                    # Use effective budgets (regime-adjusted)
+                    model_budget_fraction = effective_budgets[mdl.model_id]
+                    model_budget_value = current_nav * Decimal(str(model_budget_fraction))
+
+                    # Create context for this model
+                    context = self.pipeline.create_context(
+                        timestamp=timestamp,
+                        asset_data=asset_data,
+                        regime=regime,
+                        model_budget_fraction=model_budget_fraction,
+                        model_budget_value=model_budget_value,
+                        lookback_bars=lookback_bars
+                    )
+
+                    # Generate model output
+                    model_output = mdl.generate_target_weights(context)
+                    model_outputs.append(model_output)
+
+                # Aggregate via Portfolio Engine (use effective budgets)
+                target = self.portfolio_engine.aggregate_model_outputs(
+                    model_outputs,
+                    effective_budgets,
+                    current_nav
+                )
+
+                # Get current positions for attribution
+                current_positions = {}
+                for symbol, position in self.executor.get_positions().items():
+                    position_value = position.market_value
+                    current_positions[symbol] = float(position_value / current_nav)
+
+                # Record attribution
+                self.attribution_tracker.record_attribution(
+                    timestamp=timestamp,
+                    positions=current_positions,
+                    attribution=target.attribution,
+                    model_budgets=model_budgets,
+                    nav=current_nav
+                )
+
+                # Use aggregated weights
+                nav_weights = target.target_weights
+
+            else:
+                # Single model mode (backward compatible)
+                mdl = self.models[0]
+                model_budget_fraction = model_budgets[mdl.model_id]
+                model_budget_value = current_nav * Decimal(str(model_budget_fraction))
+
+                # Create context
+                context = self.pipeline.create_context(
+                    timestamp=timestamp,
+                    asset_data=asset_data,
+                    regime=regime,
+                    model_budget_fraction=model_budget_fraction,
+                    model_budget_value=model_budget_value,
+                    lookback_bars=lookback_bars
+                )
+
+                # Generate model output
+                model_output = mdl.generate_target_weights(context)
+
+                # Convert model-relative weights to NAV-relative weights
+                nav_weights = {
+                    symbol: weight * model_budget_fraction
+                    for symbol, weight in model_output.weights.items()
+                }
 
             # Submit to executor
             orders = self.executor.submit_target_weights(nav_weights, timestamp)
@@ -259,27 +413,103 @@ class BacktestRunner:
         asset_data: Dict[str, pd.DataFrame]
     ) -> RegimeState:
         """
-        Get regime state at timestamp.
-
-        Simplified version - returns default regime.
-        Will be enhanced in Phase 4 with actual regime classification.
+        Get regime state at timestamp using Regime Engine.
 
         Args:
             timestamp: Current timestamp
             asset_data: Asset data
 
         Returns:
-            RegimeState
+            RegimeState with current market regime classification
         """
-        # TODO: Implement actual regime classification in Phase 4
-        # For now, return a neutral regime with current timestamp
-        return RegimeState(
-            timestamp=pd.Timestamp.now(tz='UTC'),
-            equity_regime='neutral',
-            vol_regime='normal',
-            crypto_regime='neutral',
-            macro_regime='neutral'
-        )
+        # Load regime data on first call
+        if not self.regime_data_loaded:
+            try:
+                self.pipeline.load_regime_data()
+                self.regime_data_loaded = True
+                self.logger.info("Loaded regime indicator data for classification")
+            except Exception as e:
+                self.logger.info(f"Could not load regime data: {e}. Using neutral regime.")
+                # Fall back to neutral regime
+                return RegimeState(
+                    timestamp=timestamp,
+                    equity_regime='neutral',
+                    vol_regime='normal',
+                    crypto_regime='neutral',
+                    macro_regime='neutral'
+                )
+
+        # Classify regime at this timestamp
+        try:
+            regime = self.pipeline.classify_regime(timestamp)
+
+            # Detect and log regime transitions
+            if self.last_regime is not None:
+                transitions = []
+
+                if self.last_regime.equity_regime != regime.equity_regime:
+                    transitions.append({
+                        'dimension': 'equity',
+                        'from': self.last_regime.equity_regime,
+                        'to': regime.equity_regime
+                    })
+
+                if self.last_regime.vol_regime != regime.vol_regime:
+                    transitions.append({
+                        'dimension': 'volatility',
+                        'from': self.last_regime.vol_regime,
+                        'to': regime.vol_regime
+                    })
+
+                if self.last_regime.crypto_regime != regime.crypto_regime:
+                    transitions.append({
+                        'dimension': 'crypto',
+                        'from': self.last_regime.crypto_regime,
+                        'to': regime.crypto_regime
+                    })
+
+                if self.last_regime.macro_regime != regime.macro_regime:
+                    transitions.append({
+                        'dimension': 'macro',
+                        'from': self.last_regime.macro_regime,
+                        'to': regime.macro_regime
+                    })
+
+                # Log transitions
+                if transitions:
+                    self.logger.info(
+                        f"REGIME TRANSITION - {len(transitions)} dimension(s) changed",
+                        extra={
+                            "timestamp": str(timestamp),
+                            "num_transitions": len(transitions),
+                            "transitions": transitions,
+                            "new_regime": {
+                                "equity": regime.equity_regime,
+                                "volatility": regime.vol_regime,
+                                "crypto": regime.crypto_regime,
+                                "macro": regime.macro_regime
+                            }
+                        }
+                    )
+
+            # Update last regime
+            self.last_regime = regime
+
+            return regime
+
+        except Exception as e:
+            self.logger.error(f"Error classifying regime: {e}")
+            # Fall back to last known regime or neutral
+            if self.last_regime:
+                return self.last_regime
+            else:
+                return RegimeState(
+                    timestamp=timestamp,
+                    equity_regime='neutral',
+                    vol_regime='normal',
+                    crypto_regime='neutral',
+                    macro_regime='neutral'
+                )
 
     def _calculate_metrics(
         self,

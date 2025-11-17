@@ -494,6 +494,509 @@ class PipelineValidator:
         self.log_verbose(f"  SPY signal: LONG ({output.weights['SPY']:.2%})")
         self.log_verbose(f"  QQQ signal: FLAT ({output.weights['QQQ']:.2%})")
 
+    def test_index_mean_rev_model(self):
+        """Test IndexMeanReversionModel_v1."""
+        import pandas as pd
+        import numpy as np
+        from models.index_mean_rev_v1 import IndexMeanReversionModel_v1
+        from models.base import Context, RegimeState
+
+        # Create test data with RSI oversold signal
+        dates = pd.date_range('2025-01-01', periods=300, freq='4H', tz='UTC')
+
+        # SPY: oversold (RSI < 30, price < BB_lower)
+        spy_data = pd.DataFrame({
+            'close': np.ones(300) * 450,
+            'rsi': np.ones(300) * 25,  # Oversold
+            'bb_upper': np.ones(300) * 460,
+            'bb_lower': np.ones(300) * 455  # Price 450 < 455 (below BB_lower)
+        }, index=dates)
+
+        # QQQ: not oversold
+        qqq_data = pd.DataFrame({
+            'close': np.ones(300) * 380,
+            'rsi': np.ones(300) * 50,  # Neutral
+            'bb_upper': np.ones(300) * 390,
+            'bb_lower': np.ones(300) * 370
+        }, index=dates)
+
+        context = Context(
+            timestamp=dates[-1],
+            asset_features={'SPY': spy_data, 'QQQ': qqq_data},
+            regime=RegimeState(
+                timestamp=dates[-1],
+                equity_regime='neutral',
+                vol_regime='normal',
+                crypto_regime='neutral',
+                macro_regime='neutral'
+            ),
+            model_budget_fraction=0.25,
+            model_budget_value=Decimal('25000.00')
+        )
+
+        # Generate signals
+        model = IndexMeanReversionModel_v1()
+        output = model.generate_target_weights(context)
+
+        # Verify signals
+        assert output.weights['SPY'] > 0, "SPY should be LONG (oversold)"
+        assert output.weights['QQQ'] == 0, "QQQ should be FLAT (not oversold)"
+
+        total_weight = sum(output.weights.values())
+        assert 0 <= total_weight <= 1.0, f"Total weight {total_weight} out of range"
+
+        self.log_verbose(f"  SPY signal: LONG ({output.weights['SPY']:.2%}) - RSI oversold")
+        self.log_verbose(f"  QQQ signal: FLAT ({output.weights['QQQ']:.2%})")
+
+    def test_crypto_momentum_model(self):
+        """Test CryptoMomentumModel_v1."""
+        import pandas as pd
+        import numpy as np
+        from models.crypto_momentum_v1 import CryptoMomentumModel_v1
+        from models.base import Context, RegimeState
+
+        # Create test data with positive momentum
+        dates = pd.date_range('2025-01-01', periods=300, freq='4H', tz='UTC')
+
+        # BTC: positive momentum
+        btc_data = pd.DataFrame({
+            'close': 65000 + np.arange(300) * 10,
+            'daily_momentum_60': np.ones(300) * 0.15  # +15% momentum
+        }, index=dates)
+
+        # ETH: negative momentum
+        eth_data = pd.DataFrame({
+            'close': 3500 - np.arange(300) * 5,
+            'daily_momentum_60': np.ones(300) * -0.10  # -10% momentum
+        }, index=dates)
+
+        # Test 1: RISK_ON regime (should trade)
+        context_risk_on = Context(
+            timestamp=dates[-1],
+            asset_features={'BTC': btc_data, 'ETH': eth_data},
+            regime=RegimeState(
+                timestamp=dates[-1],
+                equity_regime='neutral',
+                vol_regime='normal',
+                crypto_regime='RISK_ON',
+                macro_regime='neutral'
+            ),
+            model_budget_fraction=0.15,
+            model_budget_value=Decimal('15000.00')
+        )
+
+        model = CryptoMomentumModel_v1(regime_gating=True)
+        output = model.generate_target_weights(context_risk_on)
+
+        # Should be long BTC (positive momentum), flat ETH (negative momentum)
+        assert output.weights['BTC'] > 0, "BTC should be LONG (positive momentum)"
+        assert output.weights['ETH'] == 0, "ETH should be FLAT (negative momentum)"
+
+        self.log_verbose(f"  BTC signal (RISK_ON): LONG ({output.weights['BTC']:.2%})")
+        self.log_verbose(f"  ETH signal (RISK_ON): FLAT ({output.weights['ETH']:.2%})")
+
+        # Test 2: RISK_OFF regime (should not trade)
+        context_risk_off = Context(
+            timestamp=dates[-1],
+            asset_features={'BTC': btc_data, 'ETH': eth_data},
+            regime=RegimeState(
+                timestamp=dates[-1],
+                equity_regime='neutral',
+                vol_regime='normal',
+                crypto_regime='RISK_OFF',
+                macro_regime='neutral'
+            ),
+            model_budget_fraction=0.15,
+            model_budget_value=Decimal('15000.00')
+        )
+
+        output_risk_off = model.generate_target_weights(context_risk_off)
+
+        # Should be flat on all assets (regime gating)
+        assert output_risk_off.weights['BTC'] == 0, "BTC should be FLAT (RISK_OFF regime)"
+        assert output_risk_off.weights['ETH'] == 0, "ETH should be FLAT (RISK_OFF regime)"
+
+        self.log_verbose(f"  BTC signal (RISK_OFF): FLAT (regime gate)")
+        self.log_verbose(f"  ETH signal (RISK_OFF): FLAT (regime gate)")
+
+    def test_portfolio_engine(self):
+        """Test Portfolio Engine aggregation."""
+        import pandas as pd
+        from models.base import ModelOutput, RegimeState
+        from engines.portfolio.engine import PortfolioEngine
+
+        engine = PortfolioEngine()
+        timestamp = pd.Timestamp('2025-01-15 16:00', tz='UTC')
+        nav = Decimal('100000.00')
+
+        # Test 1: Non-overlapping models
+        model_outputs = [
+            ModelOutput(
+                model_name="EquityTrendModel_v1",
+                timestamp=timestamp,
+                weights={'SPY': 1.0, 'QQQ': 0.0}  # Model-relative: 100% SPY
+            ),
+            ModelOutput(
+                model_name="IndexMeanReversionModel_v1",
+                timestamp=timestamp,
+                weights={'SPY': 0.0, 'QQQ': 1.0}  # Model-relative: 100% QQQ
+            )
+        ]
+
+        model_budgets = {
+            "EquityTrendModel_v1": 0.60,
+            "IndexMeanReversionModel_v1": 0.25
+        }
+
+        target = engine.aggregate_model_outputs(model_outputs, model_budgets, nav)
+
+        # Check NAV-relative weights
+        assert abs(target.target_weights['SPY'] - 0.60) < 0.0001, "SPY should be 60% NAV"
+        assert abs(target.target_weights['QQQ'] - 0.25) < 0.0001, "QQQ should be 25% NAV"
+
+        # Check attribution
+        assert target.attribution['SPY']['EquityTrendModel_v1'] == 0.60
+        assert target.attribution['QQQ']['IndexMeanReversionModel_v1'] == 0.25
+
+        self.log_verbose(f"  Non-overlapping aggregation: SPY={target.target_weights['SPY']:.2%}, QQQ={target.target_weights['QQQ']:.2%}")
+
+        # Test 2: Overlapping models (both target SPY)
+        model_outputs_overlap = [
+            ModelOutput(
+                model_name="Model_A",
+                timestamp=timestamp,
+                weights={'SPY': 1.0}  # 100% to SPY
+            ),
+            ModelOutput(
+                model_name="Model_B",
+                timestamp=timestamp,
+                weights={'SPY': 1.0}  # 100% to SPY
+            )
+        ]
+
+        model_budgets_overlap = {
+            "Model_A": 0.40,
+            "Model_B": 0.30
+        }
+
+        target_overlap = engine.aggregate_model_outputs(
+            model_outputs_overlap, model_budgets_overlap, nav
+        )
+
+        # Should sum: 0.40 + 0.30 = 0.70
+        assert abs(target_overlap.target_weights['SPY'] - 0.70) < 0.0001, "SPY should be 70% NAV (0.40 + 0.30)"
+
+        # Check both models are in attribution
+        assert 'Model_A' in target_overlap.attribution['SPY']
+        assert 'Model_B' in target_overlap.attribution['SPY']
+
+        self.log_verbose(f"  Overlapping aggregation: SPY={target_overlap.target_weights['SPY']:.2%} (0.40 + 0.30)")
+
+    def test_attribution_tracker(self):
+        """Test Attribution Tracker."""
+        import pandas as pd
+        from engines.portfolio.attribution import AttributionTracker
+
+        tracker = AttributionTracker()
+        timestamp = pd.Timestamp('2025-01-15 16:00', tz='UTC')
+        nav = Decimal('100000.00')
+
+        # Test 1: Valid attribution
+        positions = {'SPY': 0.60, 'QQQ': 0.25}
+        attribution = {
+            'SPY': {'Model_A': 0.40, 'Model_B': 0.20},  # Sum = 0.60 ✓
+            'QQQ': {'Model_B': 0.25}  # Sum = 0.25 ✓
+        }
+        model_budgets = {'Model_A': 0.40, 'Model_B': 0.60}
+
+        snapshot = tracker.record_attribution(timestamp, positions, attribution, model_budgets, nav)
+        is_valid, violations = tracker.validate_attribution(positions, attribution)
+
+        assert is_valid, f"Attribution validation should pass: {violations}"
+        assert len(violations) == 0
+
+        self.log_verbose("  Valid attribution: PASSED")
+
+        # Test 2: Invalid attribution (mismatch)
+        positions_bad = {'SPY': 0.60}
+        attribution_bad = {
+            'SPY': {'Model_A': 0.40, 'Model_B': 0.25}  # Sum = 0.65 ≠ 0.60 ✗
+        }
+
+        is_valid_bad, violations_bad = tracker.validate_attribution(positions_bad, attribution_bad)
+
+        assert not is_valid_bad, "Mismatched attribution should fail validation"
+        assert len(violations_bad) > 0
+
+        self.log_verbose(f"  Invalid attribution detected: {len(violations_bad)} violations")
+
+        # Test 3: Model exposure extraction
+        model_exposure = tracker.get_model_exposure(snapshot, 'Model_B')
+        assert 'SPY' in model_exposure
+        assert 'QQQ' in model_exposure
+        assert model_exposure['SPY'] == 0.20
+        assert model_exposure['QQQ'] == 0.25
+
+        self.log_verbose(f"  Model_B exposure: SPY={model_exposure['SPY']:.2%}, QQQ={model_exposure['QQQ']:.2%}")
+
+    def test_multi_model_backtest(self):
+        """Test complete multi-model backtest workflow."""
+        import pandas as pd
+        import numpy as np
+        import yaml
+        from backtest.runner import BacktestRunner
+        from models.equity_trend_v1 import EquityTrendModel_v1
+        from models.index_mean_rev_v1 import IndexMeanReversionModel_v1
+        from models.crypto_momentum_v1 import CryptoMomentumModel_v1
+
+        # Generate data
+        data_dir = self.temp_dir / "data_multi"
+
+        # Generate equities
+        dates_1d = pd.date_range('2022-01-01', '2024-01-15', freq='1D', tz='UTC')
+        dates_4h = pd.date_range('2022-01-01', '2024-01-15', freq='4h', tz='UTC')
+
+        equities_dir = data_dir / 'equities'
+        equities_dir.mkdir(parents=True, exist_ok=True)
+
+        for symbol in ['SPY', 'QQQ']:
+            base_price = 450 if symbol == 'SPY' else 380
+            close_1d = base_price * np.exp(np.cumsum(np.random.normal(0.0001, 0.015, len(dates_1d))))
+
+            df_1d = pd.DataFrame({
+                'open': close_1d * (1 + np.random.normal(0, 0.003, len(dates_1d))),
+                'high': close_1d * (1 + np.abs(np.random.normal(0.008, 0.005, len(dates_1d)))),
+                'low': close_1d * (1 - np.abs(np.random.normal(0.008, 0.005, len(dates_1d)))),
+                'close': close_1d,
+                'volume': np.random.randint(1000000, 10000000, len(dates_1d))
+            }, index=dates_1d)
+
+            df_1d['high'] = df_1d[['open', 'high', 'close']].max(axis=1)
+            df_1d['low'] = df_1d[['open', 'low', 'close']].min(axis=1)
+
+            df_1d.to_parquet(equities_dir / f"{symbol}_1D.parquet")
+
+            close_4h = base_price * np.exp(np.cumsum(np.random.normal(0.0001, 0.015, len(dates_4h))))
+
+            df_4h = pd.DataFrame({
+                'open': close_4h * (1 + np.random.normal(0, 0.003, len(dates_4h))),
+                'high': close_4h * (1 + np.abs(np.random.normal(0.008, 0.005, len(dates_4h)))),
+                'low': close_4h * (1 - np.abs(np.random.normal(0.008, 0.005, len(dates_4h)))),
+                'close': close_4h,
+                'volume': np.random.randint(1000000, 10000000, len(dates_4h))
+            }, index=dates_4h)
+
+            df_4h['high'] = df_4h[['open', 'high', 'close']].max(axis=1)
+            df_4h['low'] = df_4h[['open', 'low', 'close']].min(axis=1)
+
+            df_4h.to_parquet(equities_dir / f"{symbol}_4H.parquet")
+
+        # Generate crypto
+        crypto_dir = data_dir / 'crypto'
+        crypto_dir.mkdir(parents=True, exist_ok=True)
+
+        for symbol in ['BTC', 'ETH']:
+            base_price = 65000 if symbol == 'BTC' else 3500
+            close_1d_crypto = base_price * np.exp(np.cumsum(np.random.normal(0.0002, 0.025, len(dates_1d))))
+
+            df_1d_crypto = pd.DataFrame({
+                'open': close_1d_crypto * (1 + np.random.normal(0, 0.005, len(dates_1d))),
+                'high': close_1d_crypto * (1 + np.abs(np.random.normal(0.015, 0.01, len(dates_1d)))),
+                'low': close_1d_crypto * (1 - np.abs(np.random.normal(0.015, 0.01, len(dates_1d)))),
+                'close': close_1d_crypto,
+                'volume': np.random.randint(1000000, 10000000, len(dates_1d))
+            }, index=dates_1d)
+
+            df_1d_crypto['high'] = df_1d_crypto[['open', 'high', 'close']].max(axis=1)
+            df_1d_crypto['low'] = df_1d_crypto[['open', 'low', 'close']].min(axis=1)
+
+            df_1d_crypto.to_parquet(crypto_dir / f"{symbol}_1D.parquet")
+
+            close_4h_crypto = base_price * np.exp(np.cumsum(np.random.normal(0.0002, 0.025, len(dates_4h))))
+
+            df_4h_crypto = pd.DataFrame({
+                'open': close_4h_crypto * (1 + np.random.normal(0, 0.005, len(dates_4h))),
+                'high': close_4h_crypto * (1 + np.abs(np.random.normal(0.015, 0.01, len(dates_4h)))),
+                'low': close_4h_crypto * (1 - np.abs(np.random.normal(0.015, 0.01, len(dates_4h)))),
+                'close': close_4h_crypto,
+                'volume': np.random.randint(1000000, 10000000, len(dates_4h))
+            }, index=dates_4h)
+
+            df_4h_crypto['high'] = df_4h_crypto[['open', 'high', 'close']].max(axis=1)
+            df_4h_crypto['low'] = df_4h_crypto[['open', 'low', 'close']].min(axis=1)
+
+            df_4h_crypto.to_parquet(crypto_dir / f"{symbol}_4H.parquet")
+
+        # Create config
+        config_dir = self.temp_dir / "configs_multi"
+        config_dir.mkdir(parents=True, exist_ok=True)
+
+        config_path = config_dir / "test_multi_model.yaml"
+        config_content = {
+            'backtest': {
+                'data_dir': str(data_dir),
+                'h4_timeframe': '4H',
+                'daily_timeframe': '1D',
+                'asset_class': 'equity',
+                'symbols': ['SPY', 'QQQ', 'BTC', 'ETH'],
+                'start_date': '2023-06-01',
+                'end_date': '2024-01-01',
+                'initial_nav': 100000.0,
+                'fill_timing': 'close',
+                'slippage_bps': 5.0,
+                'commission_pct': 0.001,
+                'min_commission': 1.0,
+                'lookback_bars': 100
+            },
+            'models': {
+                'EquityTrendModel_v1': {'budget': 0.60},
+                'IndexMeanReversionModel_v1': {'budget': 0.25},
+                'CryptoMomentumModel_v1': {'budget': 0.15}
+            },
+            'risk': {}
+        }
+
+        with open(config_path, 'w') as f:
+            yaml.dump(config_content, f)
+
+        # Create models
+        model1 = EquityTrendModel_v1(assets=['SPY', 'QQQ'])
+        model2 = IndexMeanReversionModel_v1(assets=['SPY', 'QQQ'])
+        model3 = CryptoMomentumModel_v1(assets=['BTC', 'ETH'], regime_gating=False)
+
+        # Manually load data since we need mixed asset classes
+        # BacktestRunner.load_and_prepare() only supports single asset_class
+        from engines.data.pipeline import DataPipeline
+
+        pipeline = DataPipeline(data_dir=str(data_dir))
+
+        # Load equities
+        equity_data = pipeline.load_and_prepare(
+            symbols=['SPY', 'QQQ'],
+            h4_timeframe='4H',
+            daily_timeframe='1D',
+            asset_class='equity'
+        )
+
+        # Load crypto
+        crypto_data = pipeline.load_and_prepare(
+            symbols=['BTC', 'ETH'],
+            h4_timeframe='4H',
+            daily_timeframe='1D',
+            asset_class='crypto'
+        )
+
+        # Merge asset data
+        asset_data = {**equity_data, **crypto_data}
+
+        # Filter to backtest period
+        end_date_ts = pd.Timestamp('2024-01-01', tz='UTC')
+        for symbol in asset_data:
+            asset_data[symbol] = asset_data[symbol][asset_data[symbol].index <= end_date_ts]
+
+        # Get timestamps
+        timestamps = pipeline.get_timestamps(asset_data, '2023-06-01', '2024-01-01')
+
+        # Run simulation manually (since BacktestRunner doesn't support mixed asset classes yet)
+        from backtest.executor import BacktestExecutor, BacktestConfig
+        from engines.portfolio.engine import PortfolioEngine
+        from engines.portfolio.attribution import AttributionTracker
+        from models.base import RegimeState
+
+        config_bt = BacktestConfig(
+            initial_nav=Decimal('100000.0'),
+            fill_timing='close',
+            slippage_bps=5.0,
+            commission_pct=0.001
+        )
+
+        executor = BacktestExecutor(config=config_bt, asset_data=asset_data)
+        portfolio_engine = PortfolioEngine()
+        attribution_tracker = AttributionTracker()
+
+        model_budgets = {
+            'EquityTrendModel_v1': 0.60,
+            'IndexMeanReversionModel_v1': 0.25,
+            'CryptoMomentumModel_v1': 0.15
+        }
+
+        # Simple simulation loop
+        for timestamp in timestamps[:10]:  # Just test first 10 bars
+            current_nav = executor.get_nav()
+            regime = RegimeState(
+                timestamp=timestamp,
+                equity_regime='neutral',
+                vol_regime='normal',
+                crypto_regime='neutral',
+                macro_regime='neutral'
+            )
+
+            # Generate outputs from all models
+            model_outputs = []
+            for model in [model1, model2, model3]:
+                context = pipeline.create_context(
+                    timestamp=timestamp,
+                    asset_data=asset_data,
+                    regime=regime,
+                    model_budget_fraction=model_budgets[model.model_id],
+                    model_budget_value=current_nav * Decimal(str(model_budgets[model.model_id])),
+                    lookback_bars=100
+                )
+                output = model.generate_target_weights(context)
+                model_outputs.append(output)
+
+            # Aggregate
+            target = portfolio_engine.aggregate_model_outputs(
+                model_outputs, model_budgets, current_nav
+            )
+
+            # Record attribution
+            current_positions = {}
+            for symbol, position in executor.get_positions().items():
+                current_positions[symbol] = float(position.market_value / current_nav)
+
+            attribution_tracker.record_attribution(
+                timestamp, current_positions, target.attribution, model_budgets, current_nav
+            )
+
+            # Submit orders
+            executor.submit_target_weights(target.target_weights, timestamp)
+            executor.record_nav(timestamp)
+
+        # Build results dict
+        nav_series = executor.get_nav_series()
+        final_nav = float(nav_series.iloc[-1]) if len(nav_series) > 0 else 100000.0
+
+        results = {
+            'model_ids': ['EquityTrendModel_v1', 'IndexMeanReversionModel_v1', 'CryptoMomentumModel_v1'],
+            'nav_series': nav_series,
+            'trade_log': executor.get_trade_log(),
+            'metrics': {
+                'sharpe_ratio': 0.0,
+                'final_nav': final_nav
+            },
+            'attribution_history': attribution_tracker.history
+        }
+
+        # Verify results
+        assert len(results['nav_series']) > 0
+        assert 'sharpe_ratio' in results['metrics']
+        assert len(results['model_ids']) == 3
+        assert 'attribution_history' in results
+
+        # Verify attribution history exists and is valid
+        assert len(results['attribution_history']) > 0
+        final_snapshot = results['attribution_history'][-1]
+        assert hasattr(final_snapshot, 'positions')
+        assert hasattr(final_snapshot, 'attribution')
+
+        self.log_verbose(f"  Models: {', '.join(results['model_ids'])}")
+        self.log_verbose(f"  Bars simulated: {len(results['nav_series'])}")
+        self.log_verbose(f"  Trades: {len(results['trade_log'])}")
+        self.log_verbose(f"  Final NAV: ${results['metrics']['final_nav']:,.2f}")
+        self.log_verbose(f"  Sharpe: {results['metrics']['sharpe_ratio']:.2f}")
+        self.log_verbose(f"  Attribution snapshots: {len(results['attribution_history'])}")
+
     def test_backtest_executor(self):
         """Test backtest executor."""
         import pandas as pd
@@ -821,6 +1324,8 @@ class PipelineValidator:
 
             self.test_step("Model: Base Context", self.test_model_base)
             self.test_step("Model: EquityTrendModel_v1", self.test_equity_trend_model)
+            self.test_step("Model: IndexMeanReversionModel_v1", self.test_index_mean_rev_model)
+            self.test_step("Model: CryptoMomentumModel_v1", self.test_crypto_momentum_model)
 
             # Phase 5: Backtest Engine
             self.log(f"\n{'=' * 70}")
@@ -836,6 +1341,15 @@ class PipelineValidator:
             self.log(f"{'=' * 70}")
 
             self.test_step("Results: DuckDB Database", self.test_results_database)
+
+            # Phase 7: Multi-Model Portfolio Tests
+            self.log(f"\n{'=' * 70}")
+            self.log("PHASE 7: Multi-Model Portfolio Tests", "INFO")
+            self.log(f"{'=' * 70}")
+
+            self.test_step("Portfolio: Engine Aggregation", self.test_portfolio_engine)
+            self.test_step("Portfolio: Attribution Tracker", self.test_attribution_tracker)
+            self.test_step("Portfolio: Multi-Model Backtest", self.test_multi_model_backtest)
 
         finally:
             # Cleanup

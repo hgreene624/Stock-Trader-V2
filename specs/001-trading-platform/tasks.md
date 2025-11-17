@@ -106,15 +106,15 @@ Based on plan.md, this is a single Python project with structure:
 
 ### Implementation for User Story 2
 
-- [ ] T030 [P] [US2] Create IndexMeanReversionModel_v1 in models/index_mean_rev_v1.py (RSI + Bollinger Bands logic)
-- [ ] T031 [P] [US2] Create CryptoMomentumModel_v1 in models/crypto_momentum_v1.py (30-60D momentum + regime gating)
-- [ ] T032 [P] [US2] Implement data downloader for crypto in engines/data/downloader.py (Binance/Kraken via ccxt, save to Parquet)
-- [ ] T033 [US2] Implement Portfolio Engine in engines/portfolio/engine.py (convert model weights → NAV, aggregate, generate deltas)
-- [ ] T034 [US2] Implement attribution tracking in engines/portfolio/attribution.py (map exposures to source models)
-- [ ] T035 [US2] Update backtest runner in backtest/runner.py to support multi-model mode (load multiple models, aggregate outputs)
-- [ ] T036 [US2] Add per-model reporting in backtest/reporting.py (individual model equity curves, attribution breakdown)
-- [ ] T037 [US2] Add unit test for portfolio aggregation in tests/unit/test_portfolio_aggregation.py (verify budgets sum correctly)
-- [ ] T038 [US2] Add unit test for attribution accuracy in tests/unit/test_portfolio_aggregation.py (verify sum of attributions = position)
+- [X] T030 [P] [US2] Create IndexMeanReversionModel_v1 in models/index_mean_rev_v1.py (RSI + Bollinger Bands logic)
+- [X] T031 [P] [US2] Create CryptoMomentumModel_v1 in models/crypto_momentum_v1.py (30-60D momentum + regime gating)
+- [X] T032 [P] [US2] Implement data downloader for crypto in engines/data/downloader.py (Binance/Kraken via ccxt, save to Parquet)
+- [X] T033 [US2] Implement Portfolio Engine in engines/portfolio/engine.py (convert model weights → NAV, aggregate, generate deltas)
+- [X] T034 [US2] Implement attribution tracking in engines/portfolio/attribution.py (map exposures to source models)
+- [X] T035 [US2] Update backtest runner in backtest/runner.py to support multi-model mode (load multiple models, aggregate outputs)
+- [X] T036 [US2] Add per-model reporting in backtest/reporting.py (individual model equity curves, attribution breakdown)
+- [X] T037 [US2] Add unit test for portfolio aggregation in tests/unit/test_portfolio_aggregation.py (verify budgets sum correctly)
+- [X] T038 [US2] Add unit test for attribution accuracy in tests/unit/test_portfolio_aggregation.py (verify sum of attributions = position)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - multi-model portfolios aggregate correctly
 
@@ -128,13 +128,13 @@ Based on plan.md, this is a single Python project with structure:
 
 ### Implementation for User Story 3
 
-- [ ] T039 [P] [US3] Implement Risk Engine in engines/risk/engine.py (enforce per-asset caps, asset-class caps, leverage limit, drawdown monitoring)
-- [ ] T040 [P] [US3] Implement regime-aware risk scaling in engines/risk/scaling.py (apply regime-based budget multipliers)
-- [ ] T041 [US3] Integrate Risk Engine into Portfolio Engine in engines/portfolio/engine.py (apply constraints before finalizing targets)
-- [ ] T042 [US3] Add drawdown auto-derisking logic in engines/risk/engine.py (50% reduction at 15%, halt at 20%)
-- [ ] T043 [US3] Update backtest runner to include risk enforcement in backtest/runner.py
-- [ ] T044 [US3] Add unit tests for risk limit enforcement in tests/unit/test_risk_enforcement.py (per-asset, class, leverage, drawdown)
-- [ ] T045 [US3] Add integration test for risk scenarios in tests/integration/test_backtest_e2e.py (models exceeding limits)
+- [X] T039 [P] [US3] Implement Risk Engine in engines/risk/engine.py (enforce per-asset caps, asset-class caps, leverage limit, drawdown monitoring)
+- [X] T040 [P] [US3] Implement regime-aware risk scaling in engines/risk/scaling.py (apply regime-based budget multipliers)
+- [X] T041 [US3] Integrate Risk Engine into Portfolio Engine in engines/portfolio/engine.py (apply constraints before finalizing targets)
+- [X] T042 [US3] Add drawdown auto-derisking logic in engines/risk/engine.py (50% reduction at 15%, halt at 20%)
+- [X] T043 [US3] Update backtest runner to include risk enforcement in backtest/runner.py
+- [X] T044 [US3] Add unit tests for risk limit enforcement in tests/unit/test_risk_enforcement.py (per-asset, class, leverage, drawdown)
+- [X] T045 [US3] Add integration test for risk scenarios in tests/integration/test_backtest_e2e.py (models exceeding limits)
 
 **Checkpoint**: All P1 user stories complete - core backtest platform with multi-model and risk controls functional
 
@@ -148,17 +148,17 @@ Based on plan.md, this is a single Python project with structure:
 
 ### Implementation for User Story 4
 
-- [ ] T046 [P] [US4] Implement Regime Engine in engines/regime/engine.py (orchestrate all regime classifiers, output RegimeState)
-- [ ] T047 [P] [US4] Implement equity regime classifier in engines/regime/classifiers.py (SPY vs 200D MA + momentum → BULL/BEAR/NEUTRAL)
-- [ ] T048 [P] [US4] Implement volatility regime classifier in engines/regime/classifiers.py (VIX thresholds: LOW <15, NORMAL 15-25, HIGH >25)
-- [ ] T049 [P] [US4] Implement crypto regime classifier in engines/regime/classifiers.py (BTC vs 200D MA + 60D momentum → RISK_ON/RISK_OFF)
-- [ ] T050 [P] [US4] Implement macro regime classifier in engines/regime/classifiers.py (PMI + yield curve → EXPANSION/SLOWDOWN/RECESSION)
-- [ ] T051 [P] [US4] Implement data downloader for macro data in engines/data/downloader.py (FRED API for PMI, yield curve)
-- [ ] T052 [US4] Integrate Regime Engine into data pipeline in engines/data/__init__.py (include regime in Context)
-- [ ] T053 [US4] Update Portfolio Engine to apply regime budget overrides in engines/portfolio/engine.py (read regime_budgets.yaml)
-- [ ] T054 [US4] Update backtest runner to log regime transitions in backtest/runner.py
-- [ ] T055 [US4] Add unit tests for regime classification in tests/unit/test_regime_classification.py (verify BULL/BEAR logic)
-- [ ] T056 [US4] Generate regime alignment reports in backtest/reporting.py (performance by regime periods)
+- [X] T046 [P] [US4] Implement Regime Engine in engines/regime/engine.py (orchestrate all regime classifiers, output RegimeState)
+- [X] T047 [P] [US4] Implement equity regime classifier in engines/regime/classifiers.py (SPY vs 200D MA + momentum → BULL/BEAR/NEUTRAL)
+- [X] T048 [P] [US4] Implement volatility regime classifier in engines/regime/classifiers.py (VIX thresholds: LOW <15, NORMAL 15-25, HIGH >25)
+- [X] T049 [P] [US4] Implement crypto regime classifier in engines/regime/classifiers.py (BTC vs 200D MA + 60D momentum → RISK_ON/RISK_OFF)
+- [X] T050 [P] [US4] Implement macro regime classifier in engines/regime/classifiers.py (PMI + yield curve → EXPANSION/SLOWDOWN/RECESSION)
+- [X] T051 [P] [US4] Implement data downloader for macro data in engines/data/downloader.py (FRED API for PMI, yield curve)
+- [X] T052 [US4] Integrate Regime Engine into data pipeline in engines/data/__init__.py (include regime in Context)
+- [X] T053 [US4] Update Portfolio Engine to apply regime budget overrides in engines/portfolio/engine.py (read regime_budgets.yaml)
+- [X] T054 [US4] Update backtest runner to log regime transitions in backtest/runner.py
+- [X] T055 [US4] Add unit tests for regime classification in tests/unit/test_regime_classification.py (verify BULL/BEAR logic)
+- [X] T056 [US4] Generate regime alignment reports in backtest/reporting.py (performance by regime periods)
 
 **Checkpoint**: Regime-aware portfolio management functional - budgets adapt to market conditions
 
@@ -171,14 +171,7 @@ Based on plan.md, this is a single Python project with structure:
 **Independent Test**: Define parameter grid in YAML experiment file (fast_ma: [20, 30, 50], slow_ma: [100, 150, 200]), run optimizer, verify 9 backtests execute, ranks by BPS, logs to database
 
 ### Implementation for User Story 5
-
-- [ ] T057 [P] [US5] Implement grid search optimizer in engines/optimization/grid_search.py (iterate parameter combinations from YAML)
-- [ ] T058 [P] [US5] Implement random search optimizer in engines/optimization/grid_search.py (sample from distributions)
-- [ ] T059 [P] [US5] Implement BPS scorer in engines/optimization/scoring.py (0.4×Sharpe + 0.3×CAGR + 0.2×WinRate - 0.1×MaxDD)
-- [ ] T060 [P] [US5] Implement evolutionary algorithm in engines/optimization/evolutionary.py (selection, crossover, mutation using DEAP)
-- [ ] T061 [US5] Create optimization CLI in engines/optimization/__init__.py (run grid/random/EA from command line)
-- [ ] T062 [US5] Update DuckDB schema for optimization results in results/ (experiments table with metadata and parameters)
-- [ ] T063 [US5] Generate comparison reports in backtest/reporting.py (side-by-side metrics for experiments)
+063 [US5] Generate comparison reports in backtest/reporting.py (side-by-side metrics for experiments)
 - [ ] T064 [US5] Add integration test for optimization pipeline in tests/integration/test_optimization_pipeline.py
 
 **Checkpoint**: Parameter optimization functional - can search large parameter spaces efficiently
