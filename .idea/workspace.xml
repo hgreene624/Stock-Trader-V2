@@ -4,25 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="trading side app logging&#10;documentation updated">
+    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="trading app improvements to alpaca integration&#10;&#10;trading bot v10 deployed.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deploy/export.py" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/export.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/production/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/docker/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/production/docker/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/local_logs/errors.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/production/local_logs/errors.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/local_logs/orders.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/production/local_logs/orders.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/local_logs/performance.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/production/local_logs/performance.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/local_logs/trades.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/production/local_logs/trades.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/production/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/dashboard.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/params.json" beforeDir="false" afterPath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/params.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/universe.json" beforeDir="false" afterPath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/universe.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/production/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/runner/broker_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/runner/broker_adapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/runner/health_monitor.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/runner/health_monitor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/runner/live_data_fetcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/runner/live_data_fetcher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/runner/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/runner/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/runner/main_local.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/runner/main_local.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -193,7 +178,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763442546423</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="trading app improvements to alpaca integration&#10;&#10;trading bot v10 deployed.">
+      <option name="closed" value="true" />
+      <created>1763481567811</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1763481567811</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -211,6 +204,7 @@
     <MESSAGE value="alpaca connection verified" />
     <MESSAGE value="trading side app in docker container working" />
     <MESSAGE value="trading side app logging&#10;documentation updated" />
-    <option name="LAST_COMMIT_MESSAGE" value="trading side app logging&#10;documentation updated" />
+    <MESSAGE value="trading app improvements to alpaca integration&#10;&#10;trading bot v10 deployed." />
+    <option name="LAST_COMMIT_MESSAGE" value="trading app improvements to alpaca integration&#10;&#10;trading bot v10 deployed." />
   </component>
 </project>

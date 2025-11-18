@@ -116,7 +116,8 @@ class TradingDashboard:
         """Query health monitor endpoint."""
         try:
             response = requests.get(f"{self.health_url}/health", timeout=2)
-            if response.status_code == 200:
+            # Accept 200 (healthy) or 503 (degraded) - both return valid JSON
+            if response.status_code in [200, 503]:
                 return response.json()
             else:
                 return {'status': 'unknown', 'error': f'HTTP {response.status_code}'}
