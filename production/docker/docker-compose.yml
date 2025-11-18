@@ -37,44 +37,23 @@ services:
       start_period: 30s
 
   # Optional: Data sync service (updates historical cache daily)
-  data-sync:
-    build:
-      context: ../..
-      dockerfile: production/docker/Dockerfile
-    container_name: data-sync
-    restart: unless-stopped
-    env_file:
-      - .env
-    command: >
-      /bin/sh -c "
-      while true; do
-        echo 'Running data cache update...'
-        python -c '
-from production.runner.broker_adapter import AlpacaBrokerAdapter
-from production.runner.live_data_fetcher import HybridDataFetcher
-import os
-broker = AlpacaBrokerAdapter(
-    os.getenv(\"ALPACA_API_KEY\"),
-    os.getenv(\"ALPACA_SECRET_KEY\"),
-    paper=True
-)
-fetcher = HybridDataFetcher(broker, cache_dir=\"/app/data\")
-# Update cache for common symbols
-symbols = [\"SPY\", \"QQQ\", \"XLE\", \"XLF\", \"XLK\", \"XLV\", \"XLI\", \"XLP\", \"XLY\", \"XLU\", \"XLB\", \"XLC\", \"TLT\"]
-fetcher.update_cache(symbols, days_back=30)
-print(\"Cache update complete\")
-        '
-        echo 'Data sync complete. Sleeping for 24h...'
-        sleep 86400
-      done
-      "
-    volumes:
-      - ./data:/app/data
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "5m"
-        max-file: "3"
+  # Commented out for now - can be enabled later with proper script
+  # data-sync:
+  #   build:
+  #     context: ../..
+  #     dockerfile: production/docker/Dockerfile
+  #   container_name: data-sync
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   command: ["python", "-m", "engines.data.cli", "update", "--asset-class", "equity"]
+  #   volumes:
+  #     - ./data:/app/data
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "5m"
+  #       max-file: "3"
 
   # Optional: Monitoring dashboard (Grafana)
   # Uncomment if you want a web dashboard

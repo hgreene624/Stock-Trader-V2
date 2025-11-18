@@ -20,6 +20,7 @@ import sys
 import signal
 import logging
 import time
+import json
 import importlib.util
 from pathlib import Path
 from typing import Dict, List
@@ -36,6 +37,7 @@ from models.base import Context, RegimeState, ModelOutput
 from production.runner.broker_adapter import AlpacaBrokerAdapter
 from production.runner.live_data_fetcher import HybridDataFetcher
 from production.runner.health_monitor import HealthMonitor
+from production.runner.market_hours import MarketHoursManager
 
 # Production-only imports
 from engines.regime.classifiers import EquityRegimeClassifier
@@ -77,6 +79,7 @@ class ProductionTradingRunner:
         self.data_fetcher = None
         self.health_monitor = None
         self.regime_classifier = None
+        self.market_hours = None
 
         # Setup logging
         self._setup_logging()
@@ -97,6 +100,10 @@ class ProductionTradingRunner:
         config['mode'] = os.getenv('MODE', config.get('mode', 'paper'))
         config['initial_capital'] = float(os.getenv('INITIAL_CAPITAL', config.get('initial_capital', 100000)))
         config['execution_interval_minutes'] = int(os.getenv('EXECUTION_INTERVAL_MINUTES', config.get('execution_interval_minutes', 240)))
+
+        # Market hours settings
+        config['smart_schedule'] = os.getenv('SMART_SCHEDULE', str(config.get('smart_schedule', 'true'))).lower() == 'true'
+        config['require_market_open'] = os.getenv('REQUIRE_MARKET_OPEN', str(config.get('require_market_open', 'true'))).lower() == 'true'
 
         # Validate required fields
         required = ['alpaca_api_key', 'alpaca_secret_key', 'mode', 'initial_capital']
@@ -119,7 +126,26 @@ class ProductionTradingRunner:
             ]
         )
 
-        logger.info("Logging configured")
+        # Create JSONL log file handles for structured logging
+        self.orders_log = open('/app/logs/orders.jsonl', 'a')
+        self.trades_log = open('/app/logs/trades.jsonl', 'a')
+        self.performance_log = open('/app/logs/performance.jsonl', 'a')
+        self.errors_log = open('/app/logs/errors.jsonl', 'a')
+
+        logger.info("Logging configured (JSONL audit logs enabled)")
+
+    def _log_jsonl(self, file_handle, event_type: str, data: dict):
+        """Write a JSONL entry to a log file."""
+        try:
+            entry = {
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'event_type': event_type,
+                **data
+            }
+            file_handle.write(json.dumps(entry) + '\n')
+            file_handle.flush()
+        except Exception as e:
+            logger.error(f"Error writing JSONL log: {e}")
 
     def _setup_signal_handlers(self):
         """Setup graceful shutdown handlers."""
@@ -246,6 +272,13 @@ class ProductionTradingRunner:
 
         # Initialize regime classifier
         self.regime_classifier = EquityRegimeClassifier()
+
+        # Initialize market hours manager
+        self.market_hours = MarketHoursManager(timezone_str='America/New_York')
+
+        # Log market status
+        market_status = self.market_hours.get_market_status_string()
+        logger.info(f"Market status: {market_status}")
 
         # Load models
         self._load_models()
@@ -481,15 +514,49 @@ class ProductionTradingRunner:
                 self.health_monitor.record_order_submitted(success=True)
                 logger.info(f"Order submitted: {result['order_id']}")
 
+                # Log order to JSONL
+                self._log_jsonl(self.orders_log, 'order_submitted', {
+                    'order_id': result['order_id'],
+                    'symbol': order['symbol'],
+                    'side': order['side'],
+                    'quantity': order['quantity'],
+                    'price': order['price'],
+                    'order_type': 'market',
+                    'status': result['status'],
+                    'nav': float(self.current_nav),
+                    'model': order.get('model', 'unknown')
+                })
+
                 # Update internal position tracking (optimistic)
                 current_qty = self.positions.get(order['symbol'], 0)
                 delta = order['quantity'] if order['side'] == 'buy' else -order['quantity']
                 self.positions[order['symbol']] = current_qty + delta
 
+                # Log trade execution to JSONL
+                self._log_jsonl(self.trades_log, 'trade_executed', {
+                    'order_id': result['order_id'],
+                    'symbol': order['symbol'],
+                    'side': order['side'],
+                    'quantity': order['quantity'],
+                    'price': order['price'],
+                    'value': order['quantity'] * order['price'],
+                    'new_position': self.positions[order['symbol']],
+                    'nav': float(self.current_nav)
+                })
+
             except Exception as e:
                 logger.error(f"Error submitting order {order}: {e}")
                 self.health_monitor.record_order_submitted(success=False)
                 self.health_monitor.record_error(f"Order failed: {e}")
+
+                # Log error to JSONL
+                self._log_jsonl(self.errors_log, 'order_error', {
+                    'symbol': order['symbol'],
+                    'side': order['side'],
+                    'quantity': order['quantity'],
+                    'error': str(e),
+                    'order_data': order
+                })
 
     def run_cycle(self):
         """Execute one trading cycle."""
@@ -636,24 +703,55 @@ class ProductionTradingRunner:
     def run(self):
         """Main run loop."""
         logger.info("Starting production trading runner")
+        logger.info(f"Configuration: smart_schedule={self.config['smart_schedule']}, "
+                   f"require_market_open={self.config['require_market_open']}")
 
         self.setup()
 
         self.running = True
         self.health_monitor.set_status('healthy')
 
-        execution_interval_seconds = self.config['execution_interval_minutes'] * 60
-
         while self.running:
             try:
-                # Run trading cycle
-                self.run_cycle()
-
-                # Sleep until next cycle
-                logger.info(
-                    f"Sleeping for {self.config['execution_interval_minutes']} minutes"
+                # Check if we should execute this cycle
+                should_execute, reason = self.market_hours.should_execute_cycle(
+                    require_market_open=self.config['require_market_open']
                 )
-                time.sleep(execution_interval_seconds)
+
+                if should_execute:
+                    # Log market status before execution
+                    market_status = self.market_hours.get_market_status_string()
+                    logger.info(f"Market status: {market_status}")
+
+                    # Run trading cycle
+                    self.run_cycle()
+                else:
+                    # Skip cycle - market is closed
+                    logger.info(f"Skipping cycle: {reason}")
+                    self.health_monitor.record_metric('skipped_cycles', 1)
+
+                # Calculate sleep duration (smart or fixed)
+                sleep_seconds, sleep_reason = self.market_hours.get_sleep_duration(
+                    execution_interval_minutes=self.config['execution_interval_minutes'],
+                    smart_schedule=self.config['smart_schedule']
+                )
+
+                # Log sleep info
+                if sleep_reason == "market_closed":
+                    logger.info(
+                        f"💤 Market closed - sleeping {sleep_seconds / 3600:.1f} hours "
+                        f"until next market open"
+                    )
+                elif sleep_reason == "market_open":
+                    logger.info(
+                        f"Sleeping {self.config['execution_interval_minutes']} minutes "
+                        f"until next cycle"
+                    )
+                else:
+                    logger.info(f"Sleeping {sleep_seconds} seconds (reason: {sleep_reason})")
+
+                # Sleep
+                time.sleep(sleep_seconds)
 
             except KeyboardInterrupt:
                 logger.info("Keyboard interrupt received")

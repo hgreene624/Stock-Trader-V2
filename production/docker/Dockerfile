@@ -22,6 +22,9 @@ COPY production/runner/ /app/production/runner/
 COPY engines/__init__.py /app/engines/__init__.py
 COPY engines/regime/ /app/engines/regime/
 
+# Copy utilities
+COPY utils/ /app/utils/
+
 # Copy models base
 COPY models/__init__.py /app/models/__init__.py
 COPY models/base.py /app/models/base.py

@@ -9,26 +9,41 @@ echo "Local Production Container Test"
 echo "================================================================================"
 echo ""
 
-# Check if .env exists
-if [ ! -f "production/docker/.env" ]; then
-    echo "⚠️  No .env file found!"
-    echo ""
-    echo "Creating .env from .env.example..."
-    cp production/docker/.env production/docker/.env
+# Determine project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Check if .env exists
+if [ ! -f "$PROJECT_ROOT/production/docker/.env" ]; then
+    echo "⚠️  No .env file found at $PROJECT_ROOT/production/docker/.env!"
     echo ""
-    echo "⚠️  IMPORTANT: Edit production/docker/.env and add your Alpaca API keys!"
+    echo "⚠️  IMPORTANT: Create .env file and add your Alpaca API keys!"
     echo ""
-    read -p "Press Enter after updating .env file..."
+    exit 1
 fi
 
+echo "✅ Found .env file"
+
+echo ""
 echo "Step 1: Start Docker containers"
 echo "--------------------------------------------------------------------------------"
 
-cd production/docker
+cd "$PROJECT_ROOT/production/docker"
+
+# Find Docker command
+if command -v docker &> /dev/null; then
+    DOCKER_CMD="docker"
+elif [ -x "/usr/local/bin/docker" ]; then
+    DOCKER_CMD="/usr/local/bin/docker"
+else
+    echo "❌ Docker not found!"
+    exit 1
+fi
+
+echo "Using Docker: $DOCKER_CMD"
 
 # Start containers
-docker-compose up -d
+$DOCKER_CMD compose up -d
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to start containers!"
@@ -48,7 +63,7 @@ echo ""
 echo "Step 3: Check container status"
 echo "--------------------------------------------------------------------------------"
 
-docker-compose ps
+$DOCKER_CMD compose ps
 
 echo ""
 echo "Step 4: Check health endpoint"
@@ -75,7 +90,7 @@ echo "==========================================================================
 
 "
 
-docker-compose logs --tail=100 trading-bot
+$DOCKER_CMD compose logs --tail=100 trading-bot
 
 echo ""
 echo "================================================================================"
@@ -85,12 +100,12 @@ echo ""
 echo "✅ Container is running locally"
 echo ""
 echo "Useful commands:"
-echo "  View logs:       cd production/docker && docker-compose logs -f trading-bot"
+echo "  View logs:       cd production/docker && /usr/local/bin/docker compose logs -f trading-bot"
 echo "  Check health:    curl http://localhost:8080/health | python3 -m json.tool"
 echo "  Check metrics:   curl http://localhost:8080/metrics | python3 -m json.tool"
 echo "  Check status:    curl http://localhost:8080/status | python3 -m json.tool"
-echo "  Restart:         cd production/docker && docker-compose restart"
-echo "  Stop:            cd production/docker && docker-compose down"
+echo "  Restart:         cd production/docker && /usr/local/bin/docker compose restart"
+echo "  Stop:            cd production/docker && /usr/local/bin/docker compose down"
 echo ""
 echo "Monitor the logs for errors. If everything looks good, deploy to VPS:"
 echo "  ./production/deploy/deploy.sh your-vps-hostname"

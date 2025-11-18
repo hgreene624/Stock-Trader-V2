@@ -10,6 +10,8 @@ initial_capital: 100000  # Will be overridden by INITIAL_CAPITAL env var
 
 # Execution settings
 execution_interval_minutes: 240  # 4 hours
+smart_schedule: true             # Skip cycles when market is closed
+require_market_open: true        # Only execute during market hours
 
 # Risk limits
 max_per_asset_weight: 0.40    # 40% max per position

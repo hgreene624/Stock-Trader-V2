@@ -13,6 +13,7 @@ alpaca-py>=0.12.0              # Alpaca trading API (equities)
 
 # Configuration
 pyyaml>=6.0.1                  # YAML config parsing
+pytz>=2023.3                   # Timezone handling for market hours
 
 # Logging & Monitoring
 python-json-logger>=2.0.7      # Structured JSON logging
