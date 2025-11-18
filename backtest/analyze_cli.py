@@ -38,6 +38,7 @@ from models.sector_rotation_bull_v1 import SectorRotationBull_v1
 from models.sector_rotation_bear_v1 import SectorRotationBear_v1
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
+from models.cash_secured_put_v1 import CashSecuredPutModel_v1
 from models.equity_trend_v2_daily import EquityTrendModel_v2_Daily
 
 
@@ -95,6 +96,8 @@ class BacktestAnalyzer:
             return EquityTrendModel_v1_Daily(**parameters)
         elif model_name == "EquityTrendModel_v2_Daily":
             return EquityTrendModel_v2_Daily(**parameters)
+        elif model_name == "CashSecuredPutModel_v1":
+            return CashSecuredPutModel_v1(**parameters)
         else:
             raise ValueError(f"Unknown model: {model_name}")
 

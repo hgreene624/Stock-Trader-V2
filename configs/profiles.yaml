@@ -319,20 +319,43 @@ profiles:
       only_in_crypto_bull: false
       equal_weight: false
       max_positions: 2
-  my_test_1:
-    description: Custom test profile 1 - edit this for your experiments
-    model: EquityTrendModel_v1
+  csp_default:
+    description: Cash-Secured Put income strategy on SPY - conservative parameters
+    model: CashSecuredPutModel_v1
     universe:
     - SPY
-    - QQQ
     start_date: '2020-01-01'
     end_date: '2024-12-31'
+    lookback_bars: 200
     parameters:
-      slow_ma_period: 200
-      momentum_lookback_days: 60
-      exit_ma_period: 50
-      equal_weight: true
-      max_positions: 2
+      target_delta: 0.30
+      min_dte: 30
+      max_dte: 45
+      profit_target_pct: 0.50
+      time_exit_dte: 21
+      max_contracts: 2
+      allowed_regimes:
+      - bull
+      - neutral
+
+  my_test_1:
+    description: Cash-Secured Put - aggressive delta
+    model: CashSecuredPutModel_v1
+    universe:
+    - SPY
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      target_delta: 0.40
+      min_dte: 21
+      max_dte: 35
+      profit_target_pct: 0.50
+      time_exit_dte: 14
+      max_contracts: 3
+      allowed_regimes:
+      - bull
+      - neutral
   my_test_2:
     description: Custom test profile 2 - another test slot
     model: IndexMeanReversionModel_v1
