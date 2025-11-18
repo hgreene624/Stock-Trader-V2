@@ -317,3 +317,13 @@ Conclusion: ❌ Strategy overfitted, use baseline params instead!
 | Walk-Forward | Rolling windows | Unseen future | ✅ Low |
 
 **Bottom Line:** Walk-forward is the gold standard for parameter optimization. It tells you what to actually expect in live trading, not inflated in-sample numbers!
+
+---
+
+## Implementation Notes
+
+- **Architecture**: `WalkForwardOptimizer` generates rolling windows, seeds the evolutionary optimizer for each train slice, and replays the winner on the matching validation window. Outputs (including parameter stability) are aggregated and stored under `results/walk_forward/walk_forward_<timestamp>.json`.
+- **CLI workflow**: `python -m engines.optimization.walk_forward_cli [flags...]` wraps the optimizer. Quick mode shrinks windows/EA workload; `--new-tab` (macOS) launches a monitoring tab so you can watch multi-hour runs in real time.
+- **Code surface area**: Core logic lives in `engines/optimization/walk_forward.py`, the CLI/orchestration in `engines/optimization/walk_forward_cli.py`, and genetic plumbing in `engines/optimization/evolutionary.py`.
+- **Outputs**: Every run includes methodology metadata, summary stats (avg IS/OOS CAGR, degradation, stability), and per-window metrics so you can diff runs or ingest them into analysis scripts.
+- **Promotion rules**: Keep degradation under 2%, require positive OOS CAGR across all windows, and treat wildly unstable parameters (CV > 30%) as a veto even if headline metrics look strong.

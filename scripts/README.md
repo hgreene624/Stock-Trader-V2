@@ -111,6 +111,6 @@ Scripts currently support Terminal.app only. For iTerm2, modify the AppleScript 
 
 ## See Also
 
-- [docs/MONITORING_LONG_RUNS.md](../docs/MONITORING_LONG_RUNS.md) - Detailed monitoring guide
+- [docs/guides/monitoring_long_runs.md](../docs/guides/monitoring_long_runs.md) - Detailed monitoring guide
 - [MONITORING_IMPLEMENTATION_SUMMARY.md](../MONITORING_IMPLEMENTATION_SUMMARY.md) - Technical implementation details
-- [WALK_FORWARD_GUIDE.md](../WALK_FORWARD_GUIDE.md) - Walk-forward methodology
+- [walk_forward.md](../docs/guides/walk_forward.md) - Walk-forward methodology

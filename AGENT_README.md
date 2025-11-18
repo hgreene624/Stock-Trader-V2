@@ -68,7 +68,7 @@ This is a **multi-model algorithmic trading platform** for backtesting, optimizi
 - **Recent Breakthrough**: Implemented walk-forward optimization to prevent overfitting
   - Previous EA optimization gave 7.3% CAGR (overfitted)
   - Walk-forward validation gives realistic out-of-sample estimates
-  - See `WALK_FORWARD_GUIDE.md` for methodology
+- See `docs/guides/walk_forward.md` for methodology
 
 - **Next Goal**: Find parameters or model improvements to cross 14.34% CAGR threshold
 
@@ -183,6 +183,26 @@ python3 -m engines.optimization.cli list
 # Compare optimization results
 python3 -m engines.optimization.cli compare exp_001 exp_002
 ```
+
+### Walk-Forward Optimization (with EA controls)
+
+```bash
+python3 -m engines.optimization.walk_forward_cli \
+  --start 2020-01-01 --end 2024-12-31 \
+  --train-months 24 --test-months 12 --step-months 12 \
+  --population 16 --generations 8 \
+  --mutation-rate 0.3 --crossover-rate 0.85 \
+  --elitism-count 3 --tournament-size 4 \
+  --mutation-strength 0.2 --ea-seed 42 \
+  --max-windows 4 \
+  --param-range momentum_period=90:150 \
+  --param-range min_momentum=0.0:0.08 \
+  --param-range top_n=3:4
+```
+
+- `--param-range` is repeatable for each parameter; use it to tighten the search space without editing code.
+- GA knobs (`--mutation-rate`, `--crossover-rate`, `--elitism-count`, `--tournament-size`, `--mutation-strength`) trade exploration vs. exploitation.
+- `--max-windows` limits how many segments you optimize (great for quick iterations); `--ea-seed` keeps runs reproducible.
 
 ---
 
@@ -585,7 +605,7 @@ What would you like to try?"
 - **Main README**: `/README.md` - Setup and installation
 - **Architecture**: `/specs/001-trading-platform/plan.md`
 - **Tasks**: `/specs/001-trading-platform/tasks.md`
-- **Quickstart**: `/QUICKSTART.md`
+- **Quickstart**: `docs/guides/quickstart.md`
 - **Model Comparison**: `/MODEL_COMPARISON.md` - Why v2 failed vs v1
 
 ---

@@ -236,6 +236,6 @@ Potential improvements:
 
 ## See Also
 
-- [WALK_FORWARD_GUIDE.md](../WALK_FORWARD_GUIDE.md) - Walk-forward methodology
-- [WALK_FORWARD_IMPLEMENTATION.md](../WALK_FORWARD_IMPLEMENTATION.md) - Technical implementation
-- [WORKFLOW_GUIDE.md](../WORKFLOW_GUIDE.md) - General workflow patterns
+- [walk_forward.md](walk_forward.md) - Walk-forward methodology
+- [walk_forward.md – Implementation Notes](walk_forward.md#implementation-notes) - Technical implementation
+- [workflow_guide.md](workflow_guide.md) - General workflow patterns

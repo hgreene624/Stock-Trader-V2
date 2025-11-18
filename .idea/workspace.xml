@@ -4,15 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="phase 9 done. Documentation updated">
+    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="Multicore EA walkthrough&#10;&#10;Regime model selection and training to deal with bull-bear markets&#10;&#10;Exposed more ea and walkthough params for agents to use">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENT_FEATURES.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENT_FEATURES.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENT_README.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENT_README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BUG_FIX_SUMMARY.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/WALK_FORWARD_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/WALK_FORWARD_GUIDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/configs/profiles.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/configs/profiles.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engines/optimization/evolutionary.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/optimization/evolutionary.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engines/optimization/walk_forward.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/optimization/walk_forward.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engines/optimization/walk_forward_cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/engines/optimization/walk_forward_cli.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/specs/001-trading-platform/tasks.md" beforeDir="false" afterPath="$PROJECT_DIR$/specs/001-trading-platform/tasks.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DOCUMENTATION_REVIEW_2025-11-17.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DOCUMENTATION_UPDATE_SUMMARY.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/IMPLEMENTATION_STATUS.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/IMPLEMENTATION_SUMMARY.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/METRICS_COLOR_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MODEL_COMPARISON.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MONITORING_IMPLEMENTATION_SUMMARY.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/OPTIMIZATION_TRACKING_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QUICKSTART.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SESSION_SUMMARY_2025-11-17.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SESSION_SUMMARY_2025-11-17_CONTINUED.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/VALIDATION_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WALK_FORWARD_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WALK_FORWARD_IMPLEMENTATION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WORKFLOW_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/agents_research.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/MONITORING_LONG_RUNS.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -135,7 +151,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763393419588</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Multicore EA walkthrough&#10;&#10;Regime model selection and training to deal with bull-bear markets&#10;&#10;Exposed more ea and walkthough params for agents to use">
+      <option name="closed" value="true" />
+      <created>1763423298473</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1763423298473</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -147,6 +171,7 @@
     <MESSAGE value="phase 6 finished and test results all pass" />
     <MESSAGE value="phase 8 done" />
     <MESSAGE value="phase 9 done. Documentation updated" />
-    <option name="LAST_COMMIT_MESSAGE" value="phase 9 done. Documentation updated" />
+    <MESSAGE value="Multicore EA walkthrough&#10;&#10;Regime model selection and training to deal with bull-bear markets&#10;&#10;Exposed more ea and walkthough params for agents to use" />
+    <option name="LAST_COMMIT_MESSAGE" value="Multicore EA walkthrough&#10;&#10;Regime model selection and training to deal with bull-bear markets&#10;&#10;Exposed more ea and walkthough params for agents to use" />
   </component>
 </project>

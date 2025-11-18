@@ -437,3 +437,26 @@ The platform is now **fully agent-optimized**:
 7. Report findings when hitting milestones or dead ends
 
 **Good luck beating SPY! 🚀📈**
+# Walk-Forward / EA Controls
+
+Need to chase overfitting or dial in a specific walk-forward setup? The CLI now exposes every knob so you never have to edit Python:
+
+```bash
+python -m engines.optimization.walk_forward_cli \
+  --start 2020-01-01 --end 2024-12-31 \
+  --train-months 18 --test-months 9 --step-months 9 \
+  --population 16 --generations 8 \
+  --mutation-rate 0.3 --crossover-rate 0.85 \
+  --elitism-count 3 --tournament-size 4 \
+  --mutation-strength 0.2 --ea-seed 42 \
+  --max-windows 4 \
+  --param-range momentum_period=90:150 \
+  --param-range min_momentum=0.0:0.08 \
+  --param-range top_n=3:4
+```
+
+Key tips:
+- `--param-range` (repeatable) shrinks/expands the EA search space per parameter.
+- GA knobs (`--mutation-rate`, `--crossover-rate`, `--elitism-count`, `--tournament-size`, `--mutation-strength`) let you trade exploration vs exploitation.
+- `--max-windows` limits how many segments you optimize (great for quick diagnostics).
+- Lock `--ea-seed` when you want reproducible runs.

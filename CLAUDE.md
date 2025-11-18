@@ -15,7 +15,7 @@
 **Best Model So Far**: SectorRotationModel_v1 @ 13.01% CAGR (126-day momentum + 1.25x leverage)
 - Sharpe: 1.712, BPS: 0.784
 - Within 1.33% of SPY (close!)
-- See `WALK_FORWARD_GUIDE.md` for optimization methodology
+- See `docs/guides/walk_forward.md` for optimization methodology
 
 **Your Workflow**:
 1. User provides goal → 2. You propose approach → 3. You test → 4. You analyze → 5. You iterate → 6. You report
@@ -135,7 +135,7 @@ python -m backtest.cli run --profile equity_trend_default
 - ✅ Saves last run for quick review
 - ✅ No need to remember complex command arguments
 
-See [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) for detailed examples and iteration patterns.
+See [Workflow Guide](docs/guides/workflow_guide.md) for detailed examples and iteration patterns.
 
 ## Common Commands
 
@@ -517,13 +517,13 @@ Check:
 
 ## Additional Resources
 
-- **Walk-Forward Guide**: [WALK_FORWARD_GUIDE.md](WALK_FORWARD_GUIDE.md) - **NEW!** Prevent overfitting with out-of-sample validation
-- **Walk-Forward Implementation**: [WALK_FORWARD_IMPLEMENTATION.md](WALK_FORWARD_IMPLEMENTATION.md) - Technical details
-- **Monitoring Long Runs**: [docs/MONITORING_LONG_RUNS.md](docs/MONITORING_LONG_RUNS.md) - **NEW!** Real-time progress monitoring for EA optimization
-- **Workflow Guide**: [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) - Rapid iteration patterns using profiles
+- **Walk-Forward Guide**: [docs/guides/walk_forward.md](docs/guides/walk_forward.md) - Prevent overfitting with out-of-sample validation
+- **Walk-Forward Implementation**: [docs/guides/walk_forward.md](docs/guides/walk_forward.md#implementation-notes) - Technical details
+- **Monitoring Long Runs**: [docs/guides/monitoring_long_runs.md](docs/guides/monitoring_long_runs.md) - Real-time progress monitoring for EA optimization
+- **Workflow Guide**: [docs/guides/workflow_guide.md](docs/guides/workflow_guide.md) - Rapid iteration patterns using profiles
 - **Session Summaries**: [SESSION_SUMMARY_2025-11-17_CONTINUED.md](SESSION_SUMMARY_2025-11-17_CONTINUED.md) - Recent improvements
-- **Quickstart Guide**: [QUICKSTART.md](QUICKSTART.md) - Detailed 30-minute walkthrough
-- **Validation Guide**: [VALIDATION_GUIDE.md](VALIDATION_GUIDE.md) - Platform validation procedures
+- **Quickstart Guide**: [docs/guides/quickstart.md](docs/guides/quickstart.md) - Detailed 30-minute walkthrough
+- **Validation Guide**: [docs/guides/validation_guide.md](docs/guides/validation_guide.md) - Platform validation procedures
 - **Constitution**: [.specify/constitution.md](.specify/constitution.md) - Architectural principles
 - **Full Specification**: `specs/001-trading-platform/spec.md`
 - **Implementation Plan**: `specs/001-trading-platform/plan.md`

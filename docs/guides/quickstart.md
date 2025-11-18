@@ -146,7 +146,7 @@ python -m backtest.cli run --profile mean_rev_default
 - Re-run and compare results
 
 **Learn more:**
-- See [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) for iteration patterns
+- See [workflow_guide.md](workflow_guide.md) for iteration patterns
 - Continue to [Full Path](#part-1-initial-setup-10-minutes) for optimization
 
 ---
@@ -766,7 +766,7 @@ python -m backtest.cli show-last
 # Iterate: change parameters and re-run
 ```
 
-See [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) for iteration patterns and tips.
+See [workflow_guide.md](workflow_guide.md) for iteration patterns and tips.
 
 ### 2. **Optimize Other Models**
 
@@ -898,7 +898,7 @@ python -m engines.data.cli download --symbols SPY QQQ --start 2020-01-01
 
 ## Resources
 
-- **Workflow Guide**: [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) - **NEW!** Rapid iteration patterns
+- **Workflow Guide**: [workflow_guide.md](workflow_guide.md) - **NEW!** Rapid iteration patterns
 - **CLAUDE.md**: [CLAUDE.md](CLAUDE.md) - Updated with quick iteration workflow
 - **Documentation**: `specs/001-trading-platform/`
 - **Constitution**: `.specify/constitution.md`

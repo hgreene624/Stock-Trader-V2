@@ -17,7 +17,7 @@ A production-ready algorithmic trading platform that combines multiple strategy 
 
 ## Quick Start
 
-See **[QUICKSTART.md](QUICKSTART.md)** for a comprehensive guide to exploring models and finding high-performers.
+See **[Quickstart Guide](docs/guides/quickstart.md)** for a comprehensive walkthrough of the platform.
 
 **30-Minute Workflow:**
 1. Setup environment and download data (10 min)
@@ -554,8 +554,11 @@ python -m live.live_runner \
 
 ## Documentation
 
-- **[Quickstart Guide](QUICKSTART.md)**: Detailed walkthrough for model exploration
-- **[Validation Guide](VALIDATION_GUIDE.md)**: Platform validation procedures
+- **[Quickstart Guide](docs/guides/quickstart.md)**: Detailed walkthrough for model exploration
+- **[Workflow Guide](docs/guides/workflow_guide.md)**: Iteration patterns, parameter sweeps, and troubleshooting flows
+- **[Walk-Forward Guide](docs/guides/walk_forward.md)**: Methodology, CLI flags, and implementation notes for out-of-sample validation
+- **[Monitoring Long Runs](docs/guides/monitoring_long_runs.md)**: Real-time tracking options for EA/walk-forward jobs
+- **[Validation Guide](docs/guides/validation_guide.md)**: Platform validation procedures
 - **[Specification](specs/001-trading-platform/spec.md)**: Business requirements
 - **[Implementation Plan](specs/001-trading-platform/plan.md)**: Technical architecture
 - **[Data Model](specs/001-trading-platform/data-model.md)**: Entities and relationships
