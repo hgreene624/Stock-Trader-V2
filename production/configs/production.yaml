@@ -1,0 +1,39 @@
+# Production Trading Configuration
+# This file contains non-secret configuration for VPS deployment
+# Secrets (API keys) should be in .env file
+
+# Trading mode
+mode: paper  # Will be overridden by MODE env var
+
+# Initial capital (for NAV tracking)
+initial_capital: 100000  # Will be overridden by INITIAL_CAPITAL env var
+
+# Execution settings
+execution_interval_minutes: 240  # 4 hours
+
+# Risk limits
+max_per_asset_weight: 0.40    # 40% max per position
+max_leverage: 1.25             # 1.25x max total leverage
+min_position_value: 100        # $100 minimum position size
+drawdown_trigger: 0.15         # 15% drawdown = pause trading
+
+# Shutdown behavior
+close_on_shutdown: false       # Don't close positions on shutdown
+
+# Alpaca configuration (keys from env vars)
+alpaca_api_key: null           # From ALPACA_API_KEY env var
+alpaca_secret_key: null        # From ALPACA_SECRET_KEY env var
+
+# Data cache settings
+data_cache_dir: /app/data
+max_lookback_days: 250
+api_fetch_bars: 10
+
+# Health monitoring
+health_check_port: 8080
+max_cycle_age_seconds: 300
+error_threshold: 5
+
+# Logging
+log_dir: /app/logs
+log_level: INFO                # Will be overridden by LOG_LEVEL env var

@@ -1,0 +1,23 @@
+# Production Trading Bot - Minimal Dependencies
+# Only what's needed for live/paper trading (no backtest/optimization)
+
+# Core Data Processing
+pandas>=2.1.0
+numpy>=1.25.0
+
+# Data Storage & Serialization
+pyarrow>=13.0.0                # Parquet file support
+
+# Broker APIs
+alpaca-py>=0.12.0              # Alpaca trading API (equities)
+
+# Configuration
+pyyaml>=6.0.1                  # YAML config parsing
+
+# Logging & Monitoring
+python-json-logger>=2.0.7      # Structured JSON logging
+flask>=3.0.0                   # Health check HTTP endpoint
+
+# Optional: Production Enhancements
+# requests>=2.31.0             # HTTP requests (if needed)
+# python-dotenv>=1.0.0         # .env file support (if needed)

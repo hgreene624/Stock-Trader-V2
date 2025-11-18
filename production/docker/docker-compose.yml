@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # Main trading bot
+  trading-bot:
+    build:
+      context: ../..
+      dockerfile: production/docker/Dockerfile
+    container_name: trading-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MODE=${MODE:-paper}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - EXECUTION_INTERVAL_MINUTES=${EXECUTION_INTERVAL_MINUTES:-240}
+      - CONFIG_PATH=/app/configs/production.yaml
+    volumes:
+      # Persistent data cache
+      - ./data:/app/data
+      # Persistent logs
+      - ./logs:/app/logs
+      # Optional: Mount custom config
+      # - ./custom-config.yaml:/app/configs/production.yaml:ro
+    ports:
+      - "8080:8080"  # Health check endpoint
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 5m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Optional: Data sync service (updates historical cache daily)
+  data-sync:
+    build:
+      context: ../..
+      dockerfile: production/docker/Dockerfile
+    container_name: data-sync
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: >
+      /bin/sh -c "
+      while true; do
+        echo 'Running data cache update...'
+        python -c '
+from production.runner.broker_adapter import AlpacaBrokerAdapter
+from production.runner.live_data_fetcher import HybridDataFetcher
+import os
+broker = AlpacaBrokerAdapter(
+    os.getenv(\"ALPACA_API_KEY\"),
+    os.getenv(\"ALPACA_SECRET_KEY\"),
+    paper=True
+)
+fetcher = HybridDataFetcher(broker, cache_dir=\"/app/data\")
+# Update cache for common symbols
+symbols = [\"SPY\", \"QQQ\", \"XLE\", \"XLF\", \"XLK\", \"XLV\", \"XLI\", \"XLP\", \"XLY\", \"XLU\", \"XLB\", \"XLC\", \"TLT\"]
+fetcher.update_cache(symbols, days_back=30)
+print(\"Cache update complete\")
+        '
+        echo 'Data sync complete. Sleeping for 24h...'
+        sleep 86400
+      done
+      "
+    volumes:
+      - ./data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # Optional: Monitoring dashboard (Grafana)
+  # Uncomment if you want a web dashboard
+  # monitoring:
+  #   image: grafana/grafana:latest
+  #   container_name: monitoring
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - grafana-storage:/var/lib/grafana
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_USERS_ALLOW_SIGN_UP=false
+
+# volumes:
+#   grafana-storage:
