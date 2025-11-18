@@ -280,7 +280,7 @@ class ProductionTradingRunner:
         self.data_fetcher = HybridDataFetcher(
             broker_adapter=self.broker,
             cache_dir=cache_dir,
-            max_lookback_days=250,
+            max_lookback_days=400,  # Increased to accommodate MA_200 (200) + momentum (127) + buffer
             api_fetch_bars=10
         )
 
@@ -646,7 +646,7 @@ class ProductionTradingRunner:
                     return
 
                 # Validate data has sufficient bars for indicators
-                min_bars_required = 105  # Need at least 105 bars for MA_200
+                min_bars_required = 104  # Sector rotation model needs 127 for 126-day momentum, 104 is sufficient
                 insufficient_data = []
                 for symbol, df in asset_features.items():
                     if len(df) < min_bars_required:

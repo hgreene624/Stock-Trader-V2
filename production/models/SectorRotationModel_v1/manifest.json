@@ -22,7 +22,7 @@
     "TLT"
   ],
   "budget_fraction": 1.0,
-  "exported_at": "2025-11-18T16:41:41.245064+00:00",
+  "exported_at": "2025-11-18T16:55:35.055163+00:00",
   "exported_from_profile": "sector_rotation_default",
   "source_file": "models/sector_rotation_v1.py"
 }
