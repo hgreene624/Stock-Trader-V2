@@ -60,6 +60,10 @@ class HealthMonitor:
         self.last_error = None
         self.start_time = time.time()
 
+        # Models and connections
+        self.models = []
+        self.alpaca_connected = False
+
         # Additional metrics
         self.metrics = {
             'data_fetch_latency_ms': 0,
@@ -161,6 +165,8 @@ class HealthMonitor:
             'errors': self.error_count,
             'warnings': self.warning_count,
             'issues': issues,
+            'models': self.models,
+            'alpaca_connected': self.alpaca_connected,
         }
 
         if self.last_error:
@@ -248,3 +254,13 @@ class HealthMonitor:
 
         self.status = status
         logger.info(f"Status set to: {status}")
+
+    def set_models(self, models: list):
+        """Set active models list."""
+        self.models = models
+        logger.debug(f"Models updated: {len(models)} active")
+
+    def set_alpaca_connected(self, connected: bool):
+        """Set Alpaca connection status."""
+        self.alpaca_connected = connected
+        logger.debug(f"Alpaca connection: {'connected' if connected else 'disconnected'}")

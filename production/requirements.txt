@@ -20,5 +20,6 @@ python-json-logger>=2.0.7      # Structured JSON logging
 flask>=3.0.0                   # Health check HTTP endpoint
 
 # Optional: Production Enhancements
-# requests>=2.31.0             # HTTP requests (if needed)
+requests>=2.31.0               # HTTP requests (for dashboard)
+rich>=13.7.0                   # Terminal UI (for dashboard)
 # python-dotenv>=1.0.0         # .env file support (if needed)

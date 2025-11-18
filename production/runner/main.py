@@ -239,6 +239,8 @@ class ProductionTradingRunner:
                     'name': manifest['model_name'],
                     'budget_fraction': manifest.get('budget_fraction', 1.0 / len(model_dirs)),
                     'universe': manifest.get('universe', []),
+                    'parameters': manifest.get('parameters', {}),
+                    'stage': manifest.get('stage', 'unknown'),
                 })
 
                 logger.info(
@@ -264,10 +266,19 @@ class ProductionTradingRunner:
             paper=paper_mode
         )
 
+        # Test Alpaca connection
+        try:
+            self.broker.get_account()
+            alpaca_connected = True
+        except Exception as e:
+            logger.error(f"Failed to connect to Alpaca: {e}")
+            alpaca_connected = False
+
         # Initialize data fetcher
+        cache_dir = os.getenv('DATA_DIR', '/app/data')
         self.data_fetcher = HybridDataFetcher(
             broker_adapter=self.broker,
-            cache_dir='/app/data',
+            cache_dir=cache_dir,
             max_lookback_days=250,
             api_fetch_bars=10
         )
@@ -279,6 +290,7 @@ class ProductionTradingRunner:
             error_threshold=5
         )
         self.health_monitor.start()
+        self.health_monitor.set_alpaca_connected(alpaca_connected)
 
         # Initialize regime classifier
         self.regime_classifier = EquityRegimeClassifier()
@@ -292,6 +304,19 @@ class ProductionTradingRunner:
 
         # Load models
         self._load_models()
+
+        # Update health monitor with loaded models
+        models_info = [
+            {
+                'name': m['name'],
+                'budget_fraction': m['budget_fraction'],
+                'universe': m['universe'],
+                'parameters': m.get('parameters', {}),
+                'stage': m.get('stage', 'unknown'),
+            }
+            for m in self.models
+        ]
+        self.health_monitor.set_models(models_info)
 
         # Get initial account state
         account = self.broker.get_account()
@@ -579,7 +604,7 @@ class ProductionTradingRunner:
         try:
             # Get current timestamp (aligned to hour)
             now = datetime.now(timezone.utc)
-            current_timestamp = now.replace(minute=0, second=0, microsecond=0)
+            current_timestamp = pd.Timestamp(now.replace(minute=0, second=0, microsecond=0))
 
             logger.info(f"Cycle timestamp: {current_timestamp}")
 

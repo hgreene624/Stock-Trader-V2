@@ -1,2 +1,0 @@
-{"timestamp": "2025-11-18T05:02:43.860836+00:00", "event_type": "cycle_error", "error": "'universe'", "error_type": "KeyError", "nav": 100000.0}
-{"timestamp": "2025-11-18T05:05:11.813603+00:00", "event_type": "cycle_error", "error": "'universe'", "error_type": "KeyError", "nav": 100000.0}

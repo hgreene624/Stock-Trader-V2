@@ -26,6 +26,10 @@ print(f"  Data: {DATA_DIR}")
 print(f"  Config: {CONFIG_PATH}")
 print()
 
+# Set environment variables for main.py to use
+os.environ['DATA_DIR'] = DATA_DIR
+os.environ['LOGS_DIR'] = LOGS_DIR
+
 # Import and patch the main runner
 from production.runner import main
 
@@ -106,7 +110,8 @@ def patched_load_models(self):
         self.models.append({
             'instance': model_instance,
             'name': model_name,
-            'budget_fraction': budget_fraction
+            'budget_fraction': budget_fraction,
+            'universe': manifest.get('universe', [])
         })
 
         main.logger.info(f"Loaded model: {model_name} (budget={budget_fraction})")
@@ -116,17 +121,8 @@ def patched_load_models(self):
 # Apply patch
 main.ProductionTradingRunner._load_models = patched_load_models
 
-# Patch data cache path
-original_init = main.HybridDataFetcher.__init__
-
-def patched_data_fetcher_init(self, broker_adapter, cache_dir=None, max_lookback_days=250, api_fetch_bars=10):
-    """Patched data fetcher init for local execution."""
-    if cache_dir is None:
-        cache_dir = DATA_DIR
-    original_init(self, broker_adapter, cache_dir, max_lookback_days, api_fetch_bars)
-
-# Apply patch
-main.HybridDataFetcher.__init__ = patched_data_fetcher_init
+# Patch data cache path - DISABLED (causing method binding issues)
+# Instead, we'll update main.py to use environment variable for cache_dir
 
 # Run the main function
 if __name__ == '__main__':

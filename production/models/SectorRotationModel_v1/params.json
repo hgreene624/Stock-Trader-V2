@@ -1,1 +1,5 @@
-{}
+{
+  "momentum_period": 126,
+  "top_n": 3,
+  "min_momentum": 0.0
+}

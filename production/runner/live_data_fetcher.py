@@ -75,6 +75,15 @@ class HybridDataFetcher:
         try:
             df = pd.read_parquet(cache_file)
 
+            # Normalize column names (cached data uses lowercase, we need Capital)
+            df.rename(columns={
+                'open': 'Open',
+                'high': 'High',
+                'low': 'Low',
+                'close': 'Close',
+                'volume': 'Volume'
+            }, inplace=True)
+
             # Ensure timezone-aware
             if df.index.tz is None:
                 df.index = df.index.tz_localize('UTC')
@@ -236,9 +245,11 @@ class HybridDataFetcher:
         for symbol in symbols:
             try:
                 # Load cached historical data
+                # Load extra history for feature computation (MA_200 needs 200 bars)
+                cache_start_date = start_date - timedelta(days=200)
                 cached_data = self._load_cached_data(
                     symbol,
-                    start_date,
+                    cache_start_date,
                     current_timestamp - timedelta(days=self.api_fetch_bars)
                 )
 
@@ -257,6 +268,9 @@ class HybridDataFetcher:
 
                 # Filter to valid timestamps (not NaN for key features)
                 merged = merged.dropna(subset=['Close', 'MA_200'], how='any')
+
+                # Filter to requested date range (after feature computation)
+                merged = merged[merged.index >= start_date]
 
                 result[symbol] = merged
 

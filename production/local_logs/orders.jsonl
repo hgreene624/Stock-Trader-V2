@@ -1,0 +1,1 @@
+{"timestamp": "2025-11-18T15:42:21.791068+00:00", "event_type": "order_submitted", "order_id": "fd5e3cbd-5265-48b0-bfd9-50d0a34b92a7", "symbol": "TLT", "side": "buy", "quantity": 447, "price": 89.3, "order_type": "market", "status": "pending_new", "nav": 100000.05, "model": "unknown"}

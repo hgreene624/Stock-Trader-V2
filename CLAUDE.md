@@ -77,17 +77,18 @@ python3 -m deploy.export --models SectorRotationModel_v1 --stage live
 # 2. Test locally (FAST - no Docker!)
 ./production/run_local.sh        # Edit code → Ctrl+C → Restart → Test
 
-# 3. Build Docker image
-./production/deploy/build.sh
+# 3. Build and deploy to VPS (AUTOMATED - 2 commands!)
+./production/deploy/build_and_transfer.sh              # Build AMD64 + transfer to VPS
+ssh root@31.220.55.98 './vps_deploy.sh'                # Deploy on VPS
 
-# 4. Test Docker locally
-./production/deploy/local-test.sh
-
-# 5. Deploy to VPS
-./production/deploy/deploy.sh your-vps-hostname
+# Alternative: Manual steps
+./production/deploy/build.sh                           # Build Docker image
+./production/deploy/local-test.sh                      # Test Docker locally
+./production/deploy/deploy.sh your-vps-hostname        # Old deploy method
 ```
 
 ### Features:
+- ✅ **Real-time Dashboard**: Terminal UI showing positions, orders, P&L, errors
 - ✅ **JSONL Audit Logs**: Every order, trade, error logged in machine-readable format
 - ✅ **Local Development**: Run without Docker for instant code changes
 - ✅ **Docker Deployment**: Containerized for VPS deployment
@@ -96,7 +97,14 @@ python3 -m deploy.export --models SectorRotationModel_v1 --stage live
 - ✅ **Multi-Model Support**: Run multiple strategies simultaneously
 - ✅ **Graceful Shutdown**: Cancels orders, closes positions on SIGTERM
 
+### Deployment Scripts:
+- `production/deploy/build_and_transfer.sh` - Automated build & transfer to VPS
+- `production/deploy/vps_deploy.sh` - VPS deployment script (runs on server)
+- `production/deploy/DEPLOYMENT_GUIDE.md` - Complete deployment documentation
+- `production/deploy/VPS_QUICK_REFERENCE.md` - Quick reference for VPS commands
+
 ### Documentation:
+- `production/DASHBOARD.md` - Real-time monitoring dashboard guide
 - `production/LOCAL_DEVELOPMENT.md` - Fast local iteration guide
 - `production/AUDIT_LOGS.md` - JSONL logging reference
 - `production/README.md` - Complete production guide
@@ -570,3 +578,4 @@ Check:
 - **Full Specification**: `specs/001-trading-platform/spec.md`
 - **Implementation Plan**: `specs/001-trading-platform/plan.md`
 - **Test Results**: Run `pytest` to execute 200+ tests
+- memorize any important detials we just learned regarding the bugs you just fixed in the trading bot

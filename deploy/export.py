@@ -71,9 +71,10 @@ class ModelExporter:
             return {}
 
         with open(profiles_file, 'r') as f:
-            profiles = yaml.safe_load(f)
+            data = yaml.safe_load(f)
 
-        return profiles
+        # Extract 'profiles' key if it exists, otherwise return the whole dict
+        return data.get('profiles', data) if isinstance(data, dict) else {}
 
     def _find_model_file(self, model_name: str) -> Path:
         """Find model source file."""

@@ -217,8 +217,9 @@ class AlpacaBrokerAdapter:
 
         result = {}
         for symbol in symbols:
-            if symbol in bars_response:
-                bars = bars_response[symbol]
+            # Use .data dict instead of 'in' check (BarSet.__contains__ doesn't work reliably)
+            if symbol in bars_response.data and len(bars_response.data[symbol]) > 0:
+                bars = bars_response.data[symbol]
                 result[symbol] = [
                     {
                         'timestamp': bar.timestamp,

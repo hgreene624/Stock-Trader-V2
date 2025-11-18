@@ -33,6 +33,8 @@ Standalone Docker-based deployment system for running trading models on a VPS.
 - ✅ **Docker-based** - Isolated, reproducible deployments
 - ✅ **Hybrid Data** - Live prices from API + cached historical features
 - ✅ **Multi-Model** - Deploy multiple models with PortfolioEngine aggregation
+- ✅ **Real-time Dashboard** - Beautiful terminal UI for monitoring (see [DASHBOARD.md](DASHBOARD.md))
+- ✅ **JSONL Audit Logs** - Machine-readable logs for compliance (see [AUDIT_LOGS.md](AUDIT_LOGS.md))
 - ✅ **Health Monitoring** - HTTP endpoint (/health) for uptime checks
 - ✅ **Graceful Shutdown** - Handles signals properly, optional position closing
 - ✅ **Automated Deployment** - One-command deploy to VPS
@@ -181,14 +183,15 @@ production/
    # SSH to VPS
    ssh user@trading-vps.example.com
 
-   # Check logs
+   # Option 1: Real-time dashboard (RECOMMENDED)
    cd /opt/trading
+   ./production/watch.sh
+
+   # Option 2: Check raw logs
    docker-compose logs -f trading-bot
 
-   # Check health
+   # Option 3: Query health endpoints
    curl http://localhost:8080/health | python3 -m json.tool
-
-   # Check metrics
    curl http://localhost:8080/metrics | python3 -m json.tool
    ```
 
