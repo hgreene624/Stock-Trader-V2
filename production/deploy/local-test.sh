@@ -14,7 +14,7 @@ if [ ! -f "production/docker/.env" ]; then
     echo "⚠️  No .env file found!"
     echo ""
     echo "Creating .env from .env.example..."
-    cp production/docker/.env.example production/docker/.env
+    cp production/docker/.env production/docker/.env
 
     echo ""
     echo "⚠️  IMPORTANT: Edit production/docker/.env and add your Alpaca API keys!"

@@ -64,7 +64,7 @@ This creates `production/models/SectorRotationModel_v1/` with:
 
 ```bash
 # Copy .env template and edit
-cp production/docker/.env.example production/docker/.env
+cp production/docker/.env production/docker/.env
 
 # Edit .env and add your Alpaca API keys
 vim production/docker/.env
