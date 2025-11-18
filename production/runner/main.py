@@ -629,6 +629,23 @@ class ProductionTradingRunner:
                 logger.error("No data fetched, skipping cycle")
                 return
 
+            # Classify regime FIRST (before first cycle check) so dashboard shows it
+            spy_data = asset_features.get('SPY')
+            if spy_data is None or len(spy_data) == 0:
+                logger.error("No SPY data for regime classification")
+                regime = RegimeState(
+                    timestamp=current_timestamp,
+                    equity_regime='neutral',
+                    vol_regime='normal',
+                    crypto_regime='neutral',
+                    macro_regime='neutral'
+                )
+            else:
+                regime = self._classify_regime(spy_data, current_timestamp)
+
+            # Update health monitor with current regime
+            self.health_monitor.set_regime(regime)
+
             # Validate data quality and skip trading on first cycle
             if not self.first_cycle_complete:
                 logger.warning("=" * 80)
@@ -662,19 +679,7 @@ class ProductionTradingRunner:
                 self.first_cycle_complete = True
                 return
 
-            # Classify regime
-            spy_data = asset_features.get('SPY')
-            if spy_data is None or len(spy_data) == 0:
-                logger.error("No SPY data for regime classification")
-                regime = RegimeState(
-                    timestamp=current_timestamp,
-                    equity_regime='neutral',
-                    vol_regime='normal',
-                    crypto_regime='neutral',
-                    macro_regime='neutral'
-                )
-            else:
-                regime = self._classify_regime(spy_data, current_timestamp)
+            # Regime already classified above (before first cycle check)
 
             # Generate weights from each model
             model_outputs = []

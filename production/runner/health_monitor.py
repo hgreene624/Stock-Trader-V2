@@ -63,6 +63,7 @@ class HealthMonitor:
         # Models and connections
         self.models = []
         self.alpaca_connected = False
+        self.current_regime = None
 
         # Additional metrics
         self.metrics = {
@@ -167,6 +168,7 @@ class HealthMonitor:
             'issues': issues,
             'models': self.models,
             'alpaca_connected': self.alpaca_connected,
+            'regime': self.current_regime,
         }
 
         if self.last_error:
@@ -264,3 +266,17 @@ class HealthMonitor:
         """Set Alpaca connection status."""
         self.alpaca_connected = connected
         logger.debug(f"Alpaca connection: {'connected' if connected else 'disconnected'}")
+
+    def set_regime(self, regime_state):
+        """Set current market regime."""
+        if regime_state:
+            self.current_regime = {
+                'equity': regime_state.equity_regime,
+                'volatility': regime_state.vol_regime,
+                'crypto': regime_state.crypto_regime,
+                'macro': regime_state.macro_regime,
+                'timestamp': str(regime_state.timestamp)
+            }
+        else:
+            self.current_regime = None
+        logger.debug(f"Regime updated: {self.current_regime}")

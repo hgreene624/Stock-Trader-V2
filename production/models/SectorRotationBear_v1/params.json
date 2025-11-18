@@ -1,0 +1,6 @@
+{
+  "momentum_period": 126,
+  "top_n": 2,
+  "min_momentum": 0.1,
+  "target_leverage": 1.0
+}

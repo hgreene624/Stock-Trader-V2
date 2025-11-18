@@ -236,8 +236,24 @@ class TradingDashboard:
             day = calendar[0]
             now = datetime.now(timezone.utc)
 
+            # Alpaca returns times in America/New_York timezone without tzinfo
+            # We need to add EST/EDT timezone, then convert to UTC for comparison
+            import pytz
+            eastern = pytz.timezone('America/New_York')
+
+            # Add Eastern timezone to the naive datetime, then convert to UTC
+            if day.open.tzinfo is None:
+                open_time = eastern.localize(day.open).astimezone(timezone.utc)
+            else:
+                open_time = day.open.astimezone(timezone.utc)
+
+            if day.close.tzinfo is None:
+                close_time = eastern.localize(day.close).astimezone(timezone.utc)
+            else:
+                close_time = day.close.astimezone(timezone.utc)
+
             # Check if market is open
-            is_open = day.open <= now.time() <= day.close
+            is_open = open_time <= now <= close_time
 
             return {
                 'is_open': is_open,
@@ -255,6 +271,28 @@ class TradingDashboard:
 
         total_exposure = sum(abs(p['market_value']) for p in positions)
         return total_exposure / nav
+
+    def _is_model_active(self, model_name: str, current_regime: str) -> bool:
+        """
+        Determine if a model is currently active based on regime.
+
+        Args:
+            model_name: Name of the model
+            current_regime: Current equity regime ('bull', 'bear', 'neutral', 'unknown')
+
+        Returns:
+            True if model is active, False otherwise
+        """
+        # Bull specialist: only active in bull regime
+        if 'Bull' in model_name or 'bull' in model_name:
+            return current_regime == 'bull'
+
+        # Bear specialist: only active in bear regime
+        if 'Bear' in model_name or 'bear' in model_name:
+            return current_regime == 'bear'
+
+        # General/baseline models: always active
+        return True
 
     def create_header_panel(self, health: Dict, account: Optional[Dict], market: Dict) -> Panel:
         """Create header panel with system status and market info."""
@@ -291,6 +329,19 @@ class TradingDashboard:
         header_text.append(f"Alpaca: ", style="dim")
         header_text.append(f"{alpaca_symbol}", style=f"bold {alpaca_color}")
 
+        # Market regime
+        regime = health.get('regime')
+        if regime:
+            equity_regime = regime.get('equity', 'unknown')
+            regime_color = {
+                'bull': 'green',
+                'bear': 'red',
+                'neutral': 'yellow'
+            }.get(equity_regime, 'white')
+            header_text.append(" | ", style="dim")
+            header_text.append(f"Regime: ", style="dim")
+            header_text.append(f"{equity_regime.upper()}", style=f"bold {regime_color}")
+
         header_text.append(" | ", style="dim")
         header_text.append(now.strftime("%Y-%m-%d %H:%M:%S UTC"), style="dim")
 
@@ -307,6 +358,10 @@ class TradingDashboard:
         if not models_data:
             return Panel("No models loaded", title="Active Models", border_style="yellow")
 
+        # Get current regime
+        regime = health.get('regime')
+        current_equity_regime = regime.get('equity', 'unknown') if regime else 'unknown'
+
         # Create rich text content instead of table for better formatting
         content = Text()
 
@@ -320,10 +375,19 @@ class TradingDashboard:
             parameters = model.get('parameters', {})
             stage = model.get('stage', 'unknown')
 
-            # Model name and stage
+            # Determine if model is active based on regime
+            is_active = self._is_model_active(name, current_equity_regime)
+            active_indicator = "●" if is_active else "○"
+            active_color = "green" if is_active else "dim"
+            active_text = "ACTIVE" if is_active else "INACTIVE"
+
+            # Model name, status, and stage
+            content.append(f"{active_indicator} ", style=active_color)
             content.append(f"Model: ", style="dim")
             content.append(f"{name}", style="bold cyan")
             content.append(f" [{stage.upper()}]", style="yellow")
+            content.append(f" - ", style="dim")
+            content.append(f"{active_text}", style=f"bold {active_color}")
             content.append(f"\n")
 
             # Budget allocation
@@ -635,7 +699,7 @@ class TradingDashboard:
 
         # Left column
         layout["left"].split_column(
-            Layout(name="models", size=10),
+            Layout(name="models", size=18),  # Increased for 3 models with active/inactive status
             Layout(name="positions"),
             Layout(name="orders", size=12)
         )
