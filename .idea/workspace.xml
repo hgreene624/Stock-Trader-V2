@@ -4,15 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="alpaca connection verified">
+    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="trading side app in docker container working">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/configs/production.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/production/configs/production.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/deploy/build.sh" beforeDir="false" afterPath="$PROJECT_DIR$/production/deploy/build.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/deploy/local-test.sh" beforeDir="false" afterPath="$PROJECT_DIR$/production/deploy/local-test.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/docker/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/production/docker/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/docker/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/production/docker/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/docker/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/production/docker/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/production/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/manifest.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/production/runner/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/runner/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -168,7 +162,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763429005853</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="trading side app in docker container working">
+      <option name="closed" value="true" />
+      <created>1763441535142</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1763441535142</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -184,6 +186,7 @@
     <MESSAGE value="restructured docs" />
     <MESSAGE value=" complete standalone Docker-based deployment system" />
     <MESSAGE value="alpaca connection verified" />
-    <option name="LAST_COMMIT_MESSAGE" value="alpaca connection verified" />
+    <MESSAGE value="trading side app in docker container working" />
+    <option name="LAST_COMMIT_MESSAGE" value="trading side app in docker container working" />
   </component>
 </project>

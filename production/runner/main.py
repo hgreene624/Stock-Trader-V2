@@ -179,6 +179,16 @@ class ProductionTradingRunner:
         if self.health_monitor:
             self.health_monitor.set_status('shutdown')
 
+        # Close JSONL log files
+        try:
+            self.orders_log.close()
+            self.trades_log.close()
+            self.performance_log.close()
+            self.errors_log.close()
+            logger.info("Closed JSONL log files")
+        except Exception as e:
+            logger.error(f"Error closing log files: {e}")
+
         logger.info("Graceful shutdown complete")
         sys.exit(0)
 
@@ -692,6 +702,16 @@ class ProductionTradingRunner:
             self.current_nav = Decimal(str(account['equity']))
             logger.info(f"Updated NAV: ${self.current_nav:,.2f}")
 
+            # Log performance to JSONL
+            self._log_jsonl(self.performance_log, 'cycle_complete', {
+                'nav': float(self.current_nav),
+                'cash': float(account.get('cash', 0)),
+                'positions_count': len([p for p in self.positions.values() if p != 0]),
+                'positions': {k: v for k, v in self.positions.items() if v != 0},
+                'buying_power': float(account.get('buying_power', 0)),
+                'cycle_timestamp': current_timestamp.isoformat() if 'current_timestamp' in locals() else None
+            })
+
             # Record successful cycle
             self.health_monitor.record_cycle_complete()
             logger.info("Cycle completed successfully")
@@ -699,6 +719,13 @@ class ProductionTradingRunner:
         except Exception as e:
             logger.error(f"Error in trading cycle: {e}", exc_info=True)
             self.health_monitor.record_error(f"Cycle error: {e}")
+
+            # Log error to JSONL
+            self._log_jsonl(self.errors_log, 'cycle_error', {
+                'error': str(e),
+                'error_type': type(e).__name__,
+                'nav': float(self.current_nav)
+            })
 
     def run(self):
         """Main run loop."""

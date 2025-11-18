@@ -52,16 +52,24 @@ User: Compare the last 5 experiments
 
 ## Project Overview
 
-This is a **multi-model algorithmic trading platform** for backtesting, optimizing, and eventually deploying trading strategies.
+This is a **multi-model algorithmic trading platform** for backtesting, optimizing, and **live/paper trading** deployment.
 
 ### Primary Goal
 **Beat SPY's performance** (14.34% CAGR over 2020-2024) with better risk-adjusted returns.
+
+### Platform Capabilities
+1. **Research & Backtesting**: Test strategies on historical data
+2. **Walk-Forward Optimization**: Prevent overfitting with out-of-sample validation
+3. **Production Deployment**: Run validated models live/paper on VPS or locally
+4. **Audit Logging**: Complete JSONL audit trails for all trading activity
+5. **Health Monitoring**: HTTP endpoints for uptime and performance tracking
 
 ### Current Status
 - **Best Model**: SectorRotationModel_v1 (126-day momentum + 1.25x leverage)
   - CAGR: 13.01% (vs SPY: 14.34%) - Within 1.33% of SPY!
   - Sharpe: 1.712 (vs SPY: ~0.8) ✓ Better risk-adjusted
   - Max DD: ~22% (vs SPY: ~34%) ✓ Better protection
+  - **Status**: Ready for production deployment (paper trading mode)
   - BPS: 0.784 (good score)
   - **Result**: Very close to SPY performance with better risk-adjusted returns
 
@@ -71,6 +79,100 @@ This is a **multi-model algorithmic trading platform** for backtesting, optimizi
 - See `docs/guides/walk_forward.md` for methodology
 
 - **Next Goal**: Find parameters or model improvements to cross 14.34% CAGR threshold
+
+---
+
+## 🚀 Production Deployment Guide
+
+Once you've developed and validated a profitable strategy, deploy it to production:
+
+### Step 1: Export Model for Production
+
+```bash
+# Export model with parameters
+python3 -m deploy.export --models SectorRotationModel_v1 --stage live
+
+# This creates: production/models/SectorRotationModel_v1/
+#   - model.py (source code)
+#   - params.json (parameters)
+#   - universe.json (symbols)
+#   - manifest.json (metadata)
+```
+
+### Step 2: Test Locally (Fast Iteration)
+
+```bash
+# Run production runner locally (NO Docker - instant changes!)
+./production/run_local.sh
+
+# Logs go to: production/local_logs/
+#   - orders.jsonl (all orders)
+#   - trades.jsonl (executions)
+#   - performance.jsonl (NAV snapshots)
+#   - errors.jsonl (errors)
+
+# Make changes → Ctrl+C → Restart → Test
+# No Docker rebuild needed!
+```
+
+### Step 3: Build Docker Image
+
+```bash
+# Build production Docker image
+./production/deploy/build.sh
+
+# Test Docker locally
+./production/deploy/local-test.sh
+
+# Check health endpoint
+curl http://localhost:8080/health | jq '.'
+```
+
+### Step 4: Deploy to VPS
+
+```bash
+# Deploy to your VPS
+./production/deploy/deploy.sh your-vps-hostname
+
+# The script will:
+# 1. Transfer Docker image to VPS
+# 2. Start container with docker-compose
+# 3. Verify health endpoints
+# 4. Show logs
+```
+
+### Production Features
+
+- ✅ **JSONL Audit Logs**: Every order, trade, and error logged in machine-readable JSON Lines format
+- ✅ **Health Monitoring**: HTTP endpoints (`/health`, `/metrics`, `/status`) for uptime tracking
+- ✅ **Market Hours Aware**: Automatically skips trading when market is closed
+- ✅ **Graceful Shutdown**: Cancels open orders and optionally closes positions on SIGTERM
+- ✅ **Multi-Model Support**: Run multiple strategies with budget allocation
+- ✅ **Position Reconciliation**: Automatically syncs with broker positions
+- ✅ **Hybrid Data**: Combines live API data with cached historical data for efficiency
+
+### Monitoring & Auditing
+
+```bash
+# View live logs (local)
+tail -f production/local_logs/production.log
+
+# Query audit logs with jq
+cat production/local_logs/orders.jsonl | jq 'select(.symbol == "SPY")'
+
+# Track NAV over time
+cat production/local_logs/performance.jsonl | jq -r '[.timestamp, .nav] | @csv'
+
+# Check for errors
+cat production/local_logs/errors.jsonl | jq '.'
+```
+
+### Documentation
+
+- **`production/LOCAL_DEVELOPMENT.md`** - Local development workflow (fastest iteration)
+- **`production/AUDIT_LOGS.md`** - JSONL audit log format and query examples
+- **`production/README.md`** - Complete production deployment guide
+- **`production/docker/.env`** - Configuration (Alpaca keys, mode, capital, etc.)
 
 ---
 
@@ -99,6 +201,19 @@ Stock-Trader-V2/
 │   ├── cli.py               # Main CLI for running tests
 │   ├── runner.py            # Backtest orchestration
 │   └── executor.py          # Trade simulation
+│
+├── production/               # NEW: Production deployment
+│   ├── runner/              # Production trading bot
+│   ├── models/              # Exported models (generated)
+│   ├── configs/             # Production configs
+│   ├── deploy/              # Deployment scripts (build, deploy, test)
+│   ├── docker/              # Docker configs (.env, docker-compose.yml)
+│   ├── local_logs/          # Local execution logs (JSONL)
+│   ├── run_local.sh         # Run locally (fast iteration!)
+│   └── README.md            # Production guide
+│
+├── deploy/
+│   └── export.py            # Export models for production
 │
 ├── data/                     # Historical data (Parquet files)
 │   └── equities/            # SPY, QQQ, sector ETFs

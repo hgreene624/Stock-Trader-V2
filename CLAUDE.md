@@ -22,23 +22,21 @@
 
 **Key Commands**:
 ```bash
-# Run quick test
-python3 -m backtest.analyze_cli --profile sector_rotation_leverage_1.25x
-
-# View last results
-python3 -m backtest.cli show-last
-
-# Download data
+# RESEARCH & BACKTESTING
+python3 -m backtest.analyze_cli --profile sector_rotation_leverage_1.25x  # Quick test
+python3 -m backtest.cli show-last                                          # View results
 python3 -m engines.data.cli download --symbols SPY,QQQ --start-date 2020-01-01 --timeframe 1D
 
-# Walk-forward optimization (prevents overfitting!)
-python3 -m engines.optimization.walk_forward_cli --quick
+# OPTIMIZATION
+python3 -m engines.optimization.walk_forward_cli --quick  # Prevents overfitting!
+python3 -m engines.optimization.walk_forward_cli --quick --new-tab  # New tab (macOS)
 
-# Walk-forward in new tab for real-time monitoring (macOS)
-python3 -m engines.optimization.walk_forward_cli --quick --new-tab
-
-# Standard optimization (use with caution - can overfit)
-python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.yaml
+# PRODUCTION DEPLOYMENT (NEW!)
+python3 -m deploy.export --models SectorRotationModel_v1 --stage live  # Export model
+./production/run_local.sh                                               # Test locally (fast!)
+./production/deploy/build.sh                                            # Build Docker
+./production/deploy/local-test.sh                                       # Test Docker
+./production/deploy/deploy.sh your-vps-hostname                         # Deploy to VPS
 ```
 
 **Specialized Sub-Agents** (see [SUB_AGENTS.md](SUB_AGENTS.md)):
@@ -60,8 +58,52 @@ python3 -m engines.optimization.cli run --experiment configs/experiments/my_exp.
 - ✅ Add profiles to `configs/profiles.yaml`
 - ✅ Run backtests and analyze results
 - ✅ Iterate on parameters
+- ✅ Export models for production
+- ✅ Test production runner locally
 - ✅ Troubleshoot issues
 - ✅ Document findings
+
+---
+
+## 🚀 Production Deployment
+
+**NEW**: Production runner for live/paper trading on VPS or local machine.
+
+### Quick Deploy Workflow:
+```bash
+# 1. Export validated model
+python3 -m deploy.export --models SectorRotationModel_v1 --stage live
+
+# 2. Test locally (FAST - no Docker!)
+./production/run_local.sh        # Edit code → Ctrl+C → Restart → Test
+
+# 3. Build Docker image
+./production/deploy/build.sh
+
+# 4. Test Docker locally
+./production/deploy/local-test.sh
+
+# 5. Deploy to VPS
+./production/deploy/deploy.sh your-vps-hostname
+```
+
+### Features:
+- ✅ **JSONL Audit Logs**: Every order, trade, error logged in machine-readable format
+- ✅ **Local Development**: Run without Docker for instant code changes
+- ✅ **Docker Deployment**: Containerized for VPS deployment
+- ✅ **Health Monitoring**: HTTP endpoints for status checks
+- ✅ **Market Hours Aware**: Smart scheduling to skip closed market hours
+- ✅ **Multi-Model Support**: Run multiple strategies simultaneously
+- ✅ **Graceful Shutdown**: Cancels orders, closes positions on SIGTERM
+
+### Documentation:
+- `production/LOCAL_DEVELOPMENT.md` - Fast local iteration guide
+- `production/AUDIT_LOGS.md` - JSONL logging reference
+- `production/README.md` - Complete production guide
+
+### Logs Location:
+- **Local**: `production/local_logs/*.jsonl` (orders, trades, performance, errors)
+- **Docker**: `production/docker/logs/*.jsonl`
 
 ---
 
