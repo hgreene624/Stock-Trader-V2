@@ -136,8 +136,10 @@ class SectorRotationModel_v1(BaseModel):
                 continue
 
             # Get current and historical prices
-            current_price = features['close'].iloc[-1]
-            past_price = features['close'].iloc[-(self.momentum_period + 1)]
+            # Use Capital case column names (normalized in production)
+            close_col = 'Close' if 'Close' in features.columns else 'close'
+            current_price = features[close_col].iloc[-1]
+            past_price = features[close_col].iloc[-(self.momentum_period + 1)]
 
             if pd.isna(current_price) or pd.isna(past_price) or past_price == 0:
                 continue

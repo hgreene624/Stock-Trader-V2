@@ -7,7 +7,7 @@ set -e  # Exit on error
 
 # Configuration
 IMAGE_NAME="trading-bot"
-IMAGE_TAG="amd64-v11"
+IMAGE_TAG="amd64-v13"
 CONTAINER_NAME="trading-bot"
 TAR_FILE="/tmp/${IMAGE_NAME}-${IMAGE_TAG}.tar.gz"
 ALPACA_API_KEY="${ALPACA_API_KEY:-PKOJHUORSUX2C3VPVMC2FGKDT2}"

@@ -73,6 +73,7 @@ class ProductionTradingRunner:
         self.models = []
         self.current_nav = Decimal(str(self.config['initial_capital']))
         self.positions = {}  # Dict[symbol, quantity]
+        self.first_cycle_complete = False  # Skip trading on first cycle for safety
 
         # Components (initialized in setup())
         self.broker = None
@@ -628,6 +629,39 @@ class ProductionTradingRunner:
                 logger.error("No data fetched, skipping cycle")
                 return
 
+            # Validate data quality and skip trading on first cycle
+            if not self.first_cycle_complete:
+                logger.warning("=" * 80)
+                logger.warning("FIRST CYCLE AFTER STARTUP - VALIDATION MODE")
+                logger.warning("Data will be fetched and validated, but NO TRADES will be executed")
+                logger.warning("=" * 80)
+
+                # Validate critical symbols are present
+                critical_symbols = ['SPY'] + [s for model in self.models for s in model['universe']]
+                missing_symbols = [s for s in critical_symbols if s not in asset_features]
+
+                if missing_symbols:
+                    logger.error(f"Missing data for critical symbols: {missing_symbols}")
+                    logger.error("First cycle validation FAILED - will retry next cycle")
+                    return
+
+                # Validate data has sufficient bars for indicators
+                min_bars_required = 105  # Need at least 105 bars for MA_200
+                insufficient_data = []
+                for symbol, df in asset_features.items():
+                    if len(df) < min_bars_required:
+                        insufficient_data.append(f"{symbol} ({len(df)} bars)")
+
+                if insufficient_data:
+                    logger.error(f"Insufficient data (need {min_bars_required}+ bars): {', '.join(insufficient_data)}")
+                    logger.error("First cycle validation FAILED - will retry next cycle")
+                    return
+
+                logger.info(f"✅ Data validation passed: {len(asset_features)} symbols with {min_bars_required}+ bars each")
+                logger.info("Completing first cycle without trading - next cycle will be live")
+                self.first_cycle_complete = True
+                return
+
             # Classify regime
             spy_data = asset_features.get('SPY')
             if spy_data is None or len(spy_data) == 0:
@@ -697,6 +731,13 @@ class ProductionTradingRunner:
             aggregated_weights = self._aggregate_model_outputs(model_outputs)
 
             logger.info(f"Aggregated weights: {len(aggregated_weights)} positions")
+
+            # Safety check: If all models failed, don't trade
+            if not model_outputs:
+                logger.error("All models failed to generate weights!")
+                logger.error("SAFETY: Keeping existing positions unchanged")
+                logger.error("Will retry next cycle - check model errors above")
+                return
 
             # Get current prices
             current_prices = self.data_fetcher.get_current_prices(list(all_symbols))

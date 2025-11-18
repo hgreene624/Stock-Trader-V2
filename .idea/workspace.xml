@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="trading app improvements to alpaca integration&#10;&#10;trading bot v10 deployed.">
+    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="trading bot v11 deployed.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/dashboard.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/production/models/SectorRotationModel_v1/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/sector_rotation_v1.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/sector_rotation_v1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/production/deploy/vps_deploy.sh" beforeDir="false" afterPath="$PROJECT_DIR$/production/deploy/vps_deploy.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/production/docker/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/production/docker/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/production/runner/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/production/runner/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -186,7 +188,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763481567811</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="trading bot v11 deployed.">
+      <option name="closed" value="true" />
+      <created>1763482301357</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1763482301357</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -205,6 +215,7 @@
     <MESSAGE value="trading side app in docker container working" />
     <MESSAGE value="trading side app logging&#10;documentation updated" />
     <MESSAGE value="trading app improvements to alpaca integration&#10;&#10;trading bot v10 deployed." />
-    <option name="LAST_COMMIT_MESSAGE" value="trading app improvements to alpaca integration&#10;&#10;trading bot v10 deployed." />
+    <MESSAGE value="trading bot v11 deployed." />
+    <option name="LAST_COMMIT_MESSAGE" value="trading bot v11 deployed." />
   </component>
 </project>

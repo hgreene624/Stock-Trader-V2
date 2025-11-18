@@ -62,6 +62,9 @@ RUN chmod +x /app/entrypoint.sh
 # Create directories for data, logs, and .env location
 RUN mkdir -p /app/data/equities /app/data/crypto /app/logs /app/production/docker
 
+# Copy cached historical data into the image
+COPY production/docker/data/equities/*.parquet /app/data/equities/
+
 # Environment variables (can be overridden in docker-compose or at runtime)
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
