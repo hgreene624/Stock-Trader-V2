@@ -391,29 +391,68 @@ class ProductionTradingRunner:
             current_exposures=current_exposures
         )
 
-    def _aggregate_model_outputs(self, outputs: List[ModelOutput]) -> Dict[str, float]:
+    def _aggregate_model_outputs(
+        self,
+        outputs: List[ModelOutput],
+        budgets: List[float]
+    ) -> Dict[str, float]:
         """
-        Simple aggregation of model outputs.
+        Aggregate model outputs with dynamic budget reallocation.
 
-        For now: average weights across models (equal weighting).
-        Could be enhanced with confidence-based weighting.
+        Only active models (those with non-zero weights) are aggregated,
+        and their budgets are normalized to ensure 100% capital utilization.
+
+        This ensures:
+        - Neutral market (1 model active): 100% invested
+        - Bull market (2 models active): 100% invested
+        - Bear market (2 models active): 100% invested
+        - Future crypto/options: Per-asset-class caps respected
+
+        Args:
+            outputs: List of ModelOutput from each model
+            budgets: Corresponding budget fractions for each model
+
+        Returns:
+            Aggregated weights normalized by active budgets
         """
-        if not outputs:
+        if not outputs or not budgets:
             return {}
+
+        # Filter to only active models (those with non-zero total weight)
+        active_pairs = []
+        for output, budget in zip(outputs, budgets):
+            total_weight = sum(abs(w) for w in output.weights.values())
+            if total_weight > 0:
+                active_pairs.append((output, budget))
+
+        if not active_pairs:
+            logger.warning("No active models with non-zero weights")
+            return {}
+
+        # Sum budgets of active models
+        total_active_budget = sum(budget for _, budget in active_pairs)
+
+        logger.info(
+            f"Dynamic budget reallocation: {len(active_pairs)}/{len(outputs)} models active, "
+            f"total budget: {total_active_budget:.2%}"
+        )
 
         # Collect all symbols
         all_symbols = set()
-        for output in outputs:
+        for output, _ in active_pairs:
             all_symbols.update(output.weights.keys())
 
-        # Average weights
+        # Aggregate weights, normalizing by budget fraction / total active budget
         aggregated = {}
         for symbol in all_symbols:
-            weights = [
-                output.weights.get(symbol, 0.0)
-                for output in outputs
-            ]
-            aggregated[symbol] = sum(weights) / len(outputs)
+            weighted_sum = 0.0
+            for output, budget in active_pairs:
+                weight = output.weights.get(symbol, 0.0)
+                # Normalize: each model's contribution is scaled by its fraction of active budget
+                normalized_weight = weight * (budget / total_active_budget)
+                weighted_sum += normalized_weight
+
+            aggregated[symbol] = weighted_sum
 
         return aggregated
 
@@ -683,6 +722,7 @@ class ProductionTradingRunner:
 
             # Generate weights from each model
             model_outputs = []
+            model_budgets = []  # Track budget fractions for aggregation
 
             for model_info in self.models:
                 try:
@@ -721,6 +761,7 @@ class ProductionTradingRunner:
                     # Generate weights
                     output = model_info['instance'].generate_target_weights(context)
                     model_outputs.append(output)
+                    model_budgets.append(model_info['budget_fraction'])
 
                     logger.info(
                         f"Model {model_info['name']} generated "
@@ -732,8 +773,8 @@ class ProductionTradingRunner:
                     self.health_monitor.record_error(f"Model error: {e}")
                     continue
 
-            # Aggregate model outputs
-            aggregated_weights = self._aggregate_model_outputs(model_outputs)
+            # Aggregate model outputs with dynamic budget reallocation
+            aggregated_weights = self._aggregate_model_outputs(model_outputs, model_budgets)
 
             logger.info(f"Aggregated weights: {len(aggregated_weights)} positions")
 
