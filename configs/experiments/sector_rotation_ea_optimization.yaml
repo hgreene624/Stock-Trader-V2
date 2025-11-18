@@ -1,0 +1,83 @@
+# Evolutionary Algorithm Optimization for Sector Rotation
+# Goal: Find optimal momentum_period and top_n to beat SPY (14.63% CAGR)
+
+experiment:
+  name: "sector_rotation_ea_optimization"
+  description: "EA optimization of sector rotation parameters to beat SPY"
+
+  # Optimization method
+  method: "evolutionary"
+
+  # Base configuration
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "SectorRotationModel_v1"
+
+  # Configuration overrides
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      models:
+        - name: "SectorRotationModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter ranges for mutation
+  parameter_ranges:
+    models.SectorRotationModel_v1.parameters.momentum_period:
+      min: 60
+      max: 180
+
+    models.SectorRotationModel_v1.parameters.top_n:
+      min: 2
+      max: 6
+
+    models.SectorRotationModel_v1.parameters.min_momentum:
+      min: 0.0
+      max: 0.05
+
+  # Evolutionary algorithm settings
+  evolutionary:
+    # Population settings
+    population_size: 20     # Number of individuals per generation
+    num_generations: 15     # Number of generations to evolve
+
+    # Genetic operators
+    mutation_rate: 0.2      # Probability of mutation per parameter
+    mutation_strength: 0.15 # Mutation noise magnitude
+    crossover_rate: 0.7     # Probability of crossover
+
+    # Selection
+    tournament_size: 3      # Tournament selection size
+    elitism_count: 2        # Top N individuals preserved each generation
+
+    # Seed with known good parameters
+    initial_population:
+      - {momentum_period: 126, top_n: 3, min_momentum: 0.0}   # Baseline
+      - {momentum_period: 126, top_n: 5, min_momentum: 0.0}   # Best manual test
+      - {momentum_period: 120, top_n: 4, min_momentum: 0.0}
+      - {momentum_period: 150, top_n: 4, min_momentum: 0.01}
+
+    # Reproducibility
+    seed: 42
+
+  # Backtest period (training set)
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2022-12-31"
+
+  # Optimization objective
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 20  # Save top 20 solutions
+
+  # Results storage
+  results:
+    database: "results/sector_rotation_ea_optimization.db"
+    summary_csv: "results/sector_rotation_ea_optimization_top_20.csv"
+    track_generations: true  # Save best/avg fitness per generation

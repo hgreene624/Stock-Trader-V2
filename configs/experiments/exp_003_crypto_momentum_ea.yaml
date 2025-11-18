@@ -1,0 +1,85 @@
+# Experiment: Crypto Momentum Model - Evolutionary Algorithm
+# Refine momentum parameters using genetic algorithm
+
+experiment:
+  name: "crypto_momentum_ea_refinement"
+  description: "Evolutionary algorithm to optimize crypto momentum lookback periods"
+
+  # Optimization method
+  method: "evolutionary"
+
+  # Base configuration
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "CryptoMomentumModel_v1"
+
+  # Configuration overrides
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      models:
+        - name: "CryptoMomentumModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter ranges for mutation
+  parameter_ranges:
+    models.CryptoMomentumModel_v1.parameters.momentum_short_days:
+      min: 20
+      max: 45
+
+    models.CryptoMomentumModel_v1.parameters.momentum_long_days:
+      min: 50
+      max: 90
+
+  # Evolutionary algorithm settings
+  evolutionary:
+    # Population settings
+    population_size: 20  # Number of individuals per generation
+    num_generations: 10  # Number of generations to evolve
+
+    # Genetic operators
+    mutation_rate: 0.2  # Probability of mutation per parameter
+    mutation_strength: 0.1  # Mutation noise magnitude (fraction of range)
+    crossover_rate: 0.8  # Probability of crossover
+
+    # Selection
+    tournament_size: 3  # Tournament selection size
+    elitism_count: 2  # Top N individuals preserved each generation
+
+    # Seeding options (choose one):
+
+    # Option 1: Seed from previous experiment's top performers
+    # seed_from_experiment: "exp_002_mean_reversion_random"
+    # seed_top_n: 10
+
+    # Option 2: Provide initial population manually
+    # (If not specified, population will be randomly initialized)
+    initial_population:
+      - {momentum_short_days: 30, momentum_long_days: 60}
+      - {momentum_short_days: 25, momentum_long_days: 55}
+      - {momentum_short_days: 35, momentum_long_days: 70}
+
+    # Reproducibility
+    seed: 42
+
+  # Backtest period
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization objective
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 5  # Save final top 5 solutions
+
+  # Results storage
+  results:
+    database: "results/exp_003_crypto_momentum_ea.db"
+    summary_csv: "results/exp_003_summary.csv"
+    track_generations: true  # Save best/avg fitness per generation

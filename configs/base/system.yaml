@@ -1,0 +1,68 @@
+# Multi-Model Algorithmic Trading Platform
+# Main System Configuration
+
+system:
+  # Execution mode: "backtest" | "paper" | "live"
+  mode: "backtest"
+
+  # Initial NAV per mode
+  backtest_initial_nav: 100000.00  # Simulated starting capital for backtests
+  # paper_initial_nav: not used (reads from broker account balance)
+  # live_initial_nav: not used (reads from broker account balance)
+
+  # Primary timeframe for strategy decisions
+  timeframe: "H4"  # 4-hour bars
+
+  # Data paths
+  data_dir: "./data"
+  results_dir: "./results"
+  logs_dir: "./logs"
+
+  # Active models with budgets (NAV fractions)
+  # Adjust status field to control which models run in each mode:
+  #   - research: backtest only
+  #   - candidate: backtest + eligible for paper
+  #   - paper: paper trading
+  #   - live: live trading with real capital
+  models:
+    - name: "EquityTrendModel_v1"
+      version: "1.0.0"
+      status: "research"  # Start in research mode
+      budget_fraction: 1.0  # 100% for single-model testing
+
+  # Risk limits (enforced by Risk Engine before execution)
+  risk:
+    max_leverage: 1.2  # Gross exposure / NAV
+    per_asset_cap: 0.40  # Max 40% of NAV in single asset
+    crypto_class_cap: 0.20  # Max 20% of NAV in crypto assets
+    drawdown_trigger: 0.15  # 15% peak-to-trough triggers de-risking
+    drawdown_halt: 0.20  # 20% peak-to-trough triggers full exit
+    derisking_factor: 0.50  # Reduce all budgets to 50% on trigger
+
+  # Broker configuration
+  # API keys read from environment variables (.env file)
+  brokers:
+    alpaca:
+      api_key_env: "PKOJHUORSUX2C3VPVMC2FGKDT2"
+      api_secret_env: "EFU2nQz3WYRjweBkLdw2vH5g5cPML2CTU18sEMSD19AG"
+      base_url: "https://paper-api.alpaca.markets/v2"  # Paper trading URL
+      # For live trading, use: "https://api.alpaca.markets"
+
+    binance:
+      api_key_env: "BINANCE_API_KEY"
+      api_secret_env: "BINANCE_API_SECRET"
+
+    kraken:
+      api_key_env: "KRAKEN_API_KEY"
+      api_secret_env: "KRAKEN_API_SECRET"
+
+  # Logging configuration
+  logging:
+    level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+    format: "json"  # Structured JSON lines
+    files:
+      trades: "./logs/trades.log"
+      orders: "./logs/orders.log"
+      performance: "./logs/performance.log"
+      regime: "./logs/regime.log"
+      errors: "./logs/errors.log"

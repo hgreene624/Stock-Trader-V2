@@ -1,0 +1,467 @@
+profiles:
+  sector_rotation_default:
+    description: Sector rotation momentum - designed to BEAT SPY!
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 126
+      top_n: 3
+      min_momentum: 0.0
+
+  sector_rotation_ea_optimized:
+    description: EA-optimized parameters (BPS 1.173, +70% vs baseline)
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 77
+      top_n: 3
+      min_momentum: 0.044
+
+  sector_rotation_bull:
+    description: "BULL MARKET SPECIALIST - Active only in bull regimes (optimized from walk-forward Windows 1, 5)"
+    model: SectorRotationBull_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 80
+      top_n: 4
+      min_momentum: 0.03
+      target_leverage: 1.3
+
+  sector_rotation_bear:
+    description: "BEAR MARKET SPECIALIST - Active only in bear regimes (defensive baseline params)"
+    model: SectorRotationBear_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 126
+      top_n: 2
+      min_momentum: 0.10
+      target_leverage: 1.0
+
+  sector_rotation_ea_optimized_leverage:
+    description: EA-optimized parameters WITH 1.25x leverage - BEST COMBO
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 77
+      top_n: 3
+      min_momentum: 0.044
+      target_leverage: 1.25
+
+  sector_rotation_leverage_1.25x:
+    description: Baseline + 1.25x leverage to beat SPY (target ~14.6% CAGR)
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 126
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+  equity_trend_daily:
+    description: Daily bar version - full 2020-2024 history available!
+    model: EquityTrendModel_v1_Daily
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      ma_period: 200
+      momentum_period: 120
+      equal_weight: true
+  equity_trend_v2_daily:
+    description: IMPROVED v2 - Partial positions, faster signals, aims to beat SPY!
+    model: EquityTrendModel_v2_Daily
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      ma_fast: 50
+      ma_medium: 100
+      ma_slow: 200
+      momentum_period: 120
+  equity_trend_default:
+    description: Default equity trend strategy on SPY/QQQ
+    model: EquityTrendModel_v1
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      slow_ma_period: 200
+      momentum_lookback_days: 60
+      exit_ma_period: 50
+      equal_weight: true
+      max_positions: 2
+  equity_trend_aggressive:
+    description: Faster MA periods for more responsive signals
+    model: EquityTrendModel_v1
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      slow_ma_period: 150
+      momentum_lookback_days: 40
+      exit_ma_period: 30
+      equal_weight: true
+      max_positions: 2
+  equity_trend_conservative:
+    description: Slower MA periods for smoother signals
+    model: EquityTrendModel_v1
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      slow_ma_period: 250
+      momentum_lookback_days: 90
+      exit_ma_period: 70
+      equal_weight: true
+      max_positions: 2
+  equity_trend_recent:
+    description: Test on recent data only (2023-2024)
+    model: EquityTrendModel_v1
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2023-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      slow_ma_period: 200
+      momentum_lookback_days: 60
+      exit_ma_period: 50
+      equal_weight: true
+      max_positions: 2
+  mean_rev_default:
+    description: Default mean reversion on SPY/QQQ/DIA
+    model: IndexMeanReversionModel_v1
+    universe:
+    - SPY
+    - QQQ
+    - DIA
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      rsi_period: 14
+      rsi_oversold: 30
+      rsi_overbought: 70
+      bb_period: 20
+      bb_std: 2.0
+      equal_weight: true
+      max_positions: 3
+  mean_rev_extreme:
+    description: More extreme RSI thresholds for rare signals
+    model: IndexMeanReversionModel_v1
+    universe:
+    - SPY
+    - QQQ
+    - DIA
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      rsi_period: 14
+      rsi_oversold: 20
+      rsi_overbought: 80
+      bb_period: 20
+      bb_std: 2.5
+      equal_weight: true
+      max_positions: 3
+  mean_rev_short_term:
+    description: Short-term mean reversion with tight bands
+    model: IndexMeanReversionModel_v1
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2023-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      rsi_period: 7
+      rsi_oversold: 25
+      rsi_overbought: 75
+      bb_period: 10
+      bb_std: 1.5
+      equal_weight: true
+      max_positions: 2
+  crypto_momentum_default:
+    description: Default crypto momentum on BTC/ETH
+    model: CryptoMomentumModel_v1
+    universe:
+    - BTC-USD
+    - ETH-USD
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      momentum_short_days: 30
+      momentum_long_days: 60
+      only_in_crypto_bull: true
+      equal_weight: false
+      max_positions: 2
+  crypto_momentum_fast:
+    description: Faster momentum signals for crypto
+    model: CryptoMomentumModel_v1
+    universe:
+    - BTC-USD
+    - ETH-USD
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      momentum_short_days: 14
+      momentum_long_days: 30
+      only_in_crypto_bull: true
+      equal_weight: false
+      max_positions: 2
+  crypto_momentum_no_regime:
+    description: Crypto momentum without regime gating
+    model: CryptoMomentumModel_v1
+    universe:
+    - BTC-USD
+    - ETH-USD
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      momentum_short_days: 30
+      momentum_long_days: 60
+      only_in_crypto_bull: false
+      equal_weight: false
+      max_positions: 2
+  my_test_1:
+    description: Custom test profile 1 - edit this for your experiments
+    model: EquityTrendModel_v1
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      slow_ma_period: 200
+      momentum_lookback_days: 60
+      exit_ma_period: 50
+      equal_weight: true
+      max_positions: 2
+  my_test_2:
+    description: Custom test profile 2 - another test slot
+    model: IndexMeanReversionModel_v1
+    universe:
+    - SPY
+    - QQQ
+    start_date: '2023-01-01'
+    end_date: '2024-12-31'
+    parameters:
+      rsi_period: 14
+      rsi_oversold: 30
+      rsi_overbought: 70
+      bb_period: 20
+      bb_std: 2.0
+      equal_weight: true
+      max_positions: 2
+  sector_fast_momentum_90d:
+    description: Faster 90-day momentum vs baseline 126-day
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 90
+      top_n: 3
+      min_momentum: 0.0
+  sector_top4:
+    description: Hold top 4 sectors vs baseline 3
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 126
+      top_n: 4
+      min_momentum: 0.0
+  sector_top5:
+    description: Hold top 5 sectors vs baseline 3
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 126
+      top_n: 5
+      min_momentum: 0.0
+  sector_90d_top5:
+    description: 'Combination: 90-day momentum with top 5 sectors'
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 90
+      top_n: 5
+      min_momentum: 0.0
+universes:
+  major_indices:
+  - SPY
+  - QQQ
+  - DIA
+  - IWM
+  tech_etfs:
+  - QQQ
+  - XLK
+  - SMH
+  - SOXX
+  sector_rotation:
+  - XLF
+  - XLE
+  - XLK
+  - XLV
+  - XLY
+  crypto_majors:
+  - BTC-USD
+  - ETH-USD
+  - SOL-USD
+  my_custom_universe:
+  - SPY
+  - QQQ

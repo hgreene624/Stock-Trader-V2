@@ -1,0 +1,597 @@
+# Experiment Configuration Schema
+# Defines how to specify parameter optimization experiments
+# Supports: Grid Search, Random Search, and Evolutionary Algorithm
+
+# ============================================================================
+# Grid Search Experiment Example
+# ============================================================================
+
+# configs/experiments/exp_001_equity_trend_grid.yaml
+experiment:
+  name: "equity_trend_ma_optimization"
+  description: "Grid search over MA periods and momentum lookback"
+
+  # Optimization method
+  method: "grid"  # "grid" | "random" | "evolutionary"
+
+  # Base configuration to inherit from
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "EquityTrendModel_v1"
+
+  # Configuration overrides (applied to all runs)
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      # Test single model in isolation
+      models:
+        - name: "EquityTrendModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0  # 100% allocation for testing
+
+  # Parameter grid (exhaustive search)
+  # Each parameter maps to a list of values to try
+  parameter_grid:
+    # Dot notation for nested parameters
+    models.EquityTrendModel_v1.parameters.slow_ma_period:
+      - 150
+      - 200
+      - 250
+
+    models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+      - 30
+      - 60
+      - 90
+      - 120
+
+    models.EquityTrendModel_v1.parameters.exit_ma_period:
+      - 30
+      - 50
+      - 70
+
+  # Total combinations: 3 × 4 × 3 = 36 backtests
+
+  # Backtest configuration
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization metric and objective
+  optimization:
+    metric: "bps"  # Balanced Performance Score
+    maximize: true
+
+    # Store top N results for analysis
+    save_top_n: 10
+
+  # Results storage
+  results:
+    database: "results/exp_001_equity_trend_grid.db"
+    summary_csv: "results/exp_001_summary.csv"
+
+
+# ============================================================================
+# Random Search Experiment Example
+# ============================================================================
+
+# configs/experiments/exp_002_mean_reversion_random.yaml
+experiment:
+  name: "mean_reversion_rsi_bb_random_search"
+  description: "Random search over RSI and Bollinger Band parameters"
+
+  method: "random"
+
+  base_config: "configs/base/system.yaml"
+
+  target_model: "IndexMeanReversionModel_v1"
+
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+      models:
+        - name: "IndexMeanReversionModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter distributions for random sampling
+  parameter_distributions:
+    models.IndexMeanReversionModel_v1.parameters.rsi_period:
+      type: "choice"  # Discrete choice
+      values: [10, 12, 14, 16, 18, 20]
+
+    models.IndexMeanReversionModel_v1.parameters.rsi_oversold:
+      type: "uniform"  # Continuous uniform
+      min: 20.0
+      max: 35.0
+
+    models.IndexMeanReversionModel_v1.parameters.rsi_overbought:
+      type: "uniform"
+      min: 65.0
+      max: 80.0
+
+    models.IndexMeanReversionModel_v1.parameters.bb_period:
+      type: "randint"  # Random integer
+      min: 15
+      max: 30
+
+    models.IndexMeanReversionModel_v1.parameters.bb_std:
+      type: "uniform"
+      min: 1.5
+      max: 2.5
+
+  # Number of random samples to generate
+  random_search:
+    n_samples: 100  # Run 100 random parameter combinations
+    seed: 42  # For reproducibility
+
+    # Optional: estimate parameter space coverage
+    estimate_coverage: true
+
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 20  # Save top 20 for EA seeding
+
+  results:
+    database: "results/exp_002_mean_reversion_random.db"
+    summary_csv: "results/exp_002_summary.csv"
+
+
+# ============================================================================
+# Evolutionary Algorithm Experiment Example
+# ============================================================================
+
+# configs/experiments/exp_003_crypto_momentum_ea.yaml
+experiment:
+  name: "crypto_momentum_ea_refinement"
+  description: "Evolutionary algorithm to refine top crypto momentum parameters"
+
+  method: "evolutionary"
+
+  base_config: "configs/base/system.yaml"
+
+  target_model: "CryptoMomentumModel_v1"
+
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+      models:
+        - name: "CryptoMomentumModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter ranges for mutation
+  parameter_ranges:
+    models.CryptoMomentumModel_v1.parameters.momentum_short_days:
+      min: 20
+      max: 45
+
+    models.CryptoMomentumModel_v1.parameters.momentum_long_days:
+      min: 50
+      max: 90
+
+  # Evolutionary algorithm settings
+  evolutionary:
+    # Population settings
+    population_size: 20  # Number of individuals per generation
+    num_generations: 10  # Number of generations to evolve
+
+    # Genetic operators
+    mutation_rate: 0.2  # Probability of mutation per parameter
+    mutation_strength: 0.1  # Mutation noise magnitude (fraction of range)
+    crossover_rate: 0.8  # Probability of crossover
+
+    # Selection
+    tournament_size: 3  # Tournament selection size
+    elitism_count: 2  # Top N individuals preserved each generation
+
+    # Seeding
+    seed_from_experiment: "exp_002_mean_reversion_random"  # Use top performers from previous experiment
+    seed_top_n: 10  # Use top 10 from seed experiment
+
+    # Or seed from specific parameter sets
+    # initial_population:
+    #   - {momentum_short_days: 30, momentum_long_days: 60}
+    #   - {momentum_short_days: 25, momentum_long_days: 55}
+
+    # Reproducibility
+    seed: 42
+
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 5  # Final top 5 solutions
+
+  results:
+    database: "results/exp_003_crypto_momentum_ea.db"
+    summary_csv: "results/exp_003_summary.csv"
+
+    # Track evolution progress
+    track_generations: true  # Save best/avg fitness per generation
+
+
+# ============================================================================
+# Hybrid Optimization Workflow Example
+# ============================================================================
+
+# configs/experiments/exp_004_hybrid_workflow.yaml
+experiment:
+  name: "hybrid_grid_then_ea"
+  description: "Grid search followed by EA refinement (automated pipeline)"
+
+  method: "hybrid"  # Runs multiple optimization methods sequentially
+
+  base_config: "configs/base/system.yaml"
+
+  target_model: "EquityTrendModel_v1"
+
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+      models:
+        - name: "EquityTrendModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Hybrid workflow stages
+  stages:
+    # Stage 1: Coarse grid search
+    - method: "grid"
+      parameter_grid:
+        models.EquityTrendModel_v1.parameters.slow_ma_period:
+          - 150
+          - 200
+          - 250
+        models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+          - 30
+          - 60
+          - 90
+      save_top_n: 10
+
+    # Stage 2: Refine with EA
+    - method: "evolutionary"
+      parameter_ranges:
+        models.EquityTrendModel_v1.parameters.slow_ma_period:
+          min: 150
+          max: 250
+        models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+          min: 30
+          max: 90
+      evolutionary:
+        population_size: 15
+        num_generations: 8
+        mutation_rate: 0.2
+        crossover_rate: 0.8
+        elitism_count: 2
+        seed_from_previous_stage: true  # Use top 10 from stage 1
+      save_top_n: 5
+
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  optimization:
+    metric: "bps"
+    maximize: true
+
+  results:
+    database: "results/exp_004_hybrid.db"
+    summary_csv: "results/exp_004_summary.csv"
+
+
+# ============================================================================
+# Multi-Objective Optimization Example
+# ============================================================================
+
+# configs/experiments/exp_005_multi_objective.yaml
+experiment:
+  name: "equity_trend_pareto_optimization"
+  description: "Optimize for Sharpe, CAGR, and max drawdown simultaneously"
+
+  method: "random"  # Random search works well for multi-objective
+
+  base_config: "configs/base/system.yaml"
+  target_model: "EquityTrendModel_v1"
+
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+      models:
+        - name: "EquityTrendModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  parameter_distributions:
+    models.EquityTrendModel_v1.parameters.slow_ma_period:
+      type: "randint"
+      min: 100
+      max: 300
+
+    models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+      type: "randint"
+      min: 20
+      max: 120
+
+  random_search:
+    n_samples: 200
+    seed: 42
+
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Multi-objective optimization
+  optimization:
+    multi_objective: true
+
+    objectives:
+      - metric: "sharpe_ratio"
+        maximize: true
+        weight: 0.4
+
+      - metric: "cagr"
+        maximize: true
+        weight: 0.3
+
+      - metric: "win_rate"
+        maximize: true
+        weight: 0.2
+
+      - metric: "max_drawdown"
+        maximize: false  # Minimize drawdown
+        weight: 0.1
+
+    # Pareto frontier analysis
+    pareto_analysis: true
+    save_pareto_front: true
+
+  results:
+    database: "results/exp_005_multi_objective.db"
+    summary_csv: "results/exp_005_summary.csv"
+    pareto_csv: "results/exp_005_pareto_front.csv"
+
+
+# ============================================================================
+# Walk-Forward Optimization Example
+# ============================================================================
+
+# configs/experiments/exp_006_walk_forward.yaml
+experiment:
+  name: "equity_trend_walk_forward"
+  description: "Walk-forward optimization to avoid overfitting"
+
+  method: "walk_forward"
+
+  base_config: "configs/base/system.yaml"
+  target_model: "EquityTrendModel_v1"
+
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+      models:
+        - name: "EquityTrendModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Walk-forward settings
+  walk_forward:
+    in_sample_months: 12  # Train on 12 months
+    out_sample_months: 3  # Test on 3 months
+    step_months: 3  # Move forward by 3 months each iteration
+
+    # Optimization method for each in-sample period
+    optimization_method: "grid"
+    parameter_grid:
+      models.EquityTrendModel_v1.parameters.slow_ma_period:
+        - 150
+        - 200
+        - 250
+      models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+        - 30
+        - 60
+        - 90
+
+    # Use best in-sample params for out-sample testing
+    select_best_by: "sharpe_ratio"
+
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  optimization:
+    metric: "bps"
+    maximize: true
+
+  results:
+    database: "results/exp_006_walk_forward.db"
+    summary_csv: "results/exp_006_summary.csv"
+    walk_forward_csv: "results/exp_006_walk_forward_periods.csv"
+
+
+# ============================================================================
+# Parameter Distribution Type Reference
+# ============================================================================
+
+# Supported distribution types for random search:
+
+distributions:
+  # Discrete choice (uniform random selection)
+  choice:
+    type: "choice"
+    values: [10, 20, 30, 40, 50]
+
+  # Continuous uniform distribution [min, max]
+  uniform:
+    type: "uniform"
+    min: 0.1
+    max: 1.0
+
+  # Log-uniform distribution (for parameters spanning orders of magnitude)
+  # Example: learning rates from 0.001 to 1.0
+  loguniform:
+    type: "loguniform"
+    min: 0.001
+    max: 1.0
+
+  # Random integer in range [min, max] (inclusive)
+  randint:
+    type: "randint"
+    min: 10
+    max: 100
+
+
+# ============================================================================
+# Optimization Metric Reference
+# ============================================================================
+
+# Available optimization metrics:
+
+metrics:
+  # Single metrics
+  - "bps"  # Balanced Performance Score (default)
+  - "sharpe_ratio"
+  - "sortino_ratio"
+  - "cagr"
+  - "total_return"
+  - "max_drawdown"  # Usually minimize
+  - "calmar_ratio"  # CAGR / Max Drawdown
+  - "win_rate"
+  - "profit_factor"  # Gross profit / Gross loss
+  - "avg_trade_pnl"
+  - "num_trades"
+
+  # Custom metrics (define in backtest engine)
+  - "custom.risk_adjusted_return"
+  - "custom.regime_weighted_sharpe"
+
+
+# ============================================================================
+# Pydantic Validation Schema (Python Implementation)
+# ============================================================================
+
+# Example pydantic models for experiment config validation:
+#
+# from pydantic import BaseModel, Field, validator
+# from typing import List, Dict, Literal, Optional, Any
+#
+# class ParameterGridConfig(BaseModel):
+#     """Grid search parameter specification."""
+#     # Dynamic keys, values are lists
+#     __root__: Dict[str, List[Any]]
+#
+# class DistributionConfig(BaseModel):
+#     """Parameter distribution for random search."""
+#     type: Literal["choice", "uniform", "loguniform", "randint"]
+#     values: Optional[List[Any]] = None  # For 'choice'
+#     min: Optional[float] = None  # For uniform/loguniform/randint
+#     max: Optional[float] = None  # For uniform/loguniform/randint
+#
+# class ParameterDistributionsConfig(BaseModel):
+#     """Random search parameter distributions."""
+#     __root__: Dict[str, DistributionConfig]
+#
+# class ParameterRangesConfig(BaseModel):
+#     """Parameter ranges for EA mutation."""
+#     __root__: Dict[str, Dict[Literal["min", "max"], float]]
+#
+# class RandomSearchConfig(BaseModel):
+#     """Random search settings."""
+#     n_samples: int = Field(ge=1)
+#     seed: Optional[int] = None
+#     estimate_coverage: bool = False
+#
+# class EvolutionaryConfig(BaseModel):
+#     """Evolutionary algorithm settings."""
+#     population_size: int = Field(ge=2, default=20)
+#     num_generations: int = Field(ge=1, default=10)
+#     mutation_rate: float = Field(ge=0.0, le=1.0, default=0.2)
+#     mutation_strength: float = Field(ge=0.0, le=1.0, default=0.1)
+#     crossover_rate: float = Field(ge=0.0, le=1.0, default=0.8)
+#     tournament_size: int = Field(ge=2, default=3)
+#     elitism_count: int = Field(ge=0, default=2)
+#     seed_from_experiment: Optional[str] = None
+#     seed_top_n: Optional[int] = None
+#     seed: Optional[int] = None
+#
+# class BacktestConfig(BaseModel):
+#     """Backtest period configuration."""
+#     start_date: str  # ISO format: YYYY-MM-DD
+#     end_date: str
+#
+# class OptimizationConfig(BaseModel):
+#     """Optimization objective configuration."""
+#     metric: str = "bps"
+#     maximize: bool = True
+#     save_top_n: int = Field(ge=1, default=10)
+#     multi_objective: bool = False
+#     objectives: Optional[List[Dict[str, Any]]] = None
+#
+# class ResultsConfig(BaseModel):
+#     """Results storage configuration."""
+#     database: str
+#     summary_csv: str
+#     track_generations: bool = False
+#     pareto_csv: Optional[str] = None
+#
+# class ExperimentConfig(BaseModel):
+#     """Main experiment configuration."""
+#     name: str
+#     description: str
+#     method: Literal["grid", "random", "evolutionary", "hybrid", "walk_forward"]
+#     base_config: str
+#     target_model: str
+#     overrides: Dict[str, Any]
+#
+#     # Method-specific configs (only one required based on method)
+#     parameter_grid: Optional[ParameterGridConfig] = None
+#     parameter_distributions: Optional[ParameterDistributionsConfig] = None
+#     parameter_ranges: Optional[ParameterRangesConfig] = None
+#
+#     random_search: Optional[RandomSearchConfig] = None
+#     evolutionary: Optional[EvolutionaryConfig] = None
+#
+#     backtest: BacktestConfig
+#     optimization: OptimizationConfig
+#     results: ResultsConfig
+#
+#     @validator('parameter_grid')
+#     def validate_grid_method(cls, v, values):
+#         if values.get('method') == 'grid' and v is None:
+#             raise ValueError("parameter_grid required for method='grid'")
+#         return v
+#
+#     @validator('parameter_distributions')
+#     def validate_random_method(cls, v, values):
+#         if values.get('method') == 'random' and v is None:
+#             raise ValueError("parameter_distributions required for method='random'")
+#         return v
+#
+# # Usage:
+# import yaml
+# with open('configs/experiments/exp_001.yaml') as f:
+#     config_dict = yaml.safe_load(f)
+#
+# experiment_config = ExperimentConfig(**config_dict['experiment'])
+# print(f"Experiment '{experiment_config.name}' validated successfully!")

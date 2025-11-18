@@ -1,0 +1,75 @@
+# Multi-Model Algorithmic Trading Platform
+# Regime-Based Budget Adjustments
+
+# Budget multipliers per regime (applied to base model budgets)
+# Example: If EquityTrendModel has budget 0.30 and equity_bull multiplier is 1.2,
+#          effective budget = 0.30 × 1.2 = 0.36
+
+regime_budgets:
+  # Equity Regime Adjustments
+  equity_bull:
+    EquityTrendModel_v1: 1.2  # Increase equity trend budget in bull market
+    IndexMeanReversionModel_v1: 0.8  # Reduce mean reversion in strong trends
+    CryptoMomentumModel_v1: 1.0  # No change
+
+  equity_bear:
+    EquityTrendModel_v1: 0.5  # Reduce trend following in bear market
+    IndexMeanReversionModel_v1: 1.2  # Increase mean reversion (more volatility)
+    CryptoMomentumModel_v1: 1.0
+
+  equity_neutral:
+    EquityTrendModel_v1: 1.0
+    IndexMeanReversionModel_v1: 1.0
+    CryptoMomentumModel_v1: 1.0
+
+  # Volatility Regime Adjustments
+  vol_high:
+    # High volatility (VIX > 25): reduce all budgets by 20%
+    EquityTrendModel_v1: 0.8
+    IndexMeanReversionModel_v1: 0.8
+    CryptoMomentumModel_v1: 0.7  # More conservative on crypto
+
+  vol_normal:
+    # Normal volatility (VIX 15-25): no adjustment
+    EquityTrendModel_v1: 1.0
+    IndexMeanReversionModel_v1: 1.0
+    CryptoMomentumModel_v1: 1.0
+
+  vol_low:
+    # Low volatility (VIX < 15): can increase risk slightly
+    EquityTrendModel_v1: 1.1
+    IndexMeanReversionModel_v1: 1.1
+    CryptoMomentumModel_v1: 1.0
+
+  # Crypto Regime Adjustments
+  crypto_bull:
+    # Crypto bull market: increase crypto budget
+    CryptoMomentumModel_v1: 1.3
+
+  crypto_bear:
+    # Crypto bear market: exit crypto entirely
+    CryptoMomentumModel_v1: 0.0
+
+  # Macro Regime Adjustments
+  macro_expansion:
+    # Economic expansion: standard allocations
+    EquityTrendModel_v1: 1.0
+    IndexMeanReversionModel_v1: 1.0
+    CryptoMomentumModel_v1: 1.0
+
+  macro_contraction:
+    # Economic contraction: reduce risk
+    EquityTrendModel_v1: 0.7
+    IndexMeanReversionModel_v1: 0.9  # Mean reversion can work in choppy markets
+    CryptoMomentumModel_v1: 0.5
+
+  macro_neutral:
+    EquityTrendModel_v1: 1.0
+    IndexMeanReversionModel_v1: 1.0
+    CryptoMomentumModel_v1: 1.0
+
+# Notes:
+# - Multipliers are applied multiplicatively across all regimes
+# - Example: If equity_bull (1.2) AND vol_high (0.8), effective = 0.30 × 1.2 × 0.8 = 0.288
+# - Final budgets are always capped by Risk Engine limits (per-asset, class, leverage)
+# - Regime-adjusted budgets do not change model parameters, only allocations

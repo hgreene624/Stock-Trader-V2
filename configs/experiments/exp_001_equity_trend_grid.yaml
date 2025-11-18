@@ -1,0 +1,63 @@
+# Experiment: Equity Trend Model - Grid Search
+# Optimize MA periods and momentum lookback using exhaustive grid search
+
+experiment:
+  name: "equity_trend_ma_optimization"
+  description: "Grid search over slow MA period and momentum lookback days"
+
+  # Optimization method
+  method: "grid"
+
+  # Base configuration to inherit from
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "EquityTrendModel_v1"
+
+  # Configuration overrides (applied to all runs)
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      # Test single model in isolation
+      models:
+        - name: "EquityTrendModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0  # 100% allocation for testing
+
+  # Parameter grid (exhaustive search)
+  # Total combinations: 3 × 4 × 3 = 36 backtests
+  parameter_grid:
+    models.EquityTrendModel_v1.parameters.slow_ma_period:
+      - 150
+      - 200
+      - 250
+
+    models.EquityTrendModel_v1.parameters.momentum_lookback_days:
+      - 30
+      - 60
+      - 90
+      - 120
+
+    models.EquityTrendModel_v1.parameters.exit_ma_period:
+      - 30
+      - 50
+      - 70
+
+  # Backtest period
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization metric and objective
+  optimization:
+    metric: "bps"  # Balanced Performance Score
+    maximize: true
+    save_top_n: 10  # Save top 10 parameter sets
+
+  # Results storage
+  results:
+    database: "results/exp_001_equity_trend_grid.db"
+    summary_csv: "results/exp_001_summary.csv"

@@ -1,0 +1,82 @@
+# Multi-Model Algorithmic Trading Platform
+# Model-Specific Parameters Configuration
+
+models:
+  EquityTrendModel_v1:
+    version: "1.0.0"
+    description: "Long-only equity trend following using 200D MA and momentum"
+
+    # Asset universe
+    universe:
+      - "SPY"  # S&P 500 ETF
+      - "QQQ"  # Nasdaq 100 ETF
+
+    asset_classes:
+      - "equity"
+
+    # Strategy parameters
+    parameters:
+      slow_ma_period: 200  # Daily MA for trend detection
+      momentum_lookback_days: 60  # 60-day momentum
+      exit_ma_period: 50  # Faster MA for exits
+
+      # Position sizing
+      equal_weight: true  # Equal weight across universe (if false, use momentum ranking)
+      max_positions: 2  # Max concurrent positions
+
+    # Execution hints
+    execution:
+      urgency: "normal"
+      horizon: "position"  # Longer-term holds
+
+  IndexMeanReversionModel_v1:
+    version: "1.0.0"
+    description: "Mean reversion on major index ETFs using RSI + Bollinger Bands"
+
+    universe:
+      - "SPY"
+      - "QQQ"
+      - "DIA"  # Dow Jones ETF
+
+    asset_classes:
+      - "equity"
+
+    parameters:
+      rsi_period: 14  # RSI lookback
+      rsi_oversold: 30  # Entry threshold
+      rsi_overbought: 70  # Exit threshold
+
+      bb_period: 20  # Bollinger Band period
+      bb_std: 2.0  # Standard deviations
+
+      equal_weight: true
+      max_positions: 3
+
+    execution:
+      urgency: "high"  # Mean reversion is time-sensitive
+      horizon: "swing"  # Shorter holds
+
+  CryptoMomentumModel_v1:
+    version: "1.0.0"
+    description: "Crypto momentum with regime gating (bull markets only)"
+
+    universe:
+      - "BTC-USD"
+      - "ETH-USD"
+
+    asset_classes:
+      - "crypto"
+
+    parameters:
+      momentum_short_days: 30  # Short-term momentum
+      momentum_long_days: 60  # Long-term momentum
+
+      # Regime gating
+      only_in_crypto_bull: true  # Only trade in crypto bull regime
+
+      equal_weight: false  # Weight by momentum strength
+      max_positions: 2
+
+    execution:
+      urgency: "normal"
+      horizon: "position"

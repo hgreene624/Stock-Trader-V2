@@ -1,0 +1,62 @@
+# Grid Search Optimization for Sector Rotation
+# Goal: Find optimal momentum_period and top_n to beat SPY (14.63% CAGR)
+
+experiment:
+  name: "sector_rotation_grid_search"
+  description: "Exhaustive grid search of sector rotation parameters"
+
+  # Optimization method
+  method: "grid"
+
+  # Base configuration
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "SectorRotationModel_v1"
+
+  # Configuration overrides
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      models:
+        - name: "SectorRotationModel_v1"
+          version: "1.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter grid
+  parameter_grid:
+    models.SectorRotationModel_v1.parameters.momentum_period:
+      - 90
+      - 110
+      - 126
+      - 140
+      - 160
+
+    models.SectorRotationModel_v1.parameters.top_n:
+      - 3
+      - 4
+      - 5
+      - 6
+
+    models.SectorRotationModel_v1.parameters.min_momentum:
+      - 0.0
+      - 0.01
+
+  # Backtest period (training set)
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2022-12-31"
+
+  # Optimization objective
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 20  # Save top 20 solutions
+
+  # Results storage
+  results:
+    database: "results/sector_rotation_grid_search.db"
+    summary_csv: "results/sector_rotation_grid_search_top_20.csv"

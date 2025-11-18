@@ -1,0 +1,28 @@
+{
+  "model_name": "SectorRotationModel_v1",
+  "class_name": "SectorRotationModel_v1",
+  "stage": "live",
+  "parameters": {
+    "momentum_period": 126,
+    "top_n": 3,
+    "min_momentum": 0.0
+  },
+  "universe": [
+    "XLK",
+    "XLF",
+    "XLE",
+    "XLV",
+    "XLI",
+    "XLP",
+    "XLU",
+    "XLY",
+    "XLC",
+    "XLB",
+    "XLRE",
+    "TLT"
+  ],
+  "budget_fraction": 0.3333333333333333,
+  "exported_at": "2025-11-18T17:48:44.494135+00:00",
+  "exported_from_profile": "sector_rotation_default",
+  "source_file": "models/sector_rotation_v1.py"
+}
