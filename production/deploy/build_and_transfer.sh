@@ -20,6 +20,32 @@ echo "Image: ${IMAGE_NAME}:${IMAGE_TAG}"
 echo "Local tar: ${LOCAL_TAR}"
 echo ""
 
+# Pre-flight check: Warn about uncommitted changes
+echo "🔍 Pre-flight check: Checking for uncommitted changes..."
+echo "--------------------------------------------------------------------------------"
+if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+    echo "⚠️  WARNING: You have uncommitted changes!"
+    echo ""
+    echo "Modified files:"
+    git diff --name-only HEAD
+    echo ""
+    echo "Uncommitted changes will NOT be included in the Docker build."
+    echo "The build will use the last committed version of files."
+    echo ""
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "❌ Build cancelled. Commit your changes first with:"
+        echo "   git add <files>"
+        echo "   git commit -m 'your message'"
+        exit 1
+    fi
+    echo "⚠️  Proceeding with uncommitted changes (NOT RECOMMENDED)"
+else
+    echo "✅ Working directory is clean"
+fi
+echo ""
+
 # Step 1: Build AMD64 image
 echo "📦 Step 1/3: Building AMD64 Docker image..."
 echo "--------------------------------------------------------------------------------"

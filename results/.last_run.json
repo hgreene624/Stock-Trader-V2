@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-11-17T12:39:44.183449",
+  "model": "SectorRotationModel_v1",
+  "start_date": "2020-01-01",
+  "end_date": "2024-12-31",
+  "actual_start_date": "2020-01-02",
+  "actual_end_date": "2024-12-30",
+  "config": {
+    "profile": "sector_rotation_ea_optimized",
+    "profile_description": "EA-optimized parameters (BPS 1.173, +70% vs baseline)"
+  },
+  "metrics": {
+    "total_return": 0.7136437606338525,
+    "cagr": 0.1138887545288998,
+    "sharpe_ratio": 1.8961816068681099,
+    "max_drawdown": 0.2906240323062669,
+    "win_rate": 0.5,
+    "total_trades": 3325,
+    "initial_nav": 99849.9141559179,
+    "final_nav": 171107.1823931145,
+    "bps": 0.8635768658752873
+  },
+  "trade_count": 3325,
+  "nav_series_path": "results/nav_series.csv",
+  "trade_log_path": "results/trade_log.csv"
+}

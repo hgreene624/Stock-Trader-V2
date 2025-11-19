@@ -5,13 +5,17 @@ Real-time terminal dashboard for monitoring your production trading bot.
 ## Features
 
 - **Live Updates**: Auto-refreshes every 5 seconds (configurable)
-- **System Status**: Health check integration, NAV, current time
-- **Active Models**: Shows loaded models with budgets and universes
+- **System Status**: Health check integration, full account number, market hours, regime
+- **Active Models**: Shows loaded models with budgets, universes, and active status
 - **Current Positions**: Live positions with P&L, current prices, leverage
+- **Universe Rankings**: 126-day momentum rankings for all symbols (real-time)
+- **SPY Comparison**: Daily performance vs SPY benchmark with alpha calculation
+- **Trade Statistics**: Win rate, average hold time, best/worst trades
 - **Pending Orders**: Open orders with status and fill progress
-- **Recent Activity**: Last 10 orders/trades with timestamps
-- **Performance Metrics**: NAV, cash, returns over recent cycles
-- **Error Monitoring**: Recent errors with timestamps and types
+- **Recent Activity**: Last 8 orders/trades with timestamps
+- **Performance Metrics**: NAV, cash, returns, SPY comparison
+- **Risk Metrics**: Leverage, max position concentration, current drawdown
+- **Error Monitoring**: Recent errors with timestamps and types (expanded view)
 
 ## Installation
 
@@ -111,7 +115,14 @@ The dashboard reads from multiple sources:
    - Pending orders
    - Buying power and leverage
 
-3. **Health Monitor** (`http://localhost:8080`):
+3. **Cached Parquet Files** (for momentum and SPY data):
+   - `/app/data/equities/*.parquet` (Docker)
+   - `production/local_data/equities/*.parquet` (Local)
+   - `data/equities/*.parquet` (Alternative)
+   - **Note**: Uses cached files because Alpaca API doesn't provide historical data for paper accounts
+   - Automatically handles both uppercase (`Close`) and lowercase (`close`) column names
+
+4. **Health Monitor** (`http://localhost:8080`):
    - System health status
    - Active models configuration
    - Uptime and cycle information

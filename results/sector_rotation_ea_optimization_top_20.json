@@ -1,0 +1,108 @@
+{
+  "experiment": "sector_rotation_ea_optimization",
+  "method": "evolutionary",
+  "timestamp": "2025-11-17T12:36:49.849545",
+  "parameter_sets": [
+    {
+      "momentum_period": 77,
+      "top_n": 3,
+      "min_momentum": 0.0439961364244185
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.039237412819383075
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.039237412819383075
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.03676742328600746
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 77,
+      "top_n": 3,
+      "min_momentum": 0.0439961364244185
+    },
+    {
+      "momentum_period": 77,
+      "top_n": 3,
+      "min_momentum": 0.041893460924358306
+    },
+    {
+      "momentum_period": 72,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.039237412819383075
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.039237412819383075
+    },
+    {
+      "momentum_period": 77,
+      "top_n": 3,
+      "min_momentum": 0.05
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 77,
+      "top_n": 3,
+      "min_momentum": 0.04514453576915046
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.0439961364244185
+    },
+    {
+      "momentum_period": 77,
+      "top_n": 3,
+      "min_momentum": 0.039237412819383075
+    },
+    {
+      "momentum_period": 78,
+      "top_n": 3,
+      "min_momentum": 0.045772838841692844
+    }
+  ],
+  "results": []
+}

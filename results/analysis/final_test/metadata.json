@@ -1,0 +1,17 @@
+{
+  "model": "SectorRotationModel_v1",
+  "start_date": "2020-01-01",
+  "end_date": "2024-12-31",
+  "metrics": {
+    "total_return": 0.42395333267368324,
+    "cagr": 0.07333927300561704,
+    "sharpe_ratio": 1.146715327467166,
+    "max_drawdown": 0.4290385907366421,
+    "win_rate": 0.5,
+    "total_trades": 216,
+    "initial_nav": 99812.4095637253,
+    "final_nav": 142128.21324045726,
+    "bps": 0.5377840538148873
+  },
+  "generated_at": "2025-11-17T14:22:39.165033"
+}

@@ -1,0 +1,509 @@
+2025-11-18 10:52:31,544 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 10:52:31,544 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 10:52:31,544 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 10:52:31,544 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 10:52:31,544 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 10:52:31,544 - production.runner.main - INFO - Setting up production components...
+2025-11-18 10:52:31,544 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 10:52:32,142 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 10:52:32,143 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 10:52:32,143 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 10:52:32,168 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 10:52:32,168 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 12:52 PM ET)
+2025-11-18 10:52:32,168 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 10:52:32,169 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 10:52:32,171 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 10:52:32,172 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 10:52:32,172 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 10:52:32,172 - production.runner.main - INFO - Initial NAV: $100,187.54
+2025-11-18 10:52:32,266 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 10:52:32,266 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 10:52:32,266 - production.runner.main - INFO - Setup complete
+2025-11-18 10:52:32,266 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 10:52:32,266 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 12:52 PM ET)
+2025-11-18 10:52:32,266 - production.runner.main - INFO - ================================================================================
+2025-11-18 10:52:32,266 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 10:52:32,266 - production.runner.main - INFO - ================================================================================
+2025-11-18 10:52:32,266 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 17:00:00+00:00
+2025-11-18 10:52:32,266 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 10:52:32,266 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 10:52:33,013 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 10:52:33,013 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 10:52:33,013 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 10:52:33,027 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLRE_1D.parquet
+2025-11-18 10:52:33,032 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLRE (cached + live + features)
+2025-11-18 10:52:33,032 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLY_1D.parquet
+2025-11-18 10:52:33,032 - production.runner.live_data_fetcher - WARNING - No data available for XLY
+2025-11-18 10:52:33,033 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLC_1D.parquet
+2025-11-18 10:52:33,035 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLC (cached + live + features)
+2025-11-18 10:52:33,035 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/TLT_1D.parquet
+2025-11-18 10:52:33,037 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for TLT (cached + live + features)
+2025-11-18 10:52:33,037 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/SPY_1D.parquet
+2025-11-18 10:52:33,041 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for SPY (cached + live + features)
+2025-11-18 10:52:33,042 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLB_1D.parquet
+2025-11-18 10:52:33,045 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLB (cached + live + features)
+2025-11-18 10:52:33,045 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLK_1D.parquet
+2025-11-18 10:52:33,049 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLK (cached + live + features)
+2025-11-18 10:52:33,049 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLI_1D.parquet
+2025-11-18 10:52:33,051 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLI (cached + live + features)
+2025-11-18 10:52:33,051 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLE_1D.parquet
+2025-11-18 10:52:33,053 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLE (cached + live + features)
+2025-11-18 10:52:33,053 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLV_1D.parquet
+2025-11-18 10:52:33,053 - production.runner.live_data_fetcher - WARNING - No data available for XLV
+2025-11-18 10:52:33,053 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLF_1D.parquet
+2025-11-18 10:52:33,056 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLF (cached + live + features)
+2025-11-18 10:52:33,056 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLP_1D.parquet
+2025-11-18 10:52:33,058 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLP (cached + live + features)
+2025-11-18 10:52:33,058 - production.runner.live_data_fetcher - WARNING - Cache file not found: /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data/equities/XLU_1D.parquet
+2025-11-18 10:52:33,058 - production.runner.live_data_fetcher - WARNING - No data available for XLU
+2025-11-18 10:52:33,058 - production.runner.live_data_fetcher - INFO - Data ready for 10/13 symbols
+2025-11-18 10:52:33,059 - production.runner.main - WARNING - ================================================================================
+2025-11-18 10:52:33,059 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 10:52:33,059 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 10:52:33,059 - production.runner.main - WARNING - ================================================================================
+2025-11-18 10:52:33,059 - production.runner.main - ERROR - Missing data for critical symbols: ['XLV', 'XLU', 'XLY', 'XLV', 'XLU', 'XLY', 'XLV', 'XLU', 'XLY']
+2025-11-18 10:52:33,059 - production.runner.main - ERROR - First cycle validation FAILED - will retry next cycle
+2025-11-18 10:52:33,059 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 11:00:27,078 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 11:00:27,078 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 11:00:27,078 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 11:00:27,078 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 11:00:27,078 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 11:00:27,078 - production.runner.main - INFO - Setting up production components...
+2025-11-18 11:00:27,078 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 11:00:27,389 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 11:00:27,392 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 11:00:27,392 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 11:00:27,411 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 11:00:27,411 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:00 PM ET)
+2025-11-18 11:00:27,411 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 11:00:27,412 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 11:00:27,412 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 11:00:27,412 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 11:00:27,412 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 11:00:27,412 - production.runner.main - INFO - Initial NAV: $100,351.87
+2025-11-18 11:00:27,512 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 11:00:27,512 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 11:00:27,512 - production.runner.main - INFO - Setup complete
+2025-11-18 11:00:27,512 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 11:00:27,512 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:00 PM ET)
+2025-11-18 11:00:27,512 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:00:27,512 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 11:00:27,512 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:00:27,512 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 18:00:00+00:00
+2025-11-18 11:00:27,512 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 11:00:27,513 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 11:00:28,067 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 11:00:28,068 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 11:00:28,068 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 11:00:28,186 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLV: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,187 - production.runner.live_data_fetcher - WARNING - No data available for XLV
+2025-11-18 11:00:28,188 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLF: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,191 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLF (cached + live + features)
+2025-11-18 11:00:28,193 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLE: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,197 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLE (cached + live + features)
+2025-11-18 11:00:28,198 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLP: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,200 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLP (cached + live + features)
+2025-11-18 11:00:28,202 - production.runner.live_data_fetcher - ERROR - Error loading cache for SPY: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,204 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for SPY (cached + live + features)
+2025-11-18 11:00:28,206 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLY: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,206 - production.runner.live_data_fetcher - WARNING - No data available for XLY
+2025-11-18 11:00:28,207 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLRE: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,210 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLRE (cached + live + features)
+2025-11-18 11:00:28,211 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLC: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,213 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLC (cached + live + features)
+2025-11-18 11:00:28,214 - production.runner.live_data_fetcher - ERROR - Error loading cache for TLT: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,217 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for TLT (cached + live + features)
+2025-11-18 11:00:28,218 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLI: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,220 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLI (cached + live + features)
+2025-11-18 11:00:28,221 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLK: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,224 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLK (cached + live + features)
+2025-11-18 11:00:28,225 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLB: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,228 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLB (cached + live + features)
+2025-11-18 11:00:28,229 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLU: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:00:28,229 - production.runner.live_data_fetcher - WARNING - No data available for XLU
+2025-11-18 11:00:28,229 - production.runner.live_data_fetcher - INFO - Data ready for 10/13 symbols
+2025-11-18 11:00:28,229 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:00:28,229 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 11:00:28,229 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 11:00:28,229 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:00:28,229 - production.runner.main - ERROR - Missing data for critical symbols: ['XLV', 'XLU', 'XLY', 'XLV', 'XLU', 'XLY', 'XLV', 'XLU', 'XLY']
+2025-11-18 11:00:28,229 - production.runner.main - ERROR - First cycle validation FAILED - will retry next cycle
+2025-11-18 11:00:28,229 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 11:02:39,324 - production.runner.main - INFO - Received signal 2, initiating graceful shutdown...
+2025-11-18 11:02:39,325 - production.runner.broker_adapter - INFO - Cancelling all open orders...
+2025-11-18 11:02:39,626 - production.runner.broker_adapter - INFO - Cancelled 0 orders
+2025-11-18 11:02:39,626 - production.runner.main - INFO - Cancelled all open orders
+2025-11-18 11:02:39,626 - production.runner.health_monitor - INFO - Status set to: shutdown
+2025-11-18 11:02:39,627 - production.runner.main - INFO - Closed JSONL log files
+2025-11-18 11:02:39,627 - production.runner.main - INFO - Graceful shutdown complete
+2025-11-18 11:02:52,015 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 11:02:52,015 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 11:02:52,015 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 11:02:52,015 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 11:02:52,015 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 11:02:52,015 - production.runner.main - INFO - Setting up production components...
+2025-11-18 11:02:52,015 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 11:02:52,310 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 11:02:52,314 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 11:02:52,315 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 11:02:52,333 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 11:02:52,333 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:02 PM ET)
+2025-11-18 11:02:52,333 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 11:02:52,334 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 11:02:52,334 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 11:02:52,334 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 11:02:52,334 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 11:02:52,335 - production.runner.main - INFO - Initial NAV: $100,225.83
+2025-11-18 11:02:52,431 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 11:02:52,431 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 11:02:52,431 - production.runner.main - INFO - Setup complete
+2025-11-18 11:02:52,431 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 11:02:52,432 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:02 PM ET)
+2025-11-18 11:02:52,432 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:02:52,432 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 11:02:52,432 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:02:52,432 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 18:00:00+00:00
+2025-11-18 11:02:52,432 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 11:02:52,432 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 11:02:52,748 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 11:02:52,748 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 11:02:52,748 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 11:02:52,793 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLK: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,797 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLK (cached + live + features)
+2025-11-18 11:02:52,798 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLE: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,801 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLE (cached + live + features)
+2025-11-18 11:02:52,802 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLI: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,805 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLI (cached + live + features)
+2025-11-18 11:02:52,806 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLU: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,806 - production.runner.live_data_fetcher - WARNING - No data available for XLU
+2025-11-18 11:02:52,807 - production.runner.live_data_fetcher - ERROR - Error loading cache for SPY: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,809 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for SPY (cached + live + features)
+2025-11-18 11:02:52,810 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLF: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,814 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLF (cached + live + features)
+2025-11-18 11:02:52,815 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLP: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,817 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLP (cached + live + features)
+2025-11-18 11:02:52,818 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLY: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,818 - production.runner.live_data_fetcher - WARNING - No data available for XLY
+2025-11-18 11:02:52,820 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLRE: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,823 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLRE (cached + live + features)
+2025-11-18 11:02:52,824 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLV: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,824 - production.runner.live_data_fetcher - WARNING - No data available for XLV
+2025-11-18 11:02:52,825 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLC: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,827 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLC (cached + live + features)
+2025-11-18 11:02:52,828 - production.runner.live_data_fetcher - ERROR - Error loading cache for TLT: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,831 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for TLT (cached + live + features)
+2025-11-18 11:02:52,832 - production.runner.live_data_fetcher - ERROR - Error loading cache for XLB: 'RangeIndex' object has no attribute 'tz'
+2025-11-18 11:02:52,835 - production.runner.live_data_fetcher - INFO - Prepared 0 bars for XLB (cached + live + features)
+2025-11-18 11:02:52,835 - production.runner.live_data_fetcher - INFO - Data ready for 10/13 symbols
+2025-11-18 11:02:52,835 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:02:52,835 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 11:02:52,835 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 11:02:52,835 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:02:52,835 - production.runner.main - ERROR - Missing data for critical symbols: ['XLV', 'XLU', 'XLY', 'XLV', 'XLU', 'XLY', 'XLV', 'XLU', 'XLY']
+2025-11-18 11:02:52,835 - production.runner.main - ERROR - First cycle validation FAILED - will retry next cycle
+2025-11-18 11:02:52,835 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 11:08:57,960 - production.runner.main - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-18 11:08:57,960 - production.runner.broker_adapter - INFO - Cancelling all open orders...
+2025-11-18 11:08:58,254 - production.runner.broker_adapter - INFO - Cancelled 0 orders
+2025-11-18 11:08:58,254 - production.runner.main - INFO - Cancelled all open orders
+2025-11-18 11:08:58,254 - production.runner.health_monitor - INFO - Status set to: shutdown
+2025-11-18 11:08:58,254 - production.runner.main - INFO - Closed JSONL log files
+2025-11-18 11:08:58,254 - production.runner.main - INFO - Graceful shutdown complete
+2025-11-18 11:09:21,295 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 11:09:21,295 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 11:09:21,295 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 11:09:21,295 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 11:09:21,295 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 11:09:21,295 - production.runner.main - INFO - Setting up production components...
+2025-11-18 11:09:21,295 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 11:09:21,593 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 11:09:21,594 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 11:09:21,594 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 11:09:21,610 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 11:09:21,610 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:09 PM ET)
+2025-11-18 11:09:21,611 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 11:09:21,611 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 11:09:21,611 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 11:09:21,612 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 11:09:21,612 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 11:09:21,612 - production.runner.main - INFO - Initial NAV: $100,270.35
+2025-11-18 11:09:21,707 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 11:09:21,707 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 11:09:21,707 - production.runner.main - INFO - Setup complete
+2025-11-18 11:09:21,707 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 11:09:21,707 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:09 PM ET)
+2025-11-18 11:09:21,707 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:09:21,707 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 11:09:21,707 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:09:21,707 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 18:00:00+00:00
+2025-11-18 11:09:21,707 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 11:09:21,707 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 11:09:22,007 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 11:09:22,007 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 11:09:22,007 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 11:09:22,055 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLF (cached + live + features)
+2025-11-18 11:09:22,060 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLB (cached + live + features)
+2025-11-18 11:09:22,065 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for TLT (cached + live + features)
+2025-11-18 11:09:22,070 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for SPY (cached + live + features)
+2025-11-18 11:09:22,074 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLC (cached + live + features)
+2025-11-18 11:09:22,078 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLI (cached + live + features)
+2025-11-18 11:09:22,082 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLE (cached + live + features)
+2025-11-18 11:09:22,086 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLP (cached + live + features)
+2025-11-18 11:09:22,090 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLY (cached + live + features)
+2025-11-18 11:09:22,095 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLRE (cached + live + features)
+2025-11-18 11:09:22,099 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLK (cached + live + features)
+2025-11-18 11:09:22,103 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLV (cached + live + features)
+2025-11-18 11:09:22,107 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLU (cached + live + features)
+2025-11-18 11:09:22,107 - production.runner.live_data_fetcher - INFO - Data ready for 13/13 symbols
+2025-11-18 11:09:22,107 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:09:22,107 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 11:09:22,107 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 11:09:22,107 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:09:22,107 - production.runner.main - INFO - ✅ Data validation passed: 13 symbols with 104+ bars each
+2025-11-18 11:09:22,107 - production.runner.main - INFO - Completing first cycle without trading - next cycle will be live
+2025-11-18 11:09:22,107 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 11:12:18,564 - production.runner.main - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-18 11:12:18,564 - production.runner.broker_adapter - INFO - Cancelling all open orders...
+2025-11-18 11:12:18,862 - production.runner.broker_adapter - INFO - Cancelled 0 orders
+2025-11-18 11:12:18,862 - production.runner.main - INFO - Cancelled all open orders
+2025-11-18 11:12:18,862 - production.runner.health_monitor - INFO - Status set to: shutdown
+2025-11-18 11:12:18,862 - production.runner.main - INFO - Closed JSONL log files
+2025-11-18 11:12:18,862 - production.runner.main - INFO - Graceful shutdown complete
+2025-11-18 11:12:21,244 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 11:12:21,244 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 11:12:21,244 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 11:12:21,244 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 11:12:21,244 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 11:12:21,244 - production.runner.main - INFO - Setting up production components...
+2025-11-18 11:12:21,244 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 11:12:21,537 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 11:12:21,539 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 11:12:21,539 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 11:12:21,555 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 11:12:21,555 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:12 PM ET)
+2025-11-18 11:12:21,555 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 11:12:21,556 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 11:12:21,556 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 11:12:21,556 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 11:12:21,556 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 11:12:21,556 - production.runner.main - INFO - Initial NAV: $100,277.42
+2025-11-18 11:12:21,648 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 11:12:21,649 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 11:12:21,649 - production.runner.main - INFO - Setup complete
+2025-11-18 11:12:21,649 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 11:12:21,649 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:12 PM ET)
+2025-11-18 11:12:21,649 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:12:21,649 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 11:12:21,649 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:12:21,649 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 18:00:00+00:00
+2025-11-18 11:12:21,649 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 11:12:21,649 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 11:12:21,953 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 11:12:21,953 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 11:12:21,953 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 11:12:22,003 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLK (cached + live + features)
+2025-11-18 11:12:22,008 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLF (cached + live + features)
+2025-11-18 11:12:22,012 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLB (cached + live + features)
+2025-11-18 11:12:22,016 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLC (cached + live + features)
+2025-11-18 11:12:22,021 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for TLT (cached + live + features)
+2025-11-18 11:12:22,025 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLV (cached + live + features)
+2025-11-18 11:12:22,029 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLI (cached + live + features)
+2025-11-18 11:12:22,033 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLY (cached + live + features)
+2025-11-18 11:12:22,037 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLRE (cached + live + features)
+2025-11-18 11:12:22,040 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLU (cached + live + features)
+2025-11-18 11:12:22,045 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLE (cached + live + features)
+2025-11-18 11:12:22,049 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for SPY (cached + live + features)
+2025-11-18 11:12:22,053 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLP (cached + live + features)
+2025-11-18 11:12:22,053 - production.runner.live_data_fetcher - INFO - Data ready for 13/13 symbols
+2025-11-18 11:12:22,053 - production.runner.main - INFO - Classified regime: bull
+2025-11-18 11:12:22,053 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:12:22,053 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 11:12:22,053 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 11:12:22,053 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:12:22,053 - production.runner.main - INFO - ✅ Data validation passed: 13 symbols with 104+ bars each
+2025-11-18 11:12:22,053 - production.runner.main - INFO - Completing first cycle without trading - next cycle will be live
+2025-11-18 11:12:22,053 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 11:39:27,689 - production.runner.main - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-18 11:39:27,689 - production.runner.broker_adapter - INFO - Cancelling all open orders...
+2025-11-18 11:39:28,003 - production.runner.broker_adapter - INFO - Cancelled 0 orders
+2025-11-18 11:39:28,004 - production.runner.main - INFO - Cancelled all open orders
+2025-11-18 11:39:28,004 - production.runner.health_monitor - INFO - Status set to: shutdown
+2025-11-18 11:39:28,004 - production.runner.main - INFO - Closed JSONL log files
+2025-11-18 11:39:28,004 - production.runner.main - INFO - Graceful shutdown complete
+2025-11-18 11:39:35,681 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 11:39:35,681 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 11:39:35,681 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 11:39:35,681 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 11:39:35,681 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 11:39:35,681 - production.runner.main - INFO - Setting up production components...
+2025-11-18 11:39:35,681 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 11:39:35,984 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 11:39:35,989 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 11:39:35,990 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 11:39:36,017 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 11:39:36,017 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:39 PM ET)
+2025-11-18 11:39:36,017 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 11:39:36,018 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 11:39:36,018 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 11:39:36,018 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 11:39:36,018 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 11:39:36,018 - production.runner.main - INFO - Initial NAV: $100,225.12
+2025-11-18 11:39:36,115 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 11:39:36,115 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 11:39:36,115 - production.runner.main - INFO - Setup complete
+2025-11-18 11:39:36,115 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 11:39:36,116 - production.runner.main - INFO - Market status: 🟢 MARKET OPEN (currently 01:39 PM ET)
+2025-11-18 11:39:36,116 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:39:36,116 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 11:39:36,116 - production.runner.main - INFO - ================================================================================
+2025-11-18 11:39:36,116 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 18:00:00+00:00
+2025-11-18 11:39:36,116 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 11:39:36,117 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 11:39:36,456 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 11:39:36,456 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 11:39:36,456 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 11:39:36,523 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLC (cached + live + features)
+2025-11-18 11:39:36,528 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLRE (cached + live + features)
+2025-11-18 11:39:36,533 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLE (cached + live + features)
+2025-11-18 11:39:36,538 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLP (cached + live + features)
+2025-11-18 11:39:36,543 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLB (cached + live + features)
+2025-11-18 11:39:36,547 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for TLT (cached + live + features)
+2025-11-18 11:39:36,551 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLK (cached + live + features)
+2025-11-18 11:39:36,556 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLI (cached + live + features)
+2025-11-18 11:39:36,560 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLY (cached + live + features)
+2025-11-18 11:39:36,564 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLU (cached + live + features)
+2025-11-18 11:39:36,569 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for SPY (cached + live + features)
+2025-11-18 11:39:36,573 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLF (cached + live + features)
+2025-11-18 11:39:36,577 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLV (cached + live + features)
+2025-11-18 11:39:36,577 - production.runner.live_data_fetcher - INFO - Data ready for 13/13 symbols
+2025-11-18 11:39:36,578 - production.runner.main - INFO - Classified regime: bull
+2025-11-18 11:39:36,578 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:39:36,578 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 11:39:36,578 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 11:39:36,578 - production.runner.main - WARNING - ================================================================================
+2025-11-18 11:39:36,578 - production.runner.main - INFO - ✅ Data validation passed: 13 symbols with 104+ bars each
+2025-11-18 11:39:36,578 - production.runner.main - INFO - Completing first cycle without trading - next cycle will be live
+2025-11-18 11:39:36,578 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 11:44:00,997 - production.runner.main - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-18 11:44:00,998 - production.runner.broker_adapter - INFO - Cancelling all open orders...
+2025-11-18 11:44:01,329 - production.runner.broker_adapter - INFO - Cancelled 0 orders
+2025-11-18 11:44:01,329 - production.runner.main - INFO - Cancelled all open orders
+2025-11-18 11:44:01,329 - production.runner.health_monitor - INFO - Status set to: shutdown
+2025-11-18 11:44:01,329 - production.runner.main - INFO - Closed JSONL log files
+2025-11-18 11:44:01,329 - production.runner.main - INFO - Graceful shutdown complete
+2025-11-18 15:28:41,869 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 15:28:41,869 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 15:28:41,869 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 15:28:41,869 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 15:28:41,869 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 15:28:41,869 - production.runner.main - INFO - Setting up production components...
+2025-11-18 15:28:41,869 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 15:28:42,164 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 15:28:42,165 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 15:28:42,165 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 15:28:42,184 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 15:28:42,184 - production.runner.main - INFO - Market status: 🔴 MARKET CLOSED (currently Tuesday 05:28 PM ET) - opens Wednesday at 09:30 AM ET (in 16.0 hours)
+2025-11-18 15:28:42,184 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 15:28:42,185 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 15:28:42,186 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 15:28:42,187 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 15:28:42,187 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 15:28:42,187 - production.runner.main - INFO - Initial NAV: $99,399.48
+2025-11-18 15:28:42,285 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 15:28:42,285 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 15:28:42,285 - production.runner.main - INFO - Setup complete
+2025-11-18 15:28:42,285 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 15:28:42,285 - production.runner.main - INFO - Market status: 🔴 MARKET CLOSED (currently Tuesday 05:28 PM ET) - opens Wednesday at 09:30 AM ET (in 16.0 hours)
+2025-11-18 15:28:42,286 - production.runner.main - INFO - ================================================================================
+2025-11-18 15:28:42,286 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 15:28:42,286 - production.runner.main - INFO - ================================================================================
+2025-11-18 15:28:42,286 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 22:00:00+00:00
+2025-11-18 15:28:42,286 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 15:28:42,286 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 15:28:42,985 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 15:28:42,985 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 15:28:42,985 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 15:28:43,046 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLC (cached + live + features)
+2025-11-18 15:28:43,051 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLRE (cached + live + features)
+2025-11-18 15:28:43,055 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLY (cached + live + features)
+2025-11-18 15:28:43,059 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLE (cached + live + features)
+2025-11-18 15:28:43,063 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for SPY (cached + live + features)
+2025-11-18 15:28:43,067 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLP (cached + live + features)
+2025-11-18 15:28:43,070 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLI (cached + live + features)
+2025-11-18 15:28:43,075 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLB (cached + live + features)
+2025-11-18 15:28:43,079 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLV (cached + live + features)
+2025-11-18 15:28:43,083 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for TLT (cached + live + features)
+2025-11-18 15:28:43,087 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLU (cached + live + features)
+2025-11-18 15:28:43,092 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLF (cached + live + features)
+2025-11-18 15:28:43,096 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLK (cached + live + features)
+2025-11-18 15:28:43,096 - production.runner.live_data_fetcher - INFO - Data ready for 13/13 symbols
+2025-11-18 15:28:43,097 - production.runner.main - INFO - Classified regime: bull
+2025-11-18 15:28:43,097 - production.runner.main - WARNING - ================================================================================
+2025-11-18 15:28:43,097 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 15:28:43,097 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 15:28:43,097 - production.runner.main - WARNING - ================================================================================
+2025-11-18 15:28:43,097 - production.runner.main - INFO - ✅ Data validation passed: 13 symbols with 104+ bars each
+2025-11-18 15:28:43,097 - production.runner.main - INFO - Completing first cycle without trading - next cycle will be live
+2025-11-18 15:28:43,097 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 16:02:21,607 - production.runner.main - INFO - Logging configured (JSONL audit logs enabled) - LOCAL MODE
+2025-11-18 16:02:21,607 - production.runner.main - INFO - Signal handlers registered
+2025-11-18 16:02:21,607 - production.runner.main - INFO - Initialized ProductionTradingRunner (mode=paper)
+2025-11-18 16:02:21,607 - production.runner.main - INFO - Starting production trading runner
+2025-11-18 16:02:21,607 - production.runner.main - INFO - Configuration: smart_schedule=False, require_market_open=False
+2025-11-18 16:02:21,608 - production.runner.main - INFO - Setting up production components...
+2025-11-18 16:02:21,608 - production.runner.broker_adapter - INFO - Initialized Alpaca adapter (paper=True)
+2025-11-18 16:02:21,935 - production.runner.live_data_fetcher - INFO - Initialized HybridDataFetcher (cache=/Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/local_data, lookback=400d, api_bars=10)
+2025-11-18 16:02:21,938 - production.runner.health_monitor - INFO - Starting health monitor on port 8080
+2025-11-18 16:02:21,939 - production.runner.health_monitor - INFO - Health monitor started: http://0.0.0.0:8080/health
+2025-11-18 16:02:21,956 - production.runner.market_hours - INFO - Initialized MarketHoursManager (timezone=America/New_York)
+2025-11-18 16:02:21,956 - production.runner.main - INFO - Market status: 🔴 MARKET CLOSED (currently Tuesday 06:02 PM ET) - opens Wednesday at 09:30 AM ET (in 15.5 hours)
+2025-11-18 16:02:21,956 - production.runner.main - INFO - Loading models from /Users/holdengreene/PycharmProjects/Stock-Trader-V2/production/models (3 found)
+2025-11-18 16:02:21,958 - production.runner.main - INFO - Loaded model: SectorRotationBear_v1 (budget=0.3333333333333333)
+2025-11-18 16:02:21,959 - production.runner.main - INFO - Loaded model: SectorRotationModel_v1 (budget=0.3333333333333333)
+2025-11-18 16:02:21,960 - production.runner.main - INFO - Loaded model: SectorRotationBull_v1 (budget=0.3333333333333333)
+2025-11-18 16:02:21,960 - production.runner.main - INFO - Successfully loaded 3 models
+2025-11-18 16:02:21,960 - production.runner.main - INFO - Initial NAV: $99,462.13
+2025-11-18 16:02:22,076 - production.runner.broker_adapter - INFO - Retrieved 3 positions from broker
+2025-11-18 16:02:22,076 - production.runner.main - INFO - Initial positions: 3 symbols
+2025-11-18 16:02:22,076 - production.runner.main - INFO - Setup complete
+2025-11-18 16:02:22,076 - production.runner.health_monitor - INFO - Status set to: healthy
+2025-11-18 16:02:22,077 - production.runner.main - INFO - Market status: 🔴 MARKET CLOSED (currently Tuesday 06:02 PM ET) - opens Wednesday at 09:30 AM ET (in 15.5 hours)
+2025-11-18 16:02:22,077 - production.runner.main - INFO - ================================================================================
+2025-11-18 16:02:22,077 - production.runner.main - INFO - Starting trading cycle
+2025-11-18 16:02:22,077 - production.runner.main - INFO - ================================================================================
+2025-11-18 16:02:22,077 - production.runner.main - INFO - Cycle timestamp: 2025-11-18 23:00:00+00:00
+2025-11-18 16:02:22,077 - production.runner.main - INFO - Fetching data for 13 symbols
+2025-11-18 16:02:22,077 - production.runner.live_data_fetcher - INFO - Fetching data for 13 symbols (from 2024-10-14 to 2025-11-18)
+2025-11-18 16:02:22,422 - production.runner.broker_adapter - WARNING - No bar data for XLU
+2025-11-18 16:02:22,422 - production.runner.broker_adapter - WARNING - No bar data for XLY
+2025-11-18 16:02:22,422 - production.runner.broker_adapter - WARNING - No bar data for XLV
+2025-11-18 16:02:22,474 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLU (cached + live + features)
+2025-11-18 16:02:22,479 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLY (cached + live + features)
+2025-11-18 16:02:22,485 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLC (cached + live + features)
+2025-11-18 16:02:22,490 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLB (cached + live + features)
+2025-11-18 16:02:22,494 - production.runner.live_data_fetcher - INFO - Prepared 206 bars for XLV (cached + live + features)
+2025-11-18 16:02:22,499 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for SPY (cached + live + features)
+2025-11-18 16:02:22,503 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLP (cached + live + features)
+2025-11-18 16:02:22,507 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLE (cached + live + features)
+2025-11-18 16:02:22,511 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLRE (cached + live + features)
+2025-11-18 16:02:22,515 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLI (cached + live + features)
+2025-11-18 16:02:22,519 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLF (cached + live + features)
+2025-11-18 16:02:22,524 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for TLT (cached + live + features)
+2025-11-18 16:02:22,528 - production.runner.live_data_fetcher - INFO - Prepared 207 bars for XLK (cached + live + features)
+2025-11-18 16:02:22,528 - production.runner.live_data_fetcher - INFO - Data ready for 13/13 symbols
+2025-11-18 16:02:22,528 - production.runner.main - INFO - Classified regime: bull
+2025-11-18 16:02:22,528 - production.runner.main - WARNING - ================================================================================
+2025-11-18 16:02:22,528 - production.runner.main - WARNING - FIRST CYCLE AFTER STARTUP - VALIDATION MODE
+2025-11-18 16:02:22,528 - production.runner.main - WARNING - Data will be fetched and validated, but NO TRADES will be executed
+2025-11-18 16:02:22,528 - production.runner.main - WARNING - ================================================================================
+2025-11-18 16:02:22,528 - production.runner.main - INFO - ✅ Data validation passed: 13 symbols with 104+ bars each
+2025-11-18 16:02:22,528 - production.runner.main - INFO - Completing first cycle without trading - next cycle will be live
+2025-11-18 16:02:22,528 - production.runner.main - INFO - Sleeping 14400 seconds (reason: fixed_interval)
+2025-11-18 16:03:35,848 - production.runner.main - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-18 16:03:35,848 - production.runner.broker_adapter - INFO - Cancelling all open orders...
+2025-11-18 16:03:35,944 - production.runner.broker_adapter - INFO - Cancelled 0 orders
+2025-11-18 16:03:35,944 - production.runner.main - INFO - Cancelled all open orders
+2025-11-18 16:03:35,944 - production.runner.health_monitor - INFO - Status set to: shutdown
+2025-11-18 16:03:35,944 - production.runner.main - INFO - Closed JSONL log files
+2025-11-18 16:03:35,944 - production.runner.main - INFO - Graceful shutdown complete

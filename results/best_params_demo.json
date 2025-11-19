@@ -1,0 +1,14 @@
+{
+  "experiment": "sector_rotation_leverage_test_2025-11-17",
+  "parameters": {
+    "momentum_period": 126,
+    "top_n": 3,
+    "min_momentum": 0.0,
+    "target_leverage": 1.25
+  },
+  "metrics": {
+    "cagr": 0.1487,
+    "sharpe_ratio": 1.91,
+    "bps": 0.87
+  }
+}

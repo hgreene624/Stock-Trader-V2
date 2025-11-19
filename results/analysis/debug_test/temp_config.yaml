@@ -1,0 +1,42 @@
+backtest:
+  lookback_bars: 200
+data:
+  data_dir: data
+  primary_timeframe: 1D
+execution:
+  commission_rate: 0.001
+  initial_capital: 100000.0
+  slippage_bps: 5.0
+mode: backtest
+models:
+  SectorRotationModel_v1:
+    asset_classes:
+    - equity
+    budget: 1.0
+    enabled: true
+    parameters:
+      min_momentum: 0.044
+      momentum_period: 77
+      top_n: 3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+portfolio:
+  leverage_multiplier: 1.25
+risk:
+  max_asset_class_allocation:
+    crypto: 0.2
+    equity: 1.0
+  max_drawdown_threshold: 0.15
+  max_leverage: 1.25
+  max_position_size: 0.4

@@ -83,3 +83,7 @@ Thumbs.db
 *.tmp
 *.bak
 *.swp
+
+# Ignore huge log files
+logs/
+*.log

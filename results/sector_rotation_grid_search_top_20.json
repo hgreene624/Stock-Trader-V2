@@ -1,0 +1,208 @@
+{
+  "experiment": "sector_rotation_grid_search",
+  "method": "grid",
+  "timestamp": "2025-11-17T12:14:49.539089",
+  "parameter_sets": [
+    {
+      "momentum_period": 90,
+      "top_n": 3,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 90,
+      "top_n": 3,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 90,
+      "top_n": 4,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 90,
+      "top_n": 4,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 90,
+      "top_n": 5,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 90,
+      "top_n": 5,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 90,
+      "top_n": 6,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 90,
+      "top_n": 6,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 3,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 3,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 4,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 4,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 5,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 5,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 6,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 110,
+      "top_n": 6,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 3,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 3,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 4,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 4,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 5,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 5,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 6,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 126,
+      "top_n": 6,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 3,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 3,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 4,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 4,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 5,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 5,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 6,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 140,
+      "top_n": 6,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 3,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 3,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 4,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 4,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 5,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 5,
+      "min_momentum": 0.01
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 6,
+      "min_momentum": 0.0
+    },
+    {
+      "momentum_period": 160,
+      "top_n": 6,
+      "min_momentum": 0.01
+    }
+  ],
+  "results": []
+}
