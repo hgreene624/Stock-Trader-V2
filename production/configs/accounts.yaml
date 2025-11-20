@@ -1,0 +1,25 @@
+# Multi-Account Configuration for Alpaca Trading
+#
+# Each account needs:
+# - api_key: Alpaca API key
+# - secret_key: Alpaca secret key
+# - paper: true for paper trading, false for live
+
+accounts:
+  # Paper account - main (from .env)
+  paper_main:
+    api_key: ${ALPACA_API_KEY}
+    secret_key: ${ALPACA_API_SECRET}
+    paper: true
+
+  # Paper account - $2K
+  paper_2k:
+    api_key: PKIMTOVN734QEYJFKMIP2XWNKO
+    secret_key: Gr1dpJbYudKRtsEaasCWfEvkzr6bGKoKQn5SRGvtRPPB
+    paper: true
+
+  # Individual Account (Real - unfunded)
+  live:
+    api_key: AKG5WRWYMB66AXEOHRTMYPDFCD
+    secret_key: 5jtp3zbUwGjxMZ3fKtxiTKAcrJY8eT5CfYbVZGuWfack
+    paper: false
