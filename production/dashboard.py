@@ -55,6 +55,18 @@ except ImportError:
     yaml = None
     get_lock_manager = None
 
+try:
+    import plotille
+except ImportError:
+    print("Warning: 'plotille' not installed. SPY chart disabled. Install with: pip install plotille")
+    plotille = None
+
+try:
+    import yfinance as yf
+except ImportError:
+    print("Warning: 'yfinance' not installed. SPY chart disabled. Install with: pip install yfinance")
+    yf = None
+
 
 class TradingDashboard:
     """Enhanced terminal dashboard for production trading bot."""
@@ -848,6 +860,151 @@ class TradingDashboard:
         border_color = "red" if has_runner_errors else "yellow"
         return Panel(error_text, title=f"Errors ({total_issues})", border_style=border_color)
 
+    def _fetch_spy_intraday(self) -> Optional[dict]:
+        """Fetch SPY intraday 5-min bars for chart display."""
+        if not yf:
+            return None
+
+        try:
+            import pytz
+            eastern = pytz.timezone("America/New_York")
+            now = datetime.now(eastern)
+
+            # Determine session date (most recent completed session)
+            session = now.date()
+            market_close = datetime.strptime("16:00", "%H:%M").time()
+            if now.weekday() >= 5 or now.time() < market_close:
+                session -= timedelta(days=1)
+            while session.weekday() >= 5:
+                session -= timedelta(days=1)
+
+            # Fetch data
+            market_open = datetime.strptime("09:30", "%H:%M").time()
+            start_local = eastern.localize(datetime.combine(session, market_open))
+            end_local = eastern.localize(datetime.combine(session, market_close))
+
+            ticker = yf.Ticker("SPY")
+            df = ticker.history(
+                start=start_local.astimezone(pytz.UTC),
+                end=end_local.astimezone(pytz.UTC) + timedelta(minutes=5),
+                interval="5m",
+                auto_adjust=True,
+            )
+
+            if df.empty:
+                return None
+
+            df.columns = [col.lower() for col in df.columns]
+            if df.index.tz is None:
+                df.index = df.index.tz_localize(pytz.UTC)
+            df.index = df.index.tz_convert(eastern)
+            df = df[(df.index >= start_local) & (df.index <= end_local)]
+
+            if df.empty:
+                return None
+
+            return {
+                'df': df,
+                'session_date': session,
+                'start_time': df.index[0]
+            }
+        except Exception:
+            return None
+
+    def create_spy_chart_panel(self) -> Panel:
+        """Create SPY intraday chart panel using plotille."""
+        if not plotille or not yf:
+            missing = []
+            if not plotille:
+                missing.append("plotille")
+            if not yf:
+                missing.append("yfinance")
+            return Panel(f"Install: pip install {' '.join(missing)}", title="SPY Chart", border_style="dim")
+
+        data = self._fetch_spy_intraday()
+        if not data:
+            return Panel("No intraday data available", title="SPY Chart", border_style="dim")
+
+        df = data['df']
+        start_time = data['start_time']
+        session_date = data['session_date']
+
+        closes = df["close"].astype(float).to_list()
+        if not closes:
+            return Panel("No data", title="SPY Chart", border_style="dim")
+
+        open_price = closes[0]
+        close_price = closes[-1]
+        pct_change = ((close_price - open_price) / open_price) * 100
+
+        # Calculate time series
+        timestamps = df.index.to_list()
+        minutes_since_open = [(ts - start_time).total_seconds() / 60 for ts in timestamps]
+        hours_since_open = [m / 60 for m in minutes_since_open]
+        pct_series = [((p - open_price) / open_price) * 100 for p in closes]
+
+        # Build chart
+        fig = plotille.Figure()
+        fig.width = 45
+        fig.height = 10
+        fig.color_mode = "names"
+        fig.set_x_limits(min_=0, max_=6.5)
+
+        y_min, y_max = min(pct_series), max(pct_series)
+        fig.set_y_limits(min_=y_min - 0.05, max_=y_max + 0.05)
+
+        # Split into green/red segments
+        segments = []
+        if len(hours_since_open) > 1:
+            prev_x, prev_y = hours_since_open[0], pct_series[0]
+            color = "green" if prev_y >= 0 else "red"
+            seg_x, seg_y = [prev_x], [prev_y]
+
+            for x, y in zip(hours_since_open[1:], pct_series[1:]):
+                next_color = "green" if y >= 0 else "red"
+                if next_color == color:
+                    seg_x.append(x)
+                    seg_y.append(y)
+                else:
+                    # Find crossing point
+                    dy = y - prev_y
+                    dx = x - prev_x
+                    if dy != 0:
+                        t = max(0, min(1, -prev_y / dy))
+                        cross_x = prev_x + t * dx
+                    else:
+                        cross_x = x
+                    seg_x.append(cross_x)
+                    seg_y.append(0.0)
+                    segments.append((seg_x, seg_y, color))
+                    seg_x, seg_y = [cross_x, x], [0.0, y]
+                    color = next_color
+                prev_x, prev_y = x, y
+            segments.append((seg_x, seg_y, color))
+        else:
+            segments = [(hours_since_open, pct_series, "green" if pct_series[0] >= 0 else "red")]
+
+        for xs, ys, color in segments:
+            fig.plot(xs, ys, lc=color)
+
+        # Convert plotille output to Rich Text
+        chart_str = fig.show()
+        chart_text = Text.from_ansi(chart_str)
+
+        # Add summary
+        summary = Text()
+        change_color = "green" if pct_change >= 0 else "red"
+        summary.append(f"SPY ${close_price:.2f} ", style="bold")
+        summary.append(f"({pct_change:+.2f}%)", style=f"bold {change_color}")
+        summary.append(f" | {session_date.strftime('%m/%d')}", style="dim")
+
+        content = Text()
+        content.append_text(summary)
+        content.append("\n")
+        content.append_text(chart_text)
+
+        return Panel(content, title="SPY Intraday", border_style="cyan")
+
     def create_universe_panel(self, health: Dict, positions: List[Dict], market: Dict, prices: Dict) -> Panel:
         models_data = health.get('models', [])
         if not models_data:
@@ -958,15 +1115,15 @@ class TradingDashboard:
         layout["left"]["accounts"].update(self.create_accounts_panel())
 
         layout["right"].split_column(
-            Layout(name="universe", size=18),
-            Layout(name="performance", size=16),
-            Layout(name="activity", size=8),
-            Layout(name="errors", size=10)
+            Layout(name="universe", size=16),
+            Layout(name="spy_chart", size=16),
+            Layout(name="performance", size=14),
+            Layout(name="errors", size=8)
         )
 
         layout["right"]["universe"].update(self.create_universe_panel(health, positions, market, prices))
+        layout["right"]["spy_chart"].update(self.create_spy_chart_panel())
         layout["right"]["performance"].update(self.create_performance_panel(account, spy_data, trade_stats))
-        layout["right"]["activity"].update(self.create_order_history_panel())
         layout["right"]["errors"].update(self.create_errors_panel())
 
         return layout
