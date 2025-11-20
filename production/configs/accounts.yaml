@@ -8,27 +8,27 @@
 # - description: optional description for dashboard display
 
 accounts:
-  # Paper account - main (from .env)
-  paper_main:
-    api_key: ${ALPACA_API_KEY}
-    secret_key: ${ALPACA_SECRET_KEY}
-    paper: true
-    description: "Main Paper Account"
-    health_port: 8080
-    models:
-      - SectorRotationModel_v1
-      - SectorRotationBull_v1
-      - SectorRotationBear_v1
-
-  # Paper account - $2K
+  # Paper account - $2K (PA3T8N36NVJK) - New adaptive model
   paper_2k:
     api_key: PKONDDG4MY4BO4GA54C2RWRR24
     secret_key: CNukCHM8gTDnLkojX4skNpvy1qcCb6w6NQ2bdjMU4xkU
     paper: true
-    description: "Paper $2K Test"
-    health_port: 8081
+    description: "Paper $2K - Adaptive v3"
+    health_port: 8080
     models:
       - SectorRotationAdaptive_v3
+
+  # Paper account - $2K (PA3I05031HZL) - 3-part model
+  paper_3part:
+    api_key: PKX3R7HJVHUM6YACDLG6QQL4KB
+    secret_key: 8UJXr6iBXHVm12aAP4hPv4Hs7E3TZfaGz6REho28hpkn
+    paper: true
+    description: "Paper $2K - 3-Part Model"
+    health_port: 8081
+    models:
+      - SectorRotationModel_v1
+      - SectorRotationBull_v1
+      - SectorRotationBear_v1
 
   # Individual Account (Real - unfunded)
   live:
