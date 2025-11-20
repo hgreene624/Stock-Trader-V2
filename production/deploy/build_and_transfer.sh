@@ -8,7 +8,7 @@ set -e  # Exit on error
 VPS_HOST="${1:-31.220.55.98}"
 VPS_USER="root"
 IMAGE_NAME="trading-bot"
-IMAGE_TAG="amd64-v21"
+IMAGE_TAG="amd64-v22"
 LOCAL_TAR="/tmp/${IMAGE_NAME}-${IMAGE_TAG}.tar.gz"
 
 echo "=================================================================================="
