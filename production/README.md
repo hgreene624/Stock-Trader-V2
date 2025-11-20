@@ -30,15 +30,78 @@ Standalone Docker-based deployment system for running trading models on a VPS.
 
 ## Key Features
 
+- ✅ **Multi-Account** - Run different models on different accounts simultaneously
 - ✅ **Docker-based** - Isolated, reproducible deployments
 - ✅ **Hybrid Data** - Live prices from API + cached historical features
 - ✅ **Multi-Model** - Deploy multiple models with PortfolioEngine aggregation
-- ✅ **Real-time Dashboard** - Beautiful terminal UI for monitoring (see [DASHBOARD.md](DASHBOARD.md))
+- ✅ **Real-time Dashboard** - Beautiful terminal UI with account selector (see [DASHBOARD.md](DASHBOARD.md))
 - ✅ **JSONL Audit Logs** - Machine-readable logs for compliance (see [AUDIT_LOGS.md](AUDIT_LOGS.md))
-- ✅ **Health Monitoring** - HTTP endpoint (/health) for uptime checks
+- ✅ **Health Monitoring** - HTTP endpoint (/health) per account for uptime checks
+- ✅ **Instance Locking** - Prevents running same account twice with file-based locks
 - ✅ **Graceful Shutdown** - Handles signals properly, optional position closing
 - ✅ **Automated Deployment** - One-command deploy to VPS
 - ✅ **Paper & Live** - Supports both paper trading (test) and live trading (real money)
+
+## Multi-Account Support
+
+Run multiple trading bots on the same machine, each with different models and API credentials.
+
+### Configuration
+
+Edit `production/configs/accounts.yaml`:
+
+```yaml
+accounts:
+  paper_main:
+    api_key: ${ALPACA_API_KEY}      # From environment
+    secret_key: ${ALPACA_SECRET_KEY}
+    paper: true
+    health_port: 8080
+    models:
+      - SectorRotationModel_v1
+      - SectorRotationBull_v1
+
+  paper_2k:
+    api_key: YOUR_KEY_HERE          # Hardcoded or env var
+    secret_key: YOUR_SECRET_HERE
+    paper: true
+    health_port: 8081
+    models:
+      - SectorRotationAdaptive_v3
+```
+
+### Running Multiple Accounts
+
+```bash
+# Start first account
+./production/run_local.sh --account paper_main &
+
+# Start second account
+./production/run_local.sh --account paper_2k &
+
+# List accounts and lock status
+./production/run_local.sh --list
+```
+
+### Dashboard with Account Selector
+
+```bash
+# Launch dashboard - shows account selector menu
+python3 -m production.dashboard
+
+# Dashboard automatically:
+# - Shows interactive account menu
+# - Uses correct logs directory for selected account
+# - Connects to correct health endpoint (port)
+```
+
+### Instance Locking
+
+Each account uses file-based locking to prevent duplicate instances:
+- Lock files: `production/locks/{account_name}.lock`
+- Contains PID and hostname
+- Automatically released on exit
+- Use `--force` to override a stale lock
 
 ## Quick Start
 

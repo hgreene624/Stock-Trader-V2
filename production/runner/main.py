@@ -285,8 +285,9 @@ class ProductionTradingRunner:
         )
 
         # Initialize health monitor
+        health_port = int(os.getenv('HEALTH_PORT', '8080'))
         self.health_monitor = HealthMonitor(
-            port=8080,
+            port=health_port,
             max_cycle_age_seconds=300,
             error_threshold=5
         )

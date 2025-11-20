@@ -1,0 +1,19 @@
+{
+  "use_vol_targeting": true,
+  "target_vol": 0.15,
+  "vol_lookback": 20,
+  "max_scale": 1.5,
+  "min_scale": 0.2,
+  "atr_period": 12,
+  "take_profit_atr_mult": 2.0,
+  "stop_loss_atr_mult": 1.0,
+  "min_hold_days": 2,
+  "bull_momentum_period": 126,
+  "bull_top_n": 4,
+  "bull_min_momentum": 0.1,
+  "bull_leverage": 1.5,
+  "bear_momentum_period": 126,
+  "bear_top_n": 4,
+  "bear_min_momentum": 0.1,
+  "bear_leverage": 1.5
+}

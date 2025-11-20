@@ -1,6 +1,11 @@
 #!/bin/bash
 # Run production trading bot locally (without Docker)
-# Usage: ./run_local.sh
+# Usage: ./run_local.sh [--account NAME] [--list] [--force]
+#
+# Options:
+#   --account NAME  Use specific account (auto-selects if not specified)
+#   --list          List all accounts and their lock status
+#   --force         Force acquire lock even if already locked
 
 set -e
 
@@ -65,8 +70,8 @@ echo "Starting trading bot..."
 echo "================================================================================"
 echo ""
 
-# Run the production runner
+# Run the production runner with all arguments passed through
 cd "$PROJECT_ROOT"
-python3 -m production.runner.main_local
+python3 -m production.runner.main_local "$@"
 
 # Note: Press Ctrl+C to stop gracefully

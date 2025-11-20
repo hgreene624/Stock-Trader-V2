@@ -1,0 +1,42 @@
+{
+  "model_name": "SectorRotationAdaptive_v3",
+  "class_name": "SectorRotationAdaptive_v3",
+  "stage": "paper",
+  "parameters": {
+    "use_vol_targeting": true,
+    "target_vol": 0.15,
+    "vol_lookback": 20,
+    "max_scale": 1.5,
+    "min_scale": 0.2,
+    "atr_period": 12,
+    "take_profit_atr_mult": 2.0,
+    "stop_loss_atr_mult": 1.0,
+    "min_hold_days": 2,
+    "bull_momentum_period": 126,
+    "bull_top_n": 4,
+    "bull_min_momentum": 0.1,
+    "bull_leverage": 1.5,
+    "bear_momentum_period": 126,
+    "bear_top_n": 4,
+    "bear_min_momentum": 0.1,
+    "bear_leverage": 1.5
+  },
+  "universe": [
+    "XLK",
+    "XLF",
+    "XLE",
+    "XLV",
+    "XLI",
+    "XLP",
+    "XLU",
+    "XLY",
+    "XLC",
+    "XLB",
+    "XLRE",
+    "TLT"
+  ],
+  "budget_fraction": 1.0,
+  "exported_at": "2025-11-20T19:11:46.062342+00:00",
+  "exported_from_profile": "v3_vol_target_15",
+  "source_file": "models/sector_rotation_adaptive_v3.py"
+}

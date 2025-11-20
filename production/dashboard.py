@@ -48,6 +48,13 @@ except ImportError:
     print("Error: 'alpaca-py' library not installed. Install with: pip install alpaca-py")
     sys.exit(1)
 
+try:
+    import yaml
+    from production.runner.instance_lock import get_lock_manager
+except ImportError:
+    yaml = None
+    get_lock_manager = None
+
 
 class TradingDashboard:
     """Enhanced terminal dashboard for production trading bot."""
@@ -448,6 +455,76 @@ class TradingDashboard:
         if 'Bear' in model_name or 'bear' in model_name:
             return current_regime == 'bear'
         return True
+
+    def _get_account_locks(self) -> List[Dict]:
+        """Get all accounts and their lock status."""
+        if not yaml or not get_lock_manager:
+            return []
+
+        try:
+            accounts_path = Path(__file__).parent / 'configs' / 'accounts.yaml'
+            if not accounts_path.exists():
+                return []
+
+            with open(accounts_path, 'r') as f:
+                config = yaml.safe_load(f)
+
+            accounts = config.get('accounts', {})
+            lock_manager = get_lock_manager()
+
+            result = []
+            for name, acc_config in accounts.items():
+                is_locked = lock_manager.is_locked(name)
+                lock_info = lock_manager.get_lock_info(name) if is_locked else None
+
+                result.append({
+                    'name': name,
+                    'paper': acc_config.get('paper', True),
+                    'models': acc_config.get('models', []),
+                    'description': acc_config.get('description', ''),
+                    'locked': is_locked,
+                    'lock_pid': lock_info.get('pid') if lock_info else None,
+                    'lock_hostname': lock_info.get('hostname') if lock_info else None
+                })
+
+            return result
+        except Exception:
+            return []
+
+    def create_accounts_panel(self) -> Panel:
+        """Create panel showing all accounts and their lock status."""
+        accounts = self._get_account_locks()
+
+        if not accounts:
+            return Panel("No accounts configured", title="Accounts", border_style="dim")
+
+        content = Text()
+
+        for i, acc in enumerate(accounts):
+            if i > 0:
+                content.append("\n")
+
+            status_symbol = "●" if acc['locked'] else "○"
+            status_color = "red" if acc['locked'] else "green"
+            paper_label = "paper" if acc['paper'] else "LIVE"
+
+            content.append(f"{status_symbol} ", style=status_color)
+            content.append(f"{acc['name']}", style="bold cyan")
+            content.append(f" [{paper_label}]", style="yellow" if acc['paper'] else "red")
+
+            if acc['locked']:
+                content.append(f" PID:{acc['lock_pid']}", style="dim red")
+            else:
+                content.append(" available", style="dim green")
+
+            if acc['models']:
+                content.append(f"\n  → {', '.join(acc['models'][:2])}", style="dim")
+                if len(acc['models']) > 2:
+                    content.append(f" +{len(acc['models'])-2}", style="dim")
+
+        locked_count = sum(1 for a in accounts if a['locked'])
+        title = f"Accounts ({locked_count}/{len(accounts)} active)"
+        return Panel(content, title=title, border_style="cyan")
 
     def create_header_panel(self, health: Dict, account: Optional[Dict], market: Dict) -> Panel:
         status_color = {
@@ -871,12 +948,14 @@ class TradingDashboard:
         layout["left"].split_column(
             Layout(name="models", size=14),
             Layout(name="positions"),
-            Layout(name="risk", size=6)
+            Layout(name="risk", size=6),
+            Layout(name="accounts", size=10)
         )
 
         layout["left"]["models"].update(self.create_models_panel(health))
         layout["left"]["positions"].update(self.create_positions_panel(positions, nav))
         layout["left"]["risk"].update(self.create_risk_metrics_panel(positions, nav))
+        layout["left"]["accounts"].update(self.create_accounts_panel())
 
         layout["right"].split_column(
             Layout(name="universe", size=18),
@@ -912,43 +991,88 @@ def main():
     parser.add_argument('--skip-account-selection', action='store_true', help='Skip if only one account')
     args = parser.parse_args()
 
-    if args.logs:
-        logs_dir = args.logs
-    else:
-        local_logs = Path('production/local_logs')
-        docker_logs = Path('production/docker/logs')
-        if local_logs.exists():
-            logs_dir = local_logs
-        elif docker_logs.exists():
-            logs_dir = docker_logs
-        else:
-            print("Error: Could not find logs directory. Use --logs to specify.")
-            sys.exit(1)
-
-    # Try account selector first
+    # Try to load from accounts.yaml first
     api_key = None
     secret_key = None
     mode = 'paper'
+    account_name = args.account
+    logs_dir = None
+    health_url = args.health_url  # Default, may be overridden by account config
 
-    try:
-        from production.runner.account_selector import select_account
+    accounts_path = Path('production/configs/accounts.yaml')
+    if accounts_path.exists():
+        import yaml
+        import os as env_os
 
-        api_key, secret_key, account_info = select_account(
-            account_name=args.account,
-            skip_selection=args.skip_account_selection
-        )
+        with open(accounts_path, 'r') as f:
+            accounts_config = yaml.safe_load(f)
 
-        # Determine mode from account info (paper accounts have different number format)
-        # For now, check if it's explicitly set
-        mode = 'paper'  # Default to paper
+        accounts = accounts_config.get('accounts', {})
 
-        print(f"\nUsing account: {account_info['account_number']}")
-        print(f"Balance: ${account_info['portfolio_value']:,.2f}")
+        # If no account specified, list available and let user choose
+        if not account_name:
+            print("\nAvailable accounts:")
+            for i, name in enumerate(accounts.keys(), 1):
+                desc = accounts[name].get('description', '')
+                paper = "paper" if accounts[name].get('paper', True) else "LIVE"
+                print(f"  {i}. {name} [{paper}] - {desc}")
+
+            try:
+                choice = input("\nSelect account number (or name): ").strip()
+                if choice.isdigit():
+                    account_name = list(accounts.keys())[int(choice) - 1]
+                else:
+                    account_name = choice
+            except (IndexError, ValueError):
+                print("Invalid selection")
+                sys.exit(1)
+
+        if account_name not in accounts:
+            print(f"Error: Account '{account_name}' not found in accounts.yaml")
+            print(f"Available: {', '.join(accounts.keys())}")
+            sys.exit(1)
+
+        account_config = accounts[account_name]
+
+        # Resolve environment variables
+        def resolve_env(value):
+            if isinstance(value, str) and value.startswith('${') and value.endswith('}'):
+                return env_os.getenv(value[2:-1], '')
+            return value
+
+        api_key = resolve_env(account_config['api_key'])
+        secret_key = resolve_env(account_config['secret_key'])
+        mode = 'paper' if account_config.get('paper', True) else 'live'
+
+        # Set logs directory to account-specific subdirectory
+        logs_dir = Path('production/local_logs') / account_name
+
+        # Set health URL based on account's health port
+        health_port = account_config.get('health_port', 8080)
+        health_url = f"http://localhost:{health_port}"
+
+        print(f"\nUsing account: {account_name} ({mode})")
+        print(f"Models: {', '.join(account_config.get('models', ['default']))}")
+        print(f"Logs: {logs_dir}")
+        print(f"Health: {health_url}")
         print()
 
-    except Exception as e:
-        print(f"Account selection failed: {e}")
-        print("Falling back to .env file...")
+    if not logs_dir:
+        if args.logs:
+            logs_dir = args.logs
+        else:
+            local_logs = Path('production/local_logs')
+            docker_logs = Path('production/docker/logs')
+            if local_logs.exists():
+                logs_dir = local_logs
+            elif docker_logs.exists():
+                logs_dir = docker_logs
+            else:
+                print("Error: Could not find logs directory. Use --logs to specify.")
+                sys.exit(1)
+
+    if not api_key or not secret_key:
+        print("Loading credentials from .env file...")
 
         # Fall back to .env file
         if not args.env_file.exists():
@@ -976,7 +1100,7 @@ def main():
         api_key=api_key,
         secret_key=secret_key,
         paper=(mode == 'paper'),
-        health_url=args.health_url
+        health_url=health_url
     )
 
     print(f"Starting enhanced dashboard (refresh every {args.refresh}s)...")
