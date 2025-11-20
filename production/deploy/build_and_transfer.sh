@@ -8,7 +8,7 @@ set -e  # Exit on error
 VPS_HOST="${1:-31.220.55.98}"
 VPS_USER="root"
 IMAGE_NAME="trading-bot"
-IMAGE_TAG="amd64-v14"
+IMAGE_TAG="amd64-v15"
 LOCAL_TAR="/tmp/${IMAGE_NAME}-${IMAGE_TAG}.tar.gz"
 
 echo "=================================================================================="
@@ -49,7 +49,7 @@ echo ""
 # Step 1: Build AMD64 image
 echo "📦 Step 1/3: Building AMD64 Docker image..."
 echo "--------------------------------------------------------------------------------"
-if docker buildx build --platform linux/amd64 \
+if docker buildx build --platform linux/amd64 --no-cache \
     -t ${IMAGE_NAME}:${IMAGE_TAG} \
     -f production/docker/Dockerfile .; then
     echo "✅ Build completed successfully"
