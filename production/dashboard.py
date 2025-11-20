@@ -927,22 +927,90 @@ class TradingDashboard:
         except Exception:
             return None
 
+    def _render_ascii_chart(self, values: list, width: int = 60, height: int = 10) -> Text:
+        """Render a simple ASCII chart with Rich styles and axis labels."""
+        if not values:
+            return Text("No data")
+
+        # Normalize values to chart height
+        min_val = min(values)
+        max_val = max(values)
+        val_range = max_val - min_val if max_val != min_val else 1
+
+        # Resample values to fit width
+        if len(values) > width:
+            step = len(values) / width
+            sampled = [values[int(i * step)] for i in range(width)]
+        else:
+            sampled = values
+
+        # Calculate row position for each value (0 = top, height-1 = bottom)
+        row_positions = []
+        for val in sampled:
+            if val_range > 0:
+                normalized = (max_val - val) / val_range
+                row = int(normalized * (height - 1))
+                row = max(0, min(height - 1, row))
+            else:
+                row = height // 2
+            row_positions.append(row)
+
+        # Create chart grid
+        chart = [[' ' for _ in range(len(sampled))] for _ in range(height)]
+
+        # Place points at correct positions
+        for col, row in enumerate(row_positions):
+            chart[row][col] = '●'
+
+        # Build Rich Text with Y-axis labels
+        result = Text()
+
+        for row_idx in range(height):
+            # Y-axis label (show at top, middle, bottom)
+            if row_idx == 0:
+                label = f"{max_val:+.1f}%"
+            elif row_idx == height - 1:
+                label = f"{min_val:+.1f}%"
+            elif row_idx == height // 2:
+                mid_val = (max_val + min_val) / 2
+                label = f"{mid_val:+.1f}%"
+            else:
+                label = ""
+
+            # Pad label to fixed width
+            result.append(f"{label:>7} │", style="dim")
+
+            # Chart content
+            for col_idx in range(len(sampled)):
+                char = chart[row_idx][col_idx]
+                if char != ' ':
+                    val = sampled[col_idx]
+                    color = "green" if val >= 0 else "red"
+                    result.append(char, style=color)
+                else:
+                    result.append(char)
+
+            if row_idx < height - 1:
+                result.append("\n")
+
+        # X-axis
+        result.append("\n")
+        result.append("        └" + "─" * len(sampled), style="dim")
+        result.append("\n")
+        result.append("        9:30" + " " * (len(sampled) - 10) + "4:00", style="dim")
+
+        return result
+
     def create_spy_chart_panel(self) -> Panel:
-        """Create SPY intraday chart panel using plotille."""
-        if not plotille or not yf:
-            missing = []
-            if not plotille:
-                missing.append("plotille")
-            if not yf:
-                missing.append("yfinance")
-            return Panel(f"Install: pip install {' '.join(missing)}", title="SPY Chart", border_style="dim")
+        """Create SPY intraday chart panel using native Rich rendering."""
+        if not yf:
+            return Panel("Install: pip install yfinance", title="SPY Chart", border_style="dim")
 
         data = self._fetch_spy_intraday()
         if not data:
             return Panel("No intraday data available", title="SPY Chart", border_style="dim")
 
         df = data['df']
-        start_time = data['start_time']
         session_date = data['session_date']
 
         closes = df["close"].astype(float).to_list()
@@ -953,59 +1021,11 @@ class TradingDashboard:
         close_price = closes[-1]
         pct_change = ((close_price - open_price) / open_price) * 100
 
-        # Calculate time series
-        timestamps = df.index.to_list()
-        minutes_since_open = [(ts - start_time).total_seconds() / 60 for ts in timestamps]
-        hours_since_open = [m / 60 for m in minutes_since_open]
+        # Calculate percentage series (relative to open)
         pct_series = [((p - open_price) / open_price) * 100 for p in closes]
 
-        # Build chart
-        fig = plotille.Figure()
-        fig.width = 45
-        fig.height = 10
-        fig.color_mode = "byte"  # Use byte mode for consistent ANSI colors
-        fig.set_x_limits(min_=0, max_=6.5)
-
-        y_min, y_max = min(pct_series), max(pct_series)
-        fig.set_y_limits(min_=y_min - 0.05, max_=y_max + 0.05)
-
-        # Split into green/red segments (use byte color codes: green=2, red=1)
-        segments = []
-        if len(hours_since_open) > 1:
-            prev_x, prev_y = hours_since_open[0], pct_series[0]
-            color = 2 if prev_y >= 0 else 1  # 2=green, 1=red
-            seg_x, seg_y = [prev_x], [prev_y]
-
-            for x, y in zip(hours_since_open[1:], pct_series[1:]):
-                next_color = 2 if y >= 0 else 1
-                if next_color == color:
-                    seg_x.append(x)
-                    seg_y.append(y)
-                else:
-                    # Find crossing point
-                    dy = y - prev_y
-                    dx = x - prev_x
-                    if dy != 0:
-                        t = max(0, min(1, -prev_y / dy))
-                        cross_x = prev_x + t * dx
-                    else:
-                        cross_x = x
-                    seg_x.append(cross_x)
-                    seg_y.append(0.0)
-                    segments.append((seg_x, seg_y, color))
-                    seg_x, seg_y = [cross_x, x], [0.0, y]
-                    color = next_color
-                prev_x, prev_y = x, y
-            segments.append((seg_x, seg_y, color))
-        else:
-            segments = [(hours_since_open, pct_series, 2 if pct_series[0] >= 0 else 1)]
-
-        for xs, ys, color in segments:
-            fig.plot(xs, ys, lc=color)
-
-        # Convert plotille output to Rich Text
-        chart_str = fig.show()
-        chart_text = Text.from_ansi(chart_str)
+        # Render chart using native Rich - fill panel width
+        chart_text = self._render_ascii_chart(pct_series, width=100, height=10)
 
         # Add summary
         summary = Text()
@@ -1016,7 +1036,7 @@ class TradingDashboard:
 
         content = Text()
         content.append_text(summary)
-        content.append("\n")
+        content.append("\n\n\n")  # Extra spacing before chart
         content.append_text(chart_text)
 
         return Panel(content, title="SPY Intraday", border_style="cyan")
