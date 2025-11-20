@@ -36,6 +36,7 @@ accounts:
     secret_key: 5jtp3zbUwGjxMZ3fKtxiTKAcrJY8eT5CfYbVZGuWfack
     paper: false
     description: "Live Individual (unfunded)"
+    health_port: 8082
     models:
       - SectorRotationAdaptive_v1
 
