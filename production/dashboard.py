@@ -479,6 +479,8 @@ class TradingDashboard:
         try:
             accounts_path = Path(__file__).parent / 'configs' / 'accounts.yaml'
             if not accounts_path.exists():
+                accounts_path = Path('/app/configs/accounts.yaml')  # Docker location
+            if not accounts_path.exists():
                 return []
 
             with open(accounts_path, 'r') as f:
@@ -1192,7 +1194,10 @@ def main():
     logs_dir = None
     health_url = args.health_url  # Default, may be overridden by account config
 
+    # Check multiple locations for accounts.yaml (local dev vs Docker)
     accounts_path = Path(__file__).parent / 'configs' / 'accounts.yaml'
+    if not accounts_path.exists():
+        accounts_path = Path('/app/configs/accounts.yaml')  # Docker location
     if accounts_path.exists():
         import yaml
         import os as env_os
@@ -1238,7 +1243,9 @@ def main():
         mode = 'paper' if account_config.get('paper', True) else 'live'
 
         # Set logs directory to account-specific subdirectory
-        logs_dir = Path('production/local_logs') / account_name
+        # Use LOGS_BASE_DIR env var if set (for Docker), otherwise use local default
+        logs_base = env_os.getenv('LOGS_BASE_DIR', 'production/local_logs')
+        logs_dir = Path(logs_base) / account_name
 
         # Set health URL based on account's health port
         health_port = account_config.get('health_port', 8080)

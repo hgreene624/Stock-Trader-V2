@@ -55,9 +55,10 @@ COPY production/configs/ /app/configs/
 # Copy agent documentation
 COPY production/AGENTS.md /app/AGENTS.md
 
-# Copy entrypoint script
+# Copy entrypoint scripts
 COPY production/docker/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY production/docker/dashboard-entrypoint.sh /app/dashboard-entrypoint.sh
+RUN chmod +x /app/entrypoint.sh /app/dashboard-entrypoint.sh
 
 # Create directories for data, logs, and .env location
 RUN mkdir -p /app/data/equities /app/data/crypto /app/logs /app/production/docker
