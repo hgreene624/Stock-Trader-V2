@@ -1,13 +1,22 @@
 #!/bin/bash
 # VPS Deployment Script for Production Trading Bot
 # Run this script ON THE VPS to deploy the transferred image
-# Usage: ./vps_deploy.sh
+# Usage: ./vps_deploy.sh <IMAGE_TAG>
+# Example: ./vps_deploy.sh amd64-v14
 
 set -e  # Exit on error
 
+# Require IMAGE_TAG as parameter
+if [ -z "$1" ]; then
+    echo "❌ ERROR: IMAGE_TAG is required"
+    echo "Usage: $0 <IMAGE_TAG>"
+    echo "Example: $0 amd64-v14"
+    exit 1
+fi
+
 # Configuration
 IMAGE_NAME="trading-bot"
-IMAGE_TAG="amd64-v13"
+IMAGE_TAG="$1"
 CONTAINER_NAME="trading-bot"
 TAR_FILE="/tmp/${IMAGE_NAME}-${IMAGE_TAG}.tar.gz"
 ALPACA_API_KEY="${ALPACA_API_KEY:-PKOJHUORSUX2C3VPVMC2FGKDT2}"
