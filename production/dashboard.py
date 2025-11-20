@@ -908,6 +908,8 @@ def main():
     parser.add_argument('--env-file', type=Path, default=Path('production/docker/.env'))
     parser.add_argument('--refresh', type=int, default=5, help='Refresh interval in seconds')
     parser.add_argument('--health-url', default='http://localhost:8080')
+    parser.add_argument('--account', default=None, help='Account name from accounts.yaml')
+    parser.add_argument('--skip-account-selection', action='store_true', help='Skip if only one account')
     args = parser.parse_args()
 
     if args.logs:
@@ -923,24 +925,50 @@ def main():
             print("Error: Could not find logs directory. Use --logs to specify.")
             sys.exit(1)
 
-    if not args.env_file.exists():
-        print(f"Error: .env file not found: {args.env_file}")
-        sys.exit(1)
+    # Try account selector first
+    api_key = None
+    secret_key = None
+    mode = 'paper'
 
-    env_vars = {}
-    with open(args.env_file, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
-                env_vars[key] = value
+    try:
+        from production.runner.account_selector import select_account
 
-    api_key = env_vars.get('ALPACA_API_KEY')
-    secret_key = env_vars.get('ALPACA_SECRET_KEY')
-    mode = env_vars.get('MODE', 'paper')
+        api_key, secret_key, account_info = select_account(
+            account_name=args.account,
+            skip_selection=args.skip_account_selection
+        )
+
+        # Determine mode from account info (paper accounts have different number format)
+        # For now, check if it's explicitly set
+        mode = 'paper'  # Default to paper
+
+        print(f"\nUsing account: {account_info['account_number']}")
+        print(f"Balance: ${account_info['portfolio_value']:,.2f}")
+        print()
+
+    except Exception as e:
+        print(f"Account selection failed: {e}")
+        print("Falling back to .env file...")
+
+        # Fall back to .env file
+        if not args.env_file.exists():
+            print(f"Error: .env file not found: {args.env_file}")
+            sys.exit(1)
+
+        env_vars = {}
+        with open(args.env_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key] = value
+
+        api_key = env_vars.get('ALPACA_API_KEY')
+        secret_key = env_vars.get('ALPACA_SECRET_KEY')
+        mode = env_vars.get('MODE', 'paper')
 
     if not api_key or not secret_key:
-        print("Error: ALPACA_API_KEY or ALPACA_SECRET_KEY not found in .env file")
+        print("Error: Could not get Alpaca credentials")
         sys.exit(1)
 
     dashboard = TradingDashboard(
