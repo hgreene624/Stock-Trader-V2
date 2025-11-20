@@ -165,19 +165,19 @@ class HybridDataFetcher:
 
         # Moving Averages
         for period in [20, 50, 200]:
-            df[f'MA_{period}'] = df['Close'].rolling(window=period).mean()
+            df[f'MA_{period}'] = df['close'].rolling(window=period).mean()
 
         # RSI
-        delta = df['Close'].diff()
+        delta = df['close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
         df['RSI_14'] = 100 - (100 / (1 + rs))
 
         # ATR
-        high_low = df['High'] - df['Low']
-        high_close = np.abs(df['High'] - df['Close'].shift())
-        low_close = np.abs(df['Low'] - df['Close'].shift())
+        high_low = df['high'] - df['low']
+        high_close = np.abs(df['high'] - df['close'].shift())
+        low_close = np.abs(df['low'] - df['close'].shift())
         ranges = pd.concat([high_low, high_close, low_close], axis=1)
         true_range = ranges.max(axis=1)
         df['ATR_14'] = true_range.rolling(window=14).mean()
@@ -185,8 +185,8 @@ class HybridDataFetcher:
         # Bollinger Bands
         bb_period = 20
         bb_std = 2
-        bb_ma = df['Close'].rolling(window=bb_period).mean()
-        bb_stddev = df['Close'].rolling(window=bb_period).std()
+        bb_ma = df['close'].rolling(window=bb_period).mean()
+        bb_stddev = df['close'].rolling(window=bb_period).std()
         df['BB_Upper'] = bb_ma + (bb_std * bb_stddev)
         df['BB_Lower'] = bb_ma - (bb_std * bb_stddev)
         df['BB_Mid'] = bb_ma
@@ -194,7 +194,7 @@ class HybridDataFetcher:
         # Momentum (various periods)
         for period in [30, 60, 126]:
             df[f'Momentum_{period}'] = (
-                (df['Close'] - df['Close'].shift(period)) / df['Close'].shift(period)
+                (df['close'] - df['close'].shift(period)) / df['close'].shift(period)
             ) * 100
 
         return df
@@ -255,7 +255,7 @@ class HybridDataFetcher:
                 merged = self._compute_features(merged)
 
                 # Filter to valid timestamps (not NaN for key features)
-                merged = merged.dropna(subset=['Close', 'MA_200'], how='any')
+                merged = merged.dropna(subset=['close', 'MA_200'], how='any')
 
                 # Filter to requested date range (after feature computation)
                 merged = merged[merged.index >= start_date]
@@ -328,14 +328,8 @@ class HybridDataFetcher:
                 df_new['timestamp'] = pd.to_datetime(df_new['timestamp'], utc=True)
                 df_new.set_index('timestamp', inplace=True)
 
-                # Rename columns
-                df_new.rename(columns={
-                    'open': 'Open',
-                    'high': 'High',
-                    'low': 'Low',
-                    'close': 'Close',
-                    'volume': 'Volume'
-                }, inplace=True)
+                # Normalize column names to lowercase
+                df_new.columns = df_new.columns.str.lower()
 
                 # Load existing cache
                 cache_file = self.cache_dir / 'equities' / f'{symbol}_1D.parquet'

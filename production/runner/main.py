@@ -346,7 +346,7 @@ class ProductionTradingRunner:
             RegimeState
         """
         try:
-            equity_regime = self.regime_classifier.classify(spy_data['Close'], timestamp)
+            equity_regime = self.regime_classifier.classify(spy_data['close'], timestamp)
 
             # Simplified regime for production (could enhance later)
             regime = RegimeState(
@@ -745,7 +745,7 @@ class ProductionTradingRunner:
                         if symbol in self.positions and symbol in asset_features:
                             qty = self.positions[symbol]
                             # Get latest price
-                            latest_price = float(asset_features[symbol]['Close'].iloc[-1])
+                            latest_price = float(asset_features[symbol]['close'].iloc[-1])
                             exposure = (qty * latest_price) / float(self.current_nav)
                             current_exposures[symbol] = exposure
 
