@@ -1156,7 +1156,7 @@ def main():
     logs_dir = None
     health_url = args.health_url  # Default, may be overridden by account config
 
-    accounts_path = Path('production/configs/accounts.yaml')
+    accounts_path = Path(__file__).parent / 'configs' / 'accounts.yaml'
     if accounts_path.exists():
         import yaml
         import os as env_os
