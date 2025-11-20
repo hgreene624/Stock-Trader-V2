@@ -276,16 +276,18 @@ class TradingDashboard:
         # Try live data first
         if self.data_client:
             try:
-                # Fetch last 5 daily bars for SPY
+                # Fetch recent daily bars for SPY using start date (limit doesn't work well)
+                from datetime import timedelta
+                start_date = datetime.now(timezone.utc) - timedelta(days=7)
                 request = StockBarsRequest(
                     symbol_or_symbols=['SPY'],
                     timeframe=TimeFrame.Day,
-                    limit=5
+                    start=start_date
                 )
                 bars_response = self.data_client.get_stock_bars(request)
 
                 if 'SPY' in bars_response.data and len(bars_response.data['SPY']) >= 2:
-                    bars = bars_response.data['SPY']
+                    bars = list(bars_response.data['SPY'])
                     latest_close = float(bars[-1].close)
                     previous_close = float(bars[-2].close)
                     spy_return = (latest_close - previous_close) / previous_close
