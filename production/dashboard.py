@@ -91,6 +91,9 @@ class TradingDashboard:
         self.initial_nav = None
         self.peak_nav = None
 
+        # Track dashboard-specific warnings (data staleness, API failures, etc.)
+        self.dashboard_warnings = []
+
     def _read_jsonl_tail(self, file_path: Path, n: int = 20) -> List[Dict]:
         if not file_path.exists():
             return []
@@ -272,75 +275,44 @@ class TradingDashboard:
         return (current_nav - self.peak_nav) / self.peak_nav
 
     def _get_spy_performance(self) -> Optional[Dict]:
-        """Get SPY performance from live Alpaca API, with parquet fallback."""
-        # Try live data first
-        if self.data_client:
-            try:
-                # Fetch recent daily bars for SPY using start date (limit doesn't work well)
-                from datetime import timedelta
-                start_date = datetime.now(timezone.utc) - timedelta(days=7)
-                request = StockBarsRequest(
-                    symbol_or_symbols=['SPY'],
-                    timeframe=TimeFrame.Day,
-                    start=start_date
-                )
-                bars_response = self.data_client.get_stock_bars(request)
+        """Get SPY performance from live Alpaca API. No silent fallbacks."""
+        # Clear any previous SPY-related warnings
+        self.dashboard_warnings = [w for w in self.dashboard_warnings if 'SPY' not in w]
 
-                if 'SPY' in bars_response.data and len(bars_response.data['SPY']) >= 2:
-                    bars = list(bars_response.data['SPY'])
-                    latest_close = float(bars[-1].close)
-                    previous_close = float(bars[-2].close)
-                    spy_return = (latest_close - previous_close) / previous_close
+        if not self.data_client:
+            self.dashboard_warnings.append("SPY: No data client - cannot fetch live data")
+            return None
 
-                    return {
-                        'price': latest_close,
-                        'return_today': spy_return
-                    }
-            except Exception:
-                pass  # Fall through to parquet fallback
-
-        # Fallback to cached parquet files
         try:
-            import pandas as pd
+            # Fetch recent daily bars for SPY using start date
+            from datetime import timedelta
+            start_date = datetime.now(timezone.utc) - timedelta(days=7)
+            request = StockBarsRequest(
+                symbol_or_symbols=['SPY'],
+                timeframe=TimeFrame.Day,
+                start=start_date
+            )
+            bars_response = self.data_client.get_stock_bars(request)
 
-            # Check multiple locations for SPY data
-            possible_dirs = [
-                Path('/app/data/equities'),  # Docker
-                Path(__file__).parent / 'local_data' / 'equities',  # Local
-                Path(__file__).parent.parent / 'data' / 'equities',  # Alternative
-            ]
-
-            data_dir = None
-            for dir_path in possible_dirs:
-                if dir_path.exists():
-                    data_dir = dir_path
-                    break
-
-            if data_dir is None:
+            if 'SPY' not in bars_response.data:
+                self.dashboard_warnings.append("SPY: No data returned from Alpaca API")
                 return None
 
-            spy_file = data_dir / 'SPY_1D.parquet'
-            if not spy_file.exists():
+            bars = list(bars_response.data['SPY'])
+            if len(bars) < 2:
+                self.dashboard_warnings.append(f"SPY: Only {len(bars)} bars returned, need at least 2")
                 return None
 
-            df = pd.read_parquet(spy_file)
-            if len(df) < 2:
-                return None
-
-            # Handle both uppercase and lowercase column names
-            close_col = 'Close' if 'Close' in df.columns else 'close'
-
-            # Get today's and yesterday's close
-            latest_close = float(df[close_col].iloc[-1])
-            previous_close = float(df[close_col].iloc[-2])
-
+            latest_close = float(bars[-1].close)
+            previous_close = float(bars[-2].close)
             spy_return = (latest_close - previous_close) / previous_close
 
             return {
                 'price': latest_close,
                 'return_today': spy_return
             }
-        except Exception:
+        except Exception as e:
+            self.dashboard_warnings.append(f"SPY API error: {str(e)[:50]}")
             return None
 
     def _calculate_momentum_rankings(self, symbols: List[str], lookback: int = 126) -> Dict[str, float]:
@@ -769,17 +741,35 @@ class TradingDashboard:
 
     def create_errors_panel(self) -> Panel:
         recent_errors = self._read_jsonl_tail(self.errors_log, n=3)
-        if not recent_errors:
+
+        # Combine runner errors and dashboard warnings
+        has_runner_errors = bool(recent_errors)
+        has_dashboard_warnings = bool(self.dashboard_warnings)
+
+        if not has_runner_errors and not has_dashboard_warnings:
             return Panel("[green]No errors[/green]", title="Errors", border_style="green")
 
         error_text = Text()
-        for err in reversed(recent_errors[-3:]):
-            timestamp = err.get('timestamp', '')[:16]
-            error_msg = err.get('error', 'No message')[:50]
-            error_text.append(f"{timestamp}: ", style="dim")
-            error_text.append(f"{error_msg}\n", style="red")
 
-        return Panel(error_text, title=f"Errors ({len(recent_errors)})", border_style="red")
+        # Show dashboard warnings first (current issues)
+        if has_dashboard_warnings:
+            error_text.append("Dashboard:\n", style="bold yellow")
+            for warning in self.dashboard_warnings:
+                error_text.append(f"  • {warning}\n", style="yellow")
+
+        # Show runner errors
+        if has_runner_errors:
+            if has_dashboard_warnings:
+                error_text.append("\nRunner:\n", style="bold red")
+            for err in reversed(recent_errors[-3:]):
+                timestamp = err.get('timestamp', '')[:16]
+                error_msg = err.get('error', 'No message')[:50]
+                error_text.append(f"{timestamp}: ", style="dim")
+                error_text.append(f"{error_msg}\n", style="red")
+
+        total_issues = len(self.dashboard_warnings) + len(recent_errors)
+        border_color = "red" if has_runner_errors else "yellow"
+        return Panel(error_text, title=f"Errors ({total_issues})", border_style=border_color)
 
     def create_universe_panel(self, health: Dict, positions: List[Dict], market: Dict, prices: Dict) -> Panel:
         models_data = health.get('models', [])
