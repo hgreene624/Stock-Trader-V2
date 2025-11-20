@@ -106,12 +106,10 @@ class SectorRotationModel_v1(BaseModel):
         Returns:
             ModelOutput with target weights
         """
-        # Monthly rebalancing: only rebalance on first trading day of month
-        current_month = (context.timestamp.year, context.timestamp.month)
-
+        # Weekly rebalancing: only rebalance if 7+ days since last rebalance
         if self.last_rebalance is not None:
-            last_month = (self.last_rebalance.year, self.last_rebalance.month)
-            if current_month == last_month:
+            days_since_rebalance = (context.timestamp - self.last_rebalance).days
+            if days_since_rebalance < 7:
                 # Not time to rebalance yet - hold current positions
                 # Return current NAV-relative exposures directly with hold_current=True
                 # The system will skip leverage application since positions are already leveraged

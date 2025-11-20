@@ -41,6 +41,9 @@ except ImportError:
 
 try:
     from alpaca.trading.client import TradingClient
+    from alpaca.data.historical import StockHistoricalDataClient
+    from alpaca.data.requests import StockBarsRequest
+    from alpaca.data.timeframe import TimeFrame
 except ImportError:
     print("Error: 'alpaca-py' library not installed. Install with: pip install alpaca-py")
     sys.exit(1)
@@ -71,9 +74,14 @@ class TradingDashboard:
                 secret_key=secret_key,
                 paper=paper
             )
+            self.data_client = StockHistoricalDataClient(
+                api_key=api_key,
+                secret_key=secret_key
+            )
         except Exception as e:
             self.console.print(f"[red]Failed to initialize Alpaca client: {e}[/red]")
             self.trading_client = None
+            self.data_client = None
 
         self.orders_log = self.logs_dir / 'orders.jsonl'
         self.trades_log = self.logs_dir / 'trades.jsonl'
@@ -264,7 +272,32 @@ class TradingDashboard:
         return (current_nav - self.peak_nav) / self.peak_nav
 
     def _get_spy_performance(self) -> Optional[Dict]:
-        """Get SPY performance from cached parquet files."""
+        """Get SPY performance from live Alpaca API, with parquet fallback."""
+        # Try live data first
+        if self.data_client:
+            try:
+                # Fetch last 5 daily bars for SPY
+                request = StockBarsRequest(
+                    symbol_or_symbols=['SPY'],
+                    timeframe=TimeFrame.Day,
+                    limit=5
+                )
+                bars_response = self.data_client.get_stock_bars(request)
+
+                if 'SPY' in bars_response.data and len(bars_response.data['SPY']) >= 2:
+                    bars = bars_response.data['SPY']
+                    latest_close = float(bars[-1].close)
+                    previous_close = float(bars[-2].close)
+                    spy_return = (latest_close - previous_close) / previous_close
+
+                    return {
+                        'price': latest_close,
+                        'return_today': spy_return
+                    }
+            except Exception:
+                pass  # Fall through to parquet fallback
+
+        # Fallback to cached parquet files
         try:
             import pandas as pd
 

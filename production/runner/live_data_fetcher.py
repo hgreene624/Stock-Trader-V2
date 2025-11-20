@@ -75,14 +75,8 @@ class HybridDataFetcher:
         try:
             df = pd.read_parquet(cache_file)
 
-            # Normalize column names (cached data uses lowercase, we need Capital)
-            df.rename(columns={
-                'open': 'Open',
-                'high': 'High',
-                'low': 'Low',
-                'close': 'Close',
-                'volume': 'Volume'
-            }, inplace=True)
+            # Normalize column names to lowercase (models expect lowercase)
+            df.columns = df.columns.str.lower()
 
             # Ensure timezone-aware
             if df.index.tz is None:
@@ -120,14 +114,8 @@ class HybridDataFetcher:
                 df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
                 df.set_index('timestamp', inplace=True)
 
-                # Rename columns to match cache format
-                df.rename(columns={
-                    'open': 'Open',
-                    'high': 'High',
-                    'low': 'Low',
-                    'close': 'Close',
-                    'volume': 'Volume'
-                }, inplace=True)
+                # Normalize column names to lowercase (models expect lowercase)
+                df.columns = df.columns.str.lower()
 
                 result[symbol] = df
                 logger.debug(f"Fetched {len(df)} live bars for {symbol}")

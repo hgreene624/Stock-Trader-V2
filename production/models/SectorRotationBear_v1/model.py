@@ -106,15 +106,11 @@ class SectorRotationBear_v1(BaseModel):
                 weights=weights
             )
 
-        # Rebalancing logic:
-        # 1. Always rebalance on first run (last_rebalance is None)
-        # 2. Rebalance on first trading day of new month
-        # This ensures fresh positions on startup and monthly updates
-        current_month = (context.timestamp.year, context.timestamp.month)
-
+        # Weekly rebalancing: only rebalance if 7+ days since last rebalance
+        # Always rebalance on first run (last_rebalance is None)
         if self.last_rebalance is not None:
-            last_month = (self.last_rebalance.year, self.last_rebalance.month)
-            if current_month == last_month:
+            days_since_rebalance = (context.timestamp - self.last_rebalance).days
+            if days_since_rebalance < 7:
                 # Not time to rebalance yet - hold current positions
                 return ModelOutput(
                     model_name=self.model_id,
