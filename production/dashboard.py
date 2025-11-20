@@ -50,9 +50,12 @@ except ImportError:
 
 try:
     import yaml
-    from production.runner.instance_lock import get_lock_manager
 except ImportError:
     yaml = None
+
+try:
+    from production.runner.instance_lock import get_lock_manager
+except ImportError:
     get_lock_manager = None
 
 try:
@@ -470,7 +473,7 @@ class TradingDashboard:
 
     def _get_account_locks(self) -> List[Dict]:
         """Get all accounts and their lock status."""
-        if not yaml or not get_lock_manager:
+        if not yaml:
             return []
 
         try:
@@ -482,12 +485,25 @@ class TradingDashboard:
                 config = yaml.safe_load(f)
 
             accounts = config.get('accounts', {})
-            lock_manager = get_lock_manager()
+
+            # Try to get lock manager, but work without it
+            lock_manager = None
+            if get_lock_manager:
+                try:
+                    lock_manager = get_lock_manager()
+                except Exception:
+                    pass
 
             result = []
             for name, acc_config in accounts.items():
-                is_locked = lock_manager.is_locked(name)
-                lock_info = lock_manager.get_lock_info(name) if is_locked else None
+                is_locked = False
+                lock_info = None
+                if lock_manager:
+                    try:
+                        is_locked = lock_manager.is_locked(name)
+                        lock_info = lock_manager.get_lock_info(name) if is_locked else None
+                    except Exception:
+                        pass
 
                 result.append({
                     'name': name,
@@ -947,21 +963,21 @@ class TradingDashboard:
         fig = plotille.Figure()
         fig.width = 45
         fig.height = 10
-        fig.color_mode = "names"
+        fig.color_mode = "byte"  # Use byte mode for consistent ANSI colors
         fig.set_x_limits(min_=0, max_=6.5)
 
         y_min, y_max = min(pct_series), max(pct_series)
         fig.set_y_limits(min_=y_min - 0.05, max_=y_max + 0.05)
 
-        # Split into green/red segments
+        # Split into green/red segments (use byte color codes: green=2, red=1)
         segments = []
         if len(hours_since_open) > 1:
             prev_x, prev_y = hours_since_open[0], pct_series[0]
-            color = "green" if prev_y >= 0 else "red"
+            color = 2 if prev_y >= 0 else 1  # 2=green, 1=red
             seg_x, seg_y = [prev_x], [prev_y]
 
             for x, y in zip(hours_since_open[1:], pct_series[1:]):
-                next_color = "green" if y >= 0 else "red"
+                next_color = 2 if y >= 0 else 1
                 if next_color == color:
                     seg_x.append(x)
                     seg_y.append(y)
@@ -982,7 +998,7 @@ class TradingDashboard:
                 prev_x, prev_y = x, y
             segments.append((seg_x, seg_y, color))
         else:
-            segments = [(hours_since_open, pct_series, "green" if pct_series[0] >= 0 else "red")]
+            segments = [(hours_since_open, pct_series, 2 if pct_series[0] >= 0 else 1)]
 
         for xs, ys, color in segments:
             fig.plot(xs, ys, lc=color)
