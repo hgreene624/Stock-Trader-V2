@@ -498,12 +498,22 @@ class TradingDashboard:
 
             result = []
             for name, acc_config in accounts.items():
-                is_locked = False
-                lock_info = None
-                if lock_manager:
+                is_running = False
+
+                # Check health endpoint to determine if bot is running
+                health_port = acc_config.get('health_port', 8080)
+                try:
+                    import requests
+                    resp = requests.get(f'http://localhost:{health_port}/health', timeout=1)
+                    if resp.status_code == 200:
+                        is_running = True
+                except Exception:
+                    pass
+
+                # Fallback to lock manager if available
+                if not is_running and lock_manager:
                     try:
-                        is_locked = lock_manager.is_locked(name)
-                        lock_info = lock_manager.get_lock_info(name) if is_locked else None
+                        is_running = lock_manager.is_locked(name)
                     except Exception:
                         pass
 
@@ -512,9 +522,10 @@ class TradingDashboard:
                     'paper': acc_config.get('paper', True),
                     'models': acc_config.get('models', []),
                     'description': acc_config.get('description', ''),
-                    'locked': is_locked,
-                    'lock_pid': lock_info.get('pid') if lock_info else None,
-                    'lock_hostname': lock_info.get('hostname') if lock_info else None
+                    'locked': is_running,
+                    'lock_pid': None,
+                    'lock_hostname': None,
+                    'health_port': health_port
                 })
 
             return result
@@ -543,9 +554,9 @@ class TradingDashboard:
             content.append(f" [{paper_label}]", style="yellow" if acc['paper'] else "red")
 
             if acc['locked']:
-                content.append(f" PID:{acc['lock_pid']}", style="dim red")
+                content.append(f" running", style="dim green")
             else:
-                content.append(" available", style="dim green")
+                content.append(" available", style="dim yellow")
 
             if acc['models']:
                 content.append(f"\n  → {', '.join(acc['models'][:2])}", style="dim")
