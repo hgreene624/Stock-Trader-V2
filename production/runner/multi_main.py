@@ -85,6 +85,7 @@ class MultiAccountOrchestrator:
             os.environ['ALPACA_API_KEY'] = account_config['api_key']
             os.environ['ALPACA_SECRET_KEY'] = account_config['secret_key']
             os.environ['ACCOUNT_ID'] = account_id
+            os.environ['ACCOUNT'] = account_id  # For model filtering in main.py
             os.environ['HEALTH_PORT'] = str(account_config.get('health_port', 8080))
 
             # Set config path - use local path if not in Docker
