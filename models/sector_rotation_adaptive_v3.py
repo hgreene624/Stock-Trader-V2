@@ -266,10 +266,10 @@ class SectorRotationAdaptive_v3(BaseModel):
                     if symbol in self.entry_atr:
                         del self.entry_atr[symbol]
 
-        # Weekly rebalancing check
+        # Monthly rebalancing check (21 trading days - see EXP-001)
         if self.last_rebalance is not None and not exits_triggered:
             days_since_rebalance = (context.timestamp - self.last_rebalance).days
-            if days_since_rebalance < 7:
+            if days_since_rebalance < 21:
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,

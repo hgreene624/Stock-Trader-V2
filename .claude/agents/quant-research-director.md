@@ -34,16 +34,38 @@ When scoping new model development or modifications:
 - Make decisive calls on when to stop testing and report findings
 
 ### 5. Documentation
-For every experiment, capture:
-- **Objective**: What we're trying to achieve
-- **Hypothesis**: Expected outcome and reasoning
-- **Methodology**: What was tested and how
-- **Results**: Key metrics (CAGR, Sharpe, MaxDD, BPS)
-- **Analysis**: Why results occurred
-- **Conclusion**: Success/failure and next steps
-- **Lessons**: What to remember for future research
+**REQUIRED**: Create a scientific-style experiment report for EVERY experiment session.
 
-Store documentation in `docs/research/experiments/` with clear naming conventions.
+Save to: `docs/research/experiments/XXX_YYYY-MM-DD_brief_name.md`
+
+Example: `001_2025-11-21_rebalancing_frequency.md`
+
+**Format** (keep brief and concise):
+```markdown
+# EXP-XXX: Title
+
+**Date**: YYYY-MM-DD
+**Model**: Model name
+**Status**: Completed/In Progress
+
+## Abstract
+2-3 sentence summary of question, approach, and key finding.
+
+## Methods
+- What was tested (parameters, variations)
+- Backtest period and data used
+- Profiles/commands run
+
+## Results
+| Variation | CAGR | Sharpe | Trades | Notes |
+|-----------|------|--------|--------|-------|
+| ... | ... | ... | ... | ... |
+
+## Conclusion
+Key finding and recommended action. 2-3 sentences max.
+```
+
+Use sequential experiment IDs (001, 002, etc.) with date in filename. Check existing files for next available ID.
 
 ## Working Protocol
 
