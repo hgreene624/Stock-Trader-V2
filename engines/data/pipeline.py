@@ -174,15 +174,22 @@ class DataPipeline:
 
             # Use merge_asof to align daily features to H4 bars
             # This takes the most recent daily value for each H4 timestamp
+            # Handle case where index is named 'timestamp' or unnamed
+            timestamp_col = 'timestamp' if 'timestamp' in df_reset.columns else df_reset.index.name or 'index'
+            if timestamp_col == 'index' and 'index' not in df_reset.columns:
+                df_reset = df_reset.rename(columns={df_reset.columns[0]: 'timestamp'})
+                df_daily_reset = df_daily_reset.rename(columns={df_daily_reset.columns[0]: 'timestamp'})
+                timestamp_col = 'timestamp'
+
             df_merged = pd.merge_asof(
-                df_reset.sort_values('timestamp'),
-                df_daily_reset.sort_values('timestamp'),
-                on='timestamp',
+                df_reset.sort_values(timestamp_col),
+                df_daily_reset.sort_values(timestamp_col),
+                on=timestamp_col,
                 direction='backward'  # Take most recent daily value (no look-ahead)
             )
 
             # Set index back
-            df = df_merged.set_index('timestamp')
+            df = df_merged.set_index(timestamp_col)
 
         # Compute momentum on H4 (for strategies that use H4 momentum)
         df['h4_momentum_20'] = df['close'].pct_change(20)
