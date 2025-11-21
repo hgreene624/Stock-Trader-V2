@@ -543,25 +543,32 @@ class TradingDashboard:
 
         for i, acc in enumerate(accounts):
             if i > 0:
-                content.append("\n")
+                content.append("\n\n")  # Extra spacing between accounts
 
-            status_symbol = "●" if acc['locked'] else "○"
-            status_color = "red" if acc['locked'] else "green"
-            paper_label = "paper" if acc['paper'] else "LIVE"
-
-            content.append(f"{status_symbol} ", style=status_color)
+            # Account ID (Alpaca account number)
             content.append(f"{acc['name']}", style="bold cyan")
-            content.append(f" [{paper_label}]", style="yellow" if acc['paper'] else "red")
 
-            if acc['locked']:
-                content.append(f" running", style="dim green")
-            else:
-                content.append(" available", style="dim yellow")
+            # Paper/Live indicator
+            paper_label = "PAPER" if acc['paper'] else "LIVE"
+            content.append(f" [{paper_label}]\n", style="yellow" if acc['paper'] else "red")
 
+            # Models assigned to this account
             if acc['models']:
-                content.append(f"\n  → {', '.join(acc['models'][:2])}", style="dim")
-                if len(acc['models']) > 2:
-                    content.append(f" +{len(acc['models'])-2}", style="dim")
+                models_str = ', '.join(acc['models'][:3])
+                if len(acc['models']) > 3:
+                    models_str += f" +{len(acc['models'])-3}"
+                content.append(f"  Models: {models_str}\n", style="white")
+            else:
+                content.append("  Models: none\n", style="dim")
+
+            # Running status with port
+            if acc['locked']:
+                content.append(f"  Status: ", style="dim")
+                content.append(f"running", style="green")
+                content.append(f" (port {acc['health_port']})", style="dim")
+            else:
+                content.append("  Status: ", style="dim")
+                content.append("available", style="yellow")
 
         locked_count = sum(1 for a in accounts if a['locked'])
         title = f"Accounts ({locked_count}/{len(accounts)} active)"
@@ -1221,10 +1228,35 @@ def main():
         # If no account specified, list available and let user choose
         if not account_name:
             print("\nAvailable accounts:")
-            for i, name in enumerate(accounts.keys(), 1):
-                desc = accounts[name].get('description', '')
-                paper = "paper" if accounts[name].get('paper', True) else "LIVE"
-                print(f"  {i}. {name} [{paper}] - {desc}")
+            for i, (acc_id, acc_config) in enumerate(accounts.items(), 1):
+                models = acc_config.get('models', [])
+                # Shorten model names for display (remove common suffixes)
+                short_models = []
+                for model in models[:3]:
+                    short_name = model.replace('SectorRotation', 'SR')
+                    short_name = short_name.replace('Model_v', '_v')
+                    short_name = short_name.replace('Adaptive', 'Adapt')
+                    short_models.append(short_name)
+
+                models_str = ','.join(short_models) if short_models else 'none'
+                if len(models) > 3:
+                    models_str += f'+{len(models)-3}'
+
+                paper = "PAPER" if acc_config.get('paper', True) else "LIVE"
+
+                # Check if bot is running on this account
+                health_port = acc_config.get('health_port', 8080)
+                is_running = False
+                try:
+                    import requests
+                    resp = requests.get(f'http://localhost:{health_port}/health', timeout=1)
+                    if resp.status_code == 200:
+                        is_running = True
+                except Exception:
+                    pass
+
+                status = "running" if is_running else "available"
+                print(f"  [{i}] {acc_id} - {models_str} - {status} [{paper}]")
 
             try:
                 choice = input("\nSelect account number (or name): ").strip()
@@ -1263,7 +1295,9 @@ def main():
         health_url = f"http://localhost:{health_port}"
 
         print(f"\nUsing account: {account_name} ({mode})")
-        print(f"Models: {', '.join(account_config.get('models', ['default']))}")
+        models = account_config.get('models', ['default'])
+        # Display full model names in the confirmation
+        print(f"Models: {', '.join(models)}")
         print(f"Logs: {logs_dir}")
         print(f"Health: {health_url}")
         print()
