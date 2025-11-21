@@ -326,8 +326,8 @@ class TradingDashboard:
                 return None
 
             latest_close = float(bars[-1].close)
-            previous_close = float(bars[-2].close)
-            spy_return = (latest_close - previous_close) / previous_close
+            latest_open = float(bars[-1].open)
+            spy_return = (latest_close - latest_open) / latest_open  # Intraday: open to close
 
             return {
                 'price': latest_close,
