@@ -19,9 +19,10 @@ IMAGE_NAME="trading-bot"
 IMAGE_TAG="$1"
 CONTAINER_NAME="trading-bot"
 TAR_FILE="/tmp/${IMAGE_NAME}-${IMAGE_TAG}.tar.gz"
-ALPACA_API_KEY="${ALPACA_API_KEY:-PKOJHUORSUX2C3VPVMC2FGKDT2}"
-ALPACA_SECRET_KEY="${ALPACA_SECRET_KEY:-EFU2nQz3WYRjweBkLdw2vH5g5cPML2CTU18sEMSD19AG}"
 MODE="${MODE:-paper}"
+
+# Note: API keys are now read from accounts.yaml inside the container
+# No need for environment variables when using multi_main.py
 
 echo "=================================================================================="
 echo "Production Trading Bot - VPS Deployment"
@@ -59,11 +60,6 @@ if ! docker ps &> /dev/null; then
 fi
 echo "✅ Docker daemon is running"
 
-# Check API keys are set
-if [ -z "${ALPACA_API_KEY}" ] || [ -z "${ALPACA_SECRET_KEY}" ]; then
-    echo "⚠️  WARNING: Alpaca API keys not set"
-    echo "   Set ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables"
-fi
 echo ""
 
 # Step 1: Stop and remove old container
@@ -125,9 +121,9 @@ if docker run -d \
     --name ${CONTAINER_NAME} \
     --restart unless-stopped \
     -p 8080:8080 \
+    -p 8081:8081 \
+    -p 8082:8082 \
     -e MODE=${MODE} \
-    -e ALPACA_API_KEY=${ALPACA_API_KEY} \
-    -e ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY} \
     ${IMAGE_NAME}:${IMAGE_TAG}; then
 
     CONTAINER_ID=$(docker ps -q -f name=${CONTAINER_NAME})
@@ -193,11 +189,12 @@ echo "Container Information:"
 echo "  Name: ${CONTAINER_NAME}"
 echo "  Image: ${IMAGE_NAME}:${IMAGE_TAG}"
 echo "  Mode: ${MODE}"
-echo "  Port: 8080"
+echo "  Ports: 8080, 8081, 8082"
 echo ""
 echo "Useful commands:"
 echo "  View logs:       docker logs ${CONTAINER_NAME} -f"
 echo "  Check health:    curl http://localhost:8080/health | python3 -m json.tool"
+echo "  Check health 2:  curl http://localhost:8081/health | python3 -m json.tool"
 echo "  Access shell:    docker exec -it ${CONTAINER_NAME} bash"
 echo "  Stop container:  docker stop ${CONTAINER_NAME}"
 echo "  Restart:         docker restart ${CONTAINER_NAME}"

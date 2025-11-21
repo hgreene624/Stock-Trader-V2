@@ -73,15 +73,17 @@ ENV MODE=paper
 ENV LOG_LEVEL=INFO
 ENV CONFIG_PATH=/app/configs/production.yaml
 
-# Expose health check port
-EXPOSE 8080
+# Expose health check ports for multiple accounts
+EXPOSE 8080 8081 8082
 
-# Health check
+# Health check (checks first account)
 HEALTHCHECK --interval=5m --timeout=10s --retries=3 \
   CMD python -c "import requests; requests.get('http://localhost:8080/health', timeout=5)"
 
 # Set entrypoint to handle .env file creation
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Run production trading bot
-CMD ["python", "-m", "production.runner.main"]
+# Run multi-account orchestrator (default) or single account
+# Use: docker run ... trading-bot  (runs all accounts from accounts.yaml)
+# Use: docker run ... trading-bot python -m production.runner.main  (single account, uses env vars)
+CMD ["python", "-m", "production.runner.multi_main"]

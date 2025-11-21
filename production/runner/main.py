@@ -121,21 +121,25 @@ class ProductionTradingRunner:
     def _setup_logging(self):
         """Configure structured logging."""
         log_level = os.getenv('LOG_LEVEL', 'INFO')
+        log_dir = os.getenv('LOG_DIR', '/app/logs')
+
+        # Create log directory if it doesn't exist
+        os.makedirs(log_dir, exist_ok=True)
 
         logging.basicConfig(
             level=getattr(logging, log_level),
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler('/app/logs/production.log'),
+                logging.FileHandler(os.path.join(log_dir, 'production.log')),
                 logging.StreamHandler()
             ]
         )
 
         # Create JSONL log file handles for structured logging
-        self.orders_log = open('/app/logs/orders.jsonl', 'a')
-        self.trades_log = open('/app/logs/trades.jsonl', 'a')
-        self.performance_log = open('/app/logs/performance.jsonl', 'a')
-        self.errors_log = open('/app/logs/errors.jsonl', 'a')
+        self.orders_log = open(os.path.join(log_dir, 'orders.jsonl'), 'a')
+        self.trades_log = open(os.path.join(log_dir, 'trades.jsonl'), 'a')
+        self.performance_log = open(os.path.join(log_dir, 'performance.jsonl'), 'a')
+        self.errors_log = open(os.path.join(log_dir, 'errors.jsonl'), 'a')
 
         logger.info("Logging configured (JSONL audit logs enabled)")
 
@@ -315,10 +319,13 @@ class ProductionTradingRunner:
         )
 
         # Initialize health monitor
+        # Set max_cycle_age to 1.5x the execution interval + 5 min buffer
         health_port = int(os.getenv('HEALTH_PORT', '8080'))
+        execution_interval_seconds = self.config['execution_interval_minutes'] * 60
+        max_cycle_age = int(execution_interval_seconds * 1.5) + 300  # 1.5x interval + 5 min buffer
         self.health_monitor = HealthMonitor(
             port=health_port,
-            max_cycle_age_seconds=300,
+            max_cycle_age_seconds=max_cycle_age,
             error_threshold=5
         )
         self.health_monitor.start()

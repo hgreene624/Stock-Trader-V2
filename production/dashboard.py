@@ -59,10 +59,10 @@ except ImportError:
     get_lock_manager = None
 
 try:
-    import plotille
+    import asciichartpy
 except ImportError:
-    print("Warning: 'plotille' not installed. SPY chart disabled. Install with: pip install plotille")
-    plotille = None
+    print("Warning: 'asciichartpy' not installed. SPY chart disabled. Install with: pip install asciichartpy")
+    asciichartpy = None
 
 try:
     import yfinance as yf
@@ -297,7 +297,7 @@ class TradingDashboard:
         return (current_nav - self.peak_nav) / self.peak_nav
 
     def _get_spy_performance(self) -> Optional[Dict]:
-        """Get SPY performance from live Alpaca API. No silent fallbacks."""
+        """Get SPY performance from live Alpaca API using real-time quotes."""
         # Clear any previous SPY-related warnings
         self.dashboard_warnings = [w for w in self.dashboard_warnings if 'SPY' not in w]
 
@@ -306,31 +306,47 @@ class TradingDashboard:
             return None
 
         try:
-            # Fetch recent daily bars for SPY using start date
+            from alpaca.data.requests import StockLatestQuoteRequest
             from datetime import timedelta
+
+            # Get real-time quote for current price
+            quote_request = StockLatestQuoteRequest(symbol_or_symbols=['SPY'])
+            quotes = self.data_client.get_stock_latest_quote(quote_request)
+
+            if 'SPY' not in quotes:
+                self.dashboard_warnings.append("SPY: No quote data returned")
+                return None
+
+            quote = quotes['SPY']
+            current_price = (float(quote.bid_price) + float(quote.ask_price)) / 2
+
+            # Get previous day's close for % calculation
             start_date = datetime.now(timezone.utc) - timedelta(days=7)
-            request = StockBarsRequest(
+            bars_request = StockBarsRequest(
                 symbol_or_symbols=['SPY'],
                 timeframe=TimeFrame.Day,
                 start=start_date
             )
-            bars_response = self.data_client.get_stock_bars(request)
+            bars_response = self.data_client.get_stock_bars(bars_request)
 
             if 'SPY' not in bars_response.data:
-                self.dashboard_warnings.append("SPY: No data returned from Alpaca API")
+                self.dashboard_warnings.append("SPY: No bar data for prev close")
                 return None
 
             bars = list(bars_response.data['SPY'])
-            if len(bars) < 2:
-                self.dashboard_warnings.append(f"SPY: Only {len(bars)} bars returned, need at least 2")
+            if len(bars) < 1:
+                self.dashboard_warnings.append("SPY: No daily bars available")
                 return None
 
-            latest_close = float(bars[-1].close)
-            latest_open = float(bars[-1].open)
-            spy_return = (latest_close - latest_open) / latest_open  # Intraday: open to close
+            # Use most recent completed day's close as prev_close
+            # If market is open, last bar is today (incomplete), use second to last
+            # If market is closed, last bar is today's final close
+            prev_close = float(bars[-1].close) if len(bars) == 1 else float(bars[-2].close)
+
+            spy_return = (current_price - prev_close) / prev_close
 
             return {
-                'price': latest_close,
+                'price': current_price,
                 'return_today': spy_return
             }
         except Exception as e:
@@ -807,6 +823,19 @@ class TradingDashboard:
 
         return Panel(table, title="Order History", border_style="cyan")
 
+    def _get_vix_level(self) -> Optional[float]:
+        """Get current VIX level using yfinance."""
+        if not yf:
+            return None
+        try:
+            vix = yf.Ticker("^VIX")
+            hist = vix.history(period="1d")
+            if not hist.empty:
+                return float(hist['Close'].iloc[-1])
+        except:
+            pass
+        return None
+
     def create_performance_panel(self, account: Optional[Dict], spy_data: Optional[Dict], trade_stats: Dict) -> Panel:
         if not account:
             return Panel("No performance data", title="Performance", border_style="dim")
@@ -835,34 +864,56 @@ class TradingDashboard:
                 content.append("═══ vs SPY ═══\n", style="bold cyan")
                 content.append("You: ", style="dim")
                 content.append(f"{portfolio_return:+.2%}", style=f"bold {return_color}")
-                content.append("\n")
-                content.append("SPY: ", style="dim")
+                content.append(" | SPY: ", style="dim")
                 content.append(f"{spy_return:+.2%}", style=f"bold {spy_color}")
-                content.append("\n")
-                content.append("Alpha: ", style="dim")
+                content.append(" | Alpha: ", style="dim")
                 content.append(f"{alpha:+.2%}\n\n", style=f"bold {alpha_color}")
 
+        # Market Indicators
+        content.append("═══ Market ═══\n", style="bold cyan")
+        vix = self._get_vix_level()
+        if vix:
+            vix_color = "green" if vix < 15 else ("yellow" if vix < 25 else "red")
+            vix_label = "Low" if vix < 15 else ("Normal" if vix < 25 else "High")
+            content.append("VIX: ", style="dim")
+            content.append(f"{vix:.1f}", style=f"bold {vix_color}")
+            content.append(f" ({vix_label})\n\n", style=vix_color)
+        else:
+            content.append("VIX: N/A\n\n", style="dim")
+
+        # Trade Stats
         if trade_stats.get('total_trades', 0) > 0:
             content.append("═══ Stats ═══\n", style="bold cyan")
-
             win_rate = trade_stats['win_rate']
             win_color = "green" if win_rate >= 0.7 else ("yellow" if win_rate >= 0.5 else "red")
-            content.append("Win Rate: ", style="dim")
+            content.append("Win: ", style="dim")
             content.append(f"{win_rate:.0%}", style=f"bold {win_color}")
-            content.append(f" ({trade_stats['wins']}W/{trade_stats['losses']}L)\n", style="dim")
-
-            content.append("Avg Hold: ", style="dim")
-            content.append(f"{trade_stats['avg_hold_days']:.0f}d", style="white")
-            content.append("\n")
+            content.append(f" ({trade_stats['wins']}W/{trade_stats['losses']}L)", style="dim")
+            content.append(" | Hold: ", style="dim")
+            content.append(f"{trade_stats['avg_hold_days']:.0f}d\n", style="white")
 
             best_color = "green" if trade_stats['best_trade'] > 0 else "red"
             worst_color = "green" if trade_stats['worst_trade'] > 0 else "red"
             content.append("Best: ", style="dim")
             content.append(f"{trade_stats['best_trade']:+.1%}", style=f"bold {best_color}")
             content.append(" | Worst: ", style="dim")
-            content.append(f"{trade_stats['worst_trade']:+.1%}", style=f"bold {worst_color}")
+            content.append(f"{trade_stats['worst_trade']:+.1%}\n\n", style=f"bold {worst_color}")
 
-        return Panel(content, title="Performance", border_style="cyan")
+        # Recent Trades
+        recent_trades = self._read_jsonl_tail(self.trades_log, n=5)
+        if recent_trades:
+            content.append("═══ Recent ═══\n", style="bold cyan")
+            for trade in reversed(recent_trades[-3:]):
+                if trade.get('event_type') == 'trade_executed':
+                    symbol = trade.get('symbol', '???')
+                    side = trade.get('side', '?')
+                    price = trade.get('price', 0)
+                    side_color = "green" if side == 'buy' else "red"
+                    content.append(f"{symbol} ", style="cyan")
+                    content.append(f"{side.upper()}", style=f"bold {side_color}")
+                    content.append(f" @${price:.2f}\n", style="dim")
+
+        return Panel(content, title="Performance & Indicators", border_style="cyan")
 
     def create_errors_panel(self) -> Panel:
         recent_errors = self._read_jsonl_tail(self.errors_log, n=3)
@@ -906,11 +957,16 @@ class TradingDashboard:
             eastern = pytz.timezone("America/New_York")
             now = datetime.now(eastern)
 
-            # Determine session date (most recent completed session)
+            # Determine session date
+            # Show today if market is open or was open today, otherwise show last trading day
             session = now.date()
+            market_open = datetime.strptime("09:30", "%H:%M").time()
             market_close = datetime.strptime("16:00", "%H:%M").time()
-            if now.weekday() >= 5 or now.time() < market_close:
+
+            # Go back a day if: weekend OR before market open today
+            if now.weekday() >= 5 or now.time() < market_open:
                 session -= timedelta(days=1)
+            # Skip weekends
             while session.weekday() >= 5:
                 session -= timedelta(days=1)
 
@@ -948,80 +1004,51 @@ class TradingDashboard:
             return None
 
     def _render_ascii_chart(self, values: list, width: int = 60, height: int = 10) -> Text:
-        """Render a simple ASCII chart with Rich styles and axis labels."""
+        """Render a line chart using asciichartpy library."""
         if not values:
             return Text("No data")
 
-        # Normalize values to chart height
-        min_val = min(values)
-        max_val = max(values)
-        val_range = max_val - min_val if max_val != min_val else 1
+        if not asciichartpy:
+            return Text("Install: pip install asciichartpy")
 
-        # Resample values to fit width
+        # Downsample if too many points
         if len(values) > width:
             step = len(values) / width
-            sampled = [values[int(i * step)] for i in range(width)]
-        else:
-            sampled = values
+            values = [values[int(i * step)] for i in range(width)]
 
-        # Calculate row position for each value (0 = top, height-1 = bottom)
-        row_positions = []
-        for val in sampled:
-            if val_range > 0:
-                normalized = (max_val - val) / val_range
-                row = int(normalized * (height - 1))
-                row = max(0, min(height - 1, row))
-            else:
-                row = height // 2
-            row_positions.append(row)
+        # Calculate y-axis range starting from 0
+        max_val = max(values)
+        min_val = min(values)
 
-        # Create chart grid
-        chart = [[' ' for _ in range(len(sampled))] for _ in range(height)]
+        # Extend range to include 0 and round to 0.1 increments
+        y_min = min(0, min_val)
+        y_max = max(0, max_val)
 
-        # Place points at correct positions
-        for col, row in enumerate(row_positions):
-            chart[row][col] = '●'
+        # Round to nearest 0.1
+        import math
+        y_min = math.floor(y_min * 10) / 10
+        y_max = math.ceil(y_max * 10) / 10
 
-        # Build Rich Text with Y-axis labels
-        result = Text()
+        # Create chart with custom formatting
+        chart_str = asciichartpy.plot(values, {
+            'height': height,
+            'min': y_min,
+            'max': y_max,
+            'format': '{:6.1f}'
+        })
 
-        for row_idx in range(height):
-            # Y-axis label (show at top, middle, bottom)
-            if row_idx == 0:
-                label = f"{max_val:+.1f}%"
-            elif row_idx == height - 1:
-                label = f"{min_val:+.1f}%"
-            elif row_idx == height // 2:
-                mid_val = (max_val + min_val) / 2
-                label = f"{mid_val:+.1f}%"
-            else:
-                label = ""
+        # Add x-axis time labels - position 4:00pm at full chart width
+        # The chart has 7 chars for y-axis labels, then the data points
+        label_spacing = width - 14  # width minus both labels
+        chart_str += '\n       9:30am' + ' ' * label_spacing + '4:00pm'
 
-            # Pad label to fixed width
-            result.append(f"{label:>7} │", style="dim")
+        # Determine color based on final value
+        final_val = values[-1] if values else 0
+        color = "green" if final_val >= 0 else "red"
 
-            # Chart content
-            for col_idx in range(len(sampled)):
-                char = chart[row_idx][col_idx]
-                if char != ' ':
-                    val = sampled[col_idx]
-                    color = "green" if val >= 0 else "red"
-                    result.append(char, style=color)
-                else:
-                    result.append(char)
+        return Text(chart_str, style=color)
 
-            if row_idx < height - 1:
-                result.append("\n")
-
-        # X-axis
-        result.append("\n")
-        result.append("        └" + "─" * len(sampled), style="dim")
-        result.append("\n")
-        result.append("        9:30" + " " * (len(sampled) - 10) + "4:00", style="dim")
-
-        return result
-
-    def create_spy_chart_panel(self) -> Panel:
+    def create_spy_chart_panel(self, spy_data: Optional[Dict] = None) -> Panel:
         """Create SPY intraday chart panel using native Rich rendering."""
         if not yf:
             return Panel("Install: pip install yfinance", title="SPY Chart", border_style="dim")
@@ -1037,15 +1064,33 @@ class TradingDashboard:
         if not closes:
             return Panel("No data", title="SPY Chart", border_style="dim")
 
-        open_price = closes[0]
-        close_price = closes[-1]
-        pct_change = ((close_price - open_price) / open_price) * 100
+        # Use shared spy_data for consistent % change with Performance panel
+        if spy_data:
+            close_price = spy_data['price']
+            pct_change = spy_data['return_today'] * 100
+        else:
+            # Fallback to open-to-close if no shared data
+            close_price = closes[-1]
+            open_price = closes[0]
+            pct_change = ((close_price - open_price) / open_price) * 100
 
-        # Calculate percentage series (relative to open)
+        # Calculate percentage series (relative to first price of day for chart shape)
+        open_price = closes[0]
         pct_series = [((p - open_price) / open_price) * 100 for p in closes]
 
-        # Render chart using native Rich - fill panel width
-        chart_text = self._render_ascii_chart(pct_series, width=100, height=10)
+        # Calculate dynamic chart dimensions based on console size
+        console_width = self.console.width
+        console_height = self.console.height
+
+        # Chart width: right panel is ~half console, minus borders/y-axis/margins
+        chart_width = max(40, (console_width // 2) - 18)
+
+        # Chart height: spy_chart has ratio 4/11 of terminal height, with extra margin
+        panel_height = int((console_height * 4) / 11)
+        chart_height = max(8, panel_height - 8)  # Account for header, borders, x-axis, margins
+
+        # Render chart using native Rich - fill panel dynamically
+        chart_text = self._render_ascii_chart(pct_series, width=chart_width, height=chart_height)
 
         # Add summary
         summary = Text()
@@ -1056,7 +1101,7 @@ class TradingDashboard:
 
         content = Text()
         content.append_text(summary)
-        content.append("\n\n\n")  # Extra spacing before chart
+        content.append("\n\n")  # Spacing before chart
         content.append_text(chart_text)
 
         return Panel(content, title="SPY Intraday", border_style="cyan")
@@ -1159,10 +1204,10 @@ class TradingDashboard:
         )
 
         layout["left"].split_column(
-            Layout(name="models", size=14),
-            Layout(name="positions"),
-            Layout(name="risk", size=6),
-            Layout(name="accounts", size=10)
+            Layout(name="models", ratio=4),
+            Layout(name="positions", ratio=3),
+            Layout(name="risk", ratio=1),
+            Layout(name="accounts", ratio=3)
         )
 
         layout["left"]["models"].update(self.create_models_panel(health))
@@ -1171,14 +1216,14 @@ class TradingDashboard:
         layout["left"]["accounts"].update(self.create_accounts_panel())
 
         layout["right"].split_column(
-            Layout(name="universe", size=16),
-            Layout(name="spy_chart", size=16),
-            Layout(name="performance", size=14),
-            Layout(name="errors", size=8)
+            Layout(name="universe", ratio=3),
+            Layout(name="spy_chart", ratio=4),
+            Layout(name="performance", ratio=3),
+            Layout(name="errors", ratio=1)
         )
 
         layout["right"]["universe"].update(self.create_universe_panel(health, positions, market, prices))
-        layout["right"]["spy_chart"].update(self.create_spy_chart_panel())
+        layout["right"]["spy_chart"].update(self.create_spy_chart_panel(spy_data))
         layout["right"]["performance"].update(self.create_performance_panel(account, spy_data, trade_stats))
         layout["right"]["errors"].update(self.create_errors_panel())
 
