@@ -50,10 +50,25 @@ except ImportError:
 
 try:
     import yaml
-    from production.runner.instance_lock import get_lock_manager
 except ImportError:
     yaml = None
+
+try:
+    from production.runner.instance_lock import get_lock_manager
+except ImportError:
     get_lock_manager = None
+
+try:
+    import plotille
+except ImportError:
+    print("Warning: 'plotille' not installed. SPY chart disabled. Install with: pip install plotille")
+    plotille = None
+
+try:
+    import yfinance as yf
+except ImportError:
+    print("Warning: 'yfinance' not installed. SPY chart disabled. Install with: pip install yfinance")
+    yf = None
 
 
 class TradingDashboard:
@@ -311,8 +326,8 @@ class TradingDashboard:
                 return None
 
             latest_close = float(bars[-1].close)
-            previous_close = float(bars[-2].close)
-            spy_return = (latest_close - previous_close) / previous_close
+            latest_open = float(bars[-1].open)
+            spy_return = (latest_close - latest_open) / latest_open  # Intraday: open to close
 
             return {
                 'price': latest_close,
@@ -458,11 +473,13 @@ class TradingDashboard:
 
     def _get_account_locks(self) -> List[Dict]:
         """Get all accounts and their lock status."""
-        if not yaml or not get_lock_manager:
+        if not yaml:
             return []
 
         try:
             accounts_path = Path(__file__).parent / 'configs' / 'accounts.yaml'
+            if not accounts_path.exists():
+                accounts_path = Path('/app/configs/accounts.yaml')  # Docker location
             if not accounts_path.exists():
                 return []
 
@@ -470,21 +487,45 @@ class TradingDashboard:
                 config = yaml.safe_load(f)
 
             accounts = config.get('accounts', {})
-            lock_manager = get_lock_manager()
+
+            # Try to get lock manager, but work without it
+            lock_manager = None
+            if get_lock_manager:
+                try:
+                    lock_manager = get_lock_manager()
+                except Exception:
+                    pass
 
             result = []
             for name, acc_config in accounts.items():
-                is_locked = lock_manager.is_locked(name)
-                lock_info = lock_manager.get_lock_info(name) if is_locked else None
+                is_running = False
+
+                # Check health endpoint to determine if bot is running
+                health_port = acc_config.get('health_port', 8080)
+                try:
+                    import requests
+                    resp = requests.get(f'http://localhost:{health_port}/health', timeout=1)
+                    if resp.status_code == 200:
+                        is_running = True
+                except Exception:
+                    pass
+
+                # Fallback to lock manager if available
+                if not is_running and lock_manager:
+                    try:
+                        is_running = lock_manager.is_locked(name)
+                    except Exception:
+                        pass
 
                 result.append({
                     'name': name,
                     'paper': acc_config.get('paper', True),
                     'models': acc_config.get('models', []),
                     'description': acc_config.get('description', ''),
-                    'locked': is_locked,
-                    'lock_pid': lock_info.get('pid') if lock_info else None,
-                    'lock_hostname': lock_info.get('hostname') if lock_info else None
+                    'locked': is_running,
+                    'lock_pid': None,
+                    'lock_hostname': None,
+                    'health_port': health_port
                 })
 
             return result
@@ -502,25 +543,32 @@ class TradingDashboard:
 
         for i, acc in enumerate(accounts):
             if i > 0:
-                content.append("\n")
+                content.append("\n\n")  # Extra spacing between accounts
 
-            status_symbol = "●" if acc['locked'] else "○"
-            status_color = "red" if acc['locked'] else "green"
-            paper_label = "paper" if acc['paper'] else "LIVE"
-
-            content.append(f"{status_symbol} ", style=status_color)
+            # Account ID (Alpaca account number)
             content.append(f"{acc['name']}", style="bold cyan")
-            content.append(f" [{paper_label}]", style="yellow" if acc['paper'] else "red")
 
-            if acc['locked']:
-                content.append(f" PID:{acc['lock_pid']}", style="dim red")
-            else:
-                content.append(" available", style="dim green")
+            # Paper/Live indicator
+            paper_label = "PAPER" if acc['paper'] else "LIVE"
+            content.append(f" [{paper_label}]\n", style="yellow" if acc['paper'] else "red")
 
+            # Models assigned to this account
             if acc['models']:
-                content.append(f"\n  → {', '.join(acc['models'][:2])}", style="dim")
-                if len(acc['models']) > 2:
-                    content.append(f" +{len(acc['models'])-2}", style="dim")
+                models_str = ', '.join(acc['models'][:3])
+                if len(acc['models']) > 3:
+                    models_str += f" +{len(acc['models'])-3}"
+                content.append(f"  Models: {models_str}\n", style="white")
+            else:
+                content.append("  Models: none\n", style="dim")
+
+            # Running status with port
+            if acc['locked']:
+                content.append(f"  Status: ", style="dim")
+                content.append(f"running", style="green")
+                content.append(f" (port {acc['health_port']})", style="dim")
+            else:
+                content.append("  Status: ", style="dim")
+                content.append("available", style="yellow")
 
         locked_count = sum(1 for a in accounts if a['locked'])
         title = f"Accounts ({locked_count}/{len(accounts)} active)"
@@ -848,6 +896,171 @@ class TradingDashboard:
         border_color = "red" if has_runner_errors else "yellow"
         return Panel(error_text, title=f"Errors ({total_issues})", border_style=border_color)
 
+    def _fetch_spy_intraday(self) -> Optional[dict]:
+        """Fetch SPY intraday 5-min bars for chart display."""
+        if not yf:
+            return None
+
+        try:
+            import pytz
+            eastern = pytz.timezone("America/New_York")
+            now = datetime.now(eastern)
+
+            # Determine session date (most recent completed session)
+            session = now.date()
+            market_close = datetime.strptime("16:00", "%H:%M").time()
+            if now.weekday() >= 5 or now.time() < market_close:
+                session -= timedelta(days=1)
+            while session.weekday() >= 5:
+                session -= timedelta(days=1)
+
+            # Fetch data
+            market_open = datetime.strptime("09:30", "%H:%M").time()
+            start_local = eastern.localize(datetime.combine(session, market_open))
+            end_local = eastern.localize(datetime.combine(session, market_close))
+
+            ticker = yf.Ticker("SPY")
+            df = ticker.history(
+                start=start_local.astimezone(pytz.UTC),
+                end=end_local.astimezone(pytz.UTC) + timedelta(minutes=5),
+                interval="5m",
+                auto_adjust=True,
+            )
+
+            if df.empty:
+                return None
+
+            df.columns = [col.lower() for col in df.columns]
+            if df.index.tz is None:
+                df.index = df.index.tz_localize(pytz.UTC)
+            df.index = df.index.tz_convert(eastern)
+            df = df[(df.index >= start_local) & (df.index <= end_local)]
+
+            if df.empty:
+                return None
+
+            return {
+                'df': df,
+                'session_date': session,
+                'start_time': df.index[0]
+            }
+        except Exception:
+            return None
+
+    def _render_ascii_chart(self, values: list, width: int = 60, height: int = 10) -> Text:
+        """Render a simple ASCII chart with Rich styles and axis labels."""
+        if not values:
+            return Text("No data")
+
+        # Normalize values to chart height
+        min_val = min(values)
+        max_val = max(values)
+        val_range = max_val - min_val if max_val != min_val else 1
+
+        # Resample values to fit width
+        if len(values) > width:
+            step = len(values) / width
+            sampled = [values[int(i * step)] for i in range(width)]
+        else:
+            sampled = values
+
+        # Calculate row position for each value (0 = top, height-1 = bottom)
+        row_positions = []
+        for val in sampled:
+            if val_range > 0:
+                normalized = (max_val - val) / val_range
+                row = int(normalized * (height - 1))
+                row = max(0, min(height - 1, row))
+            else:
+                row = height // 2
+            row_positions.append(row)
+
+        # Create chart grid
+        chart = [[' ' for _ in range(len(sampled))] for _ in range(height)]
+
+        # Place points at correct positions
+        for col, row in enumerate(row_positions):
+            chart[row][col] = '●'
+
+        # Build Rich Text with Y-axis labels
+        result = Text()
+
+        for row_idx in range(height):
+            # Y-axis label (show at top, middle, bottom)
+            if row_idx == 0:
+                label = f"{max_val:+.1f}%"
+            elif row_idx == height - 1:
+                label = f"{min_val:+.1f}%"
+            elif row_idx == height // 2:
+                mid_val = (max_val + min_val) / 2
+                label = f"{mid_val:+.1f}%"
+            else:
+                label = ""
+
+            # Pad label to fixed width
+            result.append(f"{label:>7} │", style="dim")
+
+            # Chart content
+            for col_idx in range(len(sampled)):
+                char = chart[row_idx][col_idx]
+                if char != ' ':
+                    val = sampled[col_idx]
+                    color = "green" if val >= 0 else "red"
+                    result.append(char, style=color)
+                else:
+                    result.append(char)
+
+            if row_idx < height - 1:
+                result.append("\n")
+
+        # X-axis
+        result.append("\n")
+        result.append("        └" + "─" * len(sampled), style="dim")
+        result.append("\n")
+        result.append("        9:30" + " " * (len(sampled) - 10) + "4:00", style="dim")
+
+        return result
+
+    def create_spy_chart_panel(self) -> Panel:
+        """Create SPY intraday chart panel using native Rich rendering."""
+        if not yf:
+            return Panel("Install: pip install yfinance", title="SPY Chart", border_style="dim")
+
+        data = self._fetch_spy_intraday()
+        if not data:
+            return Panel("No intraday data available", title="SPY Chart", border_style="dim")
+
+        df = data['df']
+        session_date = data['session_date']
+
+        closes = df["close"].astype(float).to_list()
+        if not closes:
+            return Panel("No data", title="SPY Chart", border_style="dim")
+
+        open_price = closes[0]
+        close_price = closes[-1]
+        pct_change = ((close_price - open_price) / open_price) * 100
+
+        # Calculate percentage series (relative to open)
+        pct_series = [((p - open_price) / open_price) * 100 for p in closes]
+
+        # Render chart using native Rich - fill panel width
+        chart_text = self._render_ascii_chart(pct_series, width=100, height=10)
+
+        # Add summary
+        summary = Text()
+        change_color = "green" if pct_change >= 0 else "red"
+        summary.append(f"SPY ${close_price:.2f} ", style="bold")
+        summary.append(f"({pct_change:+.2f}%)", style=f"bold {change_color}")
+        summary.append(f" | {session_date.strftime('%m/%d')}", style="dim")
+
+        content = Text()
+        content.append_text(summary)
+        content.append("\n\n\n")  # Extra spacing before chart
+        content.append_text(chart_text)
+
+        return Panel(content, title="SPY Intraday", border_style="cyan")
+
     def create_universe_panel(self, health: Dict, positions: List[Dict], market: Dict, prices: Dict) -> Panel:
         models_data = health.get('models', [])
         if not models_data:
@@ -958,15 +1171,15 @@ class TradingDashboard:
         layout["left"]["accounts"].update(self.create_accounts_panel())
 
         layout["right"].split_column(
-            Layout(name="universe", size=18),
-            Layout(name="performance", size=16),
-            Layout(name="activity", size=8),
-            Layout(name="errors", size=10)
+            Layout(name="universe", size=16),
+            Layout(name="spy_chart", size=16),
+            Layout(name="performance", size=14),
+            Layout(name="errors", size=8)
         )
 
         layout["right"]["universe"].update(self.create_universe_panel(health, positions, market, prices))
+        layout["right"]["spy_chart"].update(self.create_spy_chart_panel())
         layout["right"]["performance"].update(self.create_performance_panel(account, spy_data, trade_stats))
-        layout["right"]["activity"].update(self.create_order_history_panel())
         layout["right"]["errors"].update(self.create_errors_panel())
 
         return layout
@@ -999,7 +1212,10 @@ def main():
     logs_dir = None
     health_url = args.health_url  # Default, may be overridden by account config
 
-    accounts_path = Path('production/configs/accounts.yaml')
+    # Check multiple locations for accounts.yaml (local dev vs Docker)
+    accounts_path = Path(__file__).parent / 'configs' / 'accounts.yaml'
+    if not accounts_path.exists():
+        accounts_path = Path('/app/configs/accounts.yaml')  # Docker location
     if accounts_path.exists():
         import yaml
         import os as env_os
@@ -1012,10 +1228,35 @@ def main():
         # If no account specified, list available and let user choose
         if not account_name:
             print("\nAvailable accounts:")
-            for i, name in enumerate(accounts.keys(), 1):
-                desc = accounts[name].get('description', '')
-                paper = "paper" if accounts[name].get('paper', True) else "LIVE"
-                print(f"  {i}. {name} [{paper}] - {desc}")
+            for i, (acc_id, acc_config) in enumerate(accounts.items(), 1):
+                models = acc_config.get('models', [])
+                # Shorten model names for display (remove common suffixes)
+                short_models = []
+                for model in models[:3]:
+                    short_name = model.replace('SectorRotation', 'SR')
+                    short_name = short_name.replace('Model_v', '_v')
+                    short_name = short_name.replace('Adaptive', 'Adapt')
+                    short_models.append(short_name)
+
+                models_str = ','.join(short_models) if short_models else 'none'
+                if len(models) > 3:
+                    models_str += f'+{len(models)-3}'
+
+                paper = "PAPER" if acc_config.get('paper', True) else "LIVE"
+
+                # Check if bot is running on this account
+                health_port = acc_config.get('health_port', 8080)
+                is_running = False
+                try:
+                    import requests
+                    resp = requests.get(f'http://localhost:{health_port}/health', timeout=1)
+                    if resp.status_code == 200:
+                        is_running = True
+                except Exception:
+                    pass
+
+                status = "running" if is_running else "available"
+                print(f"  [{i}] {acc_id} - {models_str} - {status} [{paper}]")
 
             try:
                 choice = input("\nSelect account number (or name): ").strip()
@@ -1045,14 +1286,18 @@ def main():
         mode = 'paper' if account_config.get('paper', True) else 'live'
 
         # Set logs directory to account-specific subdirectory
-        logs_dir = Path('production/local_logs') / account_name
+        # Use LOGS_BASE_DIR env var if set (for Docker), otherwise use local default
+        logs_base = env_os.getenv('LOGS_BASE_DIR', 'production/local_logs')
+        logs_dir = Path(logs_base) / account_name
 
         # Set health URL based on account's health port
         health_port = account_config.get('health_port', 8080)
         health_url = f"http://localhost:{health_port}"
 
         print(f"\nUsing account: {account_name} ({mode})")
-        print(f"Models: {', '.join(account_config.get('models', ['default']))}")
+        models = account_config.get('models', ['default'])
+        # Display full model names in the confirmation
+        print(f"Models: {', '.join(models)}")
         print(f"Logs: {logs_dir}")
         print(f"Health: {health_url}")
         print()

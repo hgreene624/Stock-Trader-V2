@@ -73,7 +73,11 @@ class ProductionTradingRunner:
         self.models = []
         self.current_nav = Decimal(str(self.config['initial_capital']))
         self.positions = {}  # Dict[symbol, quantity]
-        self.first_cycle_complete = False  # Skip trading on first cycle for safety
+        # Skip trading on first cycle for safety, unless explicitly disabled
+        skip_validation = os.getenv('SKIP_FIRST_CYCLE_VALIDATION', '').lower() in ('true', '1', 'yes')
+        self.first_cycle_complete = skip_validation
+        if skip_validation:
+            logger.info("⚠️ SKIP_FIRST_CYCLE_VALIDATION=true - will trade immediately")
 
         # Components (initialized in setup())
         self.broker = None
@@ -252,6 +256,32 @@ class ProductionTradingRunner:
             except Exception as e:
                 logger.error(f"Error loading model from {model_dir.name}: {e}")
                 continue
+
+        # Filter models by account if ACCOUNT env var is set
+        account_name = os.getenv('ACCOUNT')
+        if account_name:
+            accounts_path = Path('/app/configs/accounts.yaml')
+            if accounts_path.exists():
+                with open(accounts_path, 'r') as f:
+                    accounts_config = yaml.safe_load(f)
+
+                accounts = accounts_config.get('accounts', {})
+                if account_name in accounts:
+                    account_models = accounts[account_name].get('models', [])
+                    logger.info(f"Filtering to account '{account_name}' models: {account_models}")
+
+                    # Filter and reassign budgets
+                    filtered = [m for m in self.models if m['name'] in account_models]
+                    if filtered:
+                        # Redistribute budget equally among filtered models
+                        budget_per_model = 1.0 / len(filtered)
+                        for m in filtered:
+                            m['budget_fraction'] = budget_per_model
+                        self.models = filtered
+                    else:
+                        logger.warning(f"No matching models found for account '{account_name}'")
+                else:
+                    logger.warning(f"Account '{account_name}' not found in accounts.yaml")
 
         logger.info(f"Successfully loaded {len(self.models)} models")
 

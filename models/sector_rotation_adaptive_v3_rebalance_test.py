@@ -1,14 +1,8 @@
 """
-SectorRotationAdaptive_v3
+SectorRotationAdaptive_v3 with configurable rebalancing period for testing
 
-Enhanced adaptive sector rotation with VOLATILITY TARGETING.
-
-Key feature: Scales leverage based on current volatility vs target volatility.
-- When VIX is high (>25), reduces exposure to limit drawdowns
-- When VIX is normal (<20), stays fully invested
-- Preserves upside in calm markets, limits downside in turbulent ones
-
-Based on v1 optimized parameters with added volatility targeting.
+This is a modified version of v3 that accepts rebalancing_days as a parameter
+to test the optimal rebalancing frequency.
 """
 
 import pandas as pd
@@ -20,16 +14,18 @@ sys.path.append('..')
 from models.base import BaseModel, Context, ModelOutput
 
 
-class SectorRotationAdaptive_v3(BaseModel):
+class SectorRotationAdaptive_v3_RebalanceTest(BaseModel):
     """
-    Adaptive sector rotation with volatility targeting.
+    Adaptive sector rotation with configurable rebalancing period.
     """
 
     def __init__(
         self,
-        model_id: str = "SectorRotationAdaptive_v3",
+        model_id: str = "SectorRotationAdaptive_v3_RebalanceTest",
         sectors: list[str] = None,
         defensive_asset: str = "TLT",
+        # REBALANCING PARAMETER (NEW)
+        rebalancing_days: int = 7,  # Default to 7 days (weekly)
         # Volatility targeting parameters
         use_vol_targeting: bool = True,
         target_vol: float = 0.15,  # Target 15% annual volatility
@@ -67,6 +63,9 @@ class SectorRotationAdaptive_v3(BaseModel):
         self.assets = self.all_assets
         self.model_id = model_id
 
+        # STORE REBALANCING PERIOD
+        self.rebalancing_days = rebalancing_days
+
         # Volatility targeting
         self.use_vol_targeting = use_vol_targeting
         self.target_vol = target_vol
@@ -97,7 +96,7 @@ class SectorRotationAdaptive_v3(BaseModel):
 
         super().__init__(
             name=model_id,
-            version="3.0.0",
+            version="3.0.0-rebalance-test",
             universe=self.all_assets
         )
 
@@ -266,10 +265,10 @@ class SectorRotationAdaptive_v3(BaseModel):
                     if symbol in self.entry_atr:
                         del self.entry_atr[symbol]
 
-        # Monthly rebalancing check (21 trading days - see EXP-001)
+        # CONFIGURABLE REBALANCING CHECK (MODIFIED)
         if self.last_rebalance is not None and not exits_triggered:
             days_since_rebalance = (context.timestamp - self.last_rebalance).days
-            if days_since_rebalance < 21:
+            if days_since_rebalance < self.rebalancing_days:  # Use configurable period
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,
@@ -363,6 +362,7 @@ class SectorRotationAdaptive_v3(BaseModel):
 
     def __repr__(self):
         return (
-            f"SectorRotationAdaptive_v3(model_id='{self.model_id}', "
+            f"SectorRotationAdaptive_v3_RebalanceTest(model_id='{self.model_id}', "
+            f"rebalancing_days={self.rebalancing_days}, "
             f"vol_targeting={self.use_vol_targeting}, target_vol={self.target_vol})"
         )

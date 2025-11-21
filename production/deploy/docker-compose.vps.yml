@@ -1,0 +1,73 @@
+# Docker Compose for VPS Deployment
+# This file is transferred to VPS and used for container orchestration
+#
+# Usage on VPS:
+#   cd /root && docker compose -f docker-compose.yml up -d
+#
+# To update after new image transfer:
+#   docker compose -f docker-compose.yml up -d --force-recreate
+
+services:
+  trading-bot-pa3t8n:
+    image: trading-bot:amd64-v${VERSION:-27}
+    container_name: trading-bot-PA3T8N36NVJK
+    ports:
+      - "8080:8080"
+    environment:
+      - ALPACA_API_KEY=PKONDDG4MY4BO4GA54C2RWRR24
+      - ALPACA_SECRET_KEY=CNukCHM8gTDnLkojX4skNpvy1qcCb6w6NQ2bdjMU4xkU
+      - MODE=paper
+      - ACCOUNT=PA3T8N36NVJK
+      - SKIP_FIRST_CYCLE_VALIDATION=true
+    volumes:
+      - /root/trading-bot-logs/PA3T8N36NVJK:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  trading-bot-pa3i05:
+    image: trading-bot:amd64-v${VERSION:-27}
+    container_name: trading-bot-PA3I05031HZL
+    ports:
+      - "8081:8080"
+    environment:
+      - ALPACA_API_KEY=PKX3R7HJVHUM6YACDLG6QQL4KB
+      - ALPACA_SECRET_KEY=8UJXr6iBXHVm12aAP4hPv4Hs7E3TZfaGz6REho28hpkn
+      - MODE=paper
+      - ACCOUNT=PA3I05031HZL
+      - SKIP_FIRST_CYCLE_VALIDATION=true
+    volumes:
+      - /root/trading-bot-logs/PA3I05031HZL:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# Uncomment to add live account
+#  trading-bot-live:
+#    image: trading-bot:amd64-v${VERSION:-27}
+#    container_name: trading-bot-935928263
+#    ports:
+#      - "8082:8080"
+#    environment:
+#      - ALPACA_API_KEY=AKG5WRWYMB66AXEOHRTMYPDFCD
+#      - ALPACA_SECRET_KEY=5jtp3zbUwGjxMZ3fKtxiTKAcrJY8eT5CfYbVZGuWfack
+#      - MODE=live
+#      - ACCOUNT=935928263
+#      - SKIP_FIRST_CYCLE_VALIDATION=true
+#    volumes:
+#      - /root/trading-bot-logs/935928263:/app/logs
+#    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#      start_period: 60s

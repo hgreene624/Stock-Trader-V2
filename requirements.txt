@@ -31,6 +31,8 @@ python-json-logger>=2.0.7
 
 # Visualization
 matplotlib>=3.7.0
+plotille>=5.0.0  # Terminal-based charts
+pytz>=2023.3  # Timezone support
 
 # Testing
 pytest>=7.4.0

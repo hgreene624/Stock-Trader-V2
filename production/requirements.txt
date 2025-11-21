@@ -23,3 +23,5 @@ flask>=3.0.0                   # Health check HTTP endpoint
 requests>=2.31.0               # HTTP requests (for dashboard)
 rich>=13.7.0                   # Terminal UI (for dashboard)
 python-dotenv>=1.0.0           # .env file support (for account selector)
+plotille>=5.0.0                # Terminal charts (for SPY chart panel)
+yfinance>=0.2.28               # Yahoo Finance data (for SPY chart)

@@ -8,7 +8,18 @@ set -e  # Exit on error
 VPS_HOST="${1:-31.220.55.98}"
 VPS_USER="root"
 IMAGE_NAME="trading-bot"
-IMAGE_TAG="amd64-v15"
+
+# Read version from VERSION file (single source of truth)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VERSION_FILE="${SCRIPT_DIR}/VERSION"
+if [ -f "$VERSION_FILE" ]; then
+    VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
+else
+    echo "❌ ERROR: VERSION file not found at $VERSION_FILE"
+    exit 1
+fi
+
+IMAGE_TAG="amd64-v${VERSION}"
 LOCAL_TAR="/tmp/${IMAGE_NAME}-${IMAGE_TAG}.tar.gz"
 
 echo "=================================================================================="
