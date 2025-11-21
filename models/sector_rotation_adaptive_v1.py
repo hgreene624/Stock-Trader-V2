@@ -1,14 +1,36 @@
 """
-SectorRotationAdaptive_v3
+SectorRotationAdaptive_v1
 
-Enhanced adaptive sector rotation with VOLATILITY TARGETING.
+Unified adaptive sector rotation model with internal bull/bear regime switching,
+ATR-based take profit/stop loss, and PDT-aware trading.
 
-Key feature: Scales leverage based on current volatility vs target volatility.
-- When VIX is high (>25), reduces exposure to limit drawdowns
-- When VIX is normal (<20), stays fully invested
-- Preserves upside in calm markets, limits downside in turbulent ones
+Features:
+- Single model handles both bull and bear markets internally
+- ATR-based take profit (2.5x ATR) and stop loss (1.5x ATR)
+- PDT protection: minimum 2-day hold period
+- Fee-aware trading: minimum profit threshold to avoid unnecessary churn
 
-Based on v1 optimized parameters with added volatility targeting.
+Bull Mode (equity_regime == 'bull'):
+- Aggressive: 80D momentum, top 4 sectors, 1.3x leverage
+- Faster rotation to capture trends
+
+Bear Mode (equity_regime != 'bull'):
+- Defensive: 126D momentum, top 2 sectors, 1.0x leverage
+- TLT fallback when all sectors bearish
+
+Sectors:
+- XLK: Technology
+- XLF: Financials
+- XLE: Energy
+- XLV: Healthcare
+- XLI: Industrials
+- XLP: Consumer Staples
+- XLU: Utilities
+- XLY: Consumer Discretionary
+- XLC: Communications
+- XLB: Materials
+- XLRE: Real Estate
+- TLT: 20+ Year Treasury Bonds (defensive)
 """
 
 import pandas as pd
@@ -20,41 +42,55 @@ sys.path.append('..')
 from models.base import BaseModel, Context, ModelOutput
 
 
-class SectorRotationAdaptive_v3(BaseModel):
+class SectorRotationAdaptive_v1(BaseModel):
     """
-    Adaptive sector rotation with volatility targeting.
+    Adaptive sector rotation with ATR-based exits and internal regime switching.
     """
 
     def __init__(
         self,
-        model_id: str = "SectorRotationAdaptive_v3",
+        model_id: str = "SectorRotationAdaptive_v1",
         sectors: list[str] = None,
         defensive_asset: str = "TLT",
-        # Volatility targeting parameters
-        use_vol_targeting: bool = True,
-        target_vol: float = 0.15,  # Target 15% annual volatility
-        vol_lookback: int = 20,  # 20-day realized vol
-        vix_symbol: str = "^VIX",  # VIX for vol estimation
-        max_scale: float = 1.5,  # Max scale up
-        min_scale: float = 0.2,  # Min scale down (20% of normal)
         # ATR parameters
-        atr_period: int = 12,
-        take_profit_atr_mult: float = 2.0,
-        stop_loss_atr_mult: float = 1.0,
+        atr_period: int = 14,
+        take_profit_atr_mult: float = 2.5,
+        stop_loss_atr_mult: float = 1.5,
         # PDT and fee parameters
         min_hold_days: int = 2,
         min_profit_bps: float = 10.0,
         # Bull mode parameters
-        bull_momentum_period: int = 126,
+        bull_momentum_period: int = 80,
         bull_top_n: int = 4,
-        bull_min_momentum: float = 0.10,
-        bull_leverage: float = 1.5,
+        bull_min_momentum: float = 0.03,
+        bull_leverage: float = 1.3,
         # Bear mode parameters
         bear_momentum_period: int = 126,
-        bear_top_n: int = 4,
+        bear_top_n: int = 2,
         bear_min_momentum: float = 0.10,
-        bear_leverage: float = 1.5,
+        bear_leverage: float = 1.0,
     ):
+        """
+        Initialize SectorRotationAdaptive_v1.
+
+        Args:
+            model_id: Unique model identifier
+            sectors: List of sector ETFs (default: 11 S&P sectors)
+            defensive_asset: Asset to hold when all sectors bearish
+            atr_period: Period for ATR calculation
+            take_profit_atr_mult: Take profit at entry + X * ATR
+            stop_loss_atr_mult: Stop loss at entry - X * ATR
+            min_hold_days: Minimum days to hold (PDT protection)
+            min_profit_bps: Minimum profit in bps to exit (fee protection)
+            bull_momentum_period: Momentum lookback in bull markets
+            bull_top_n: Number of sectors in bull markets
+            bull_min_momentum: Minimum momentum threshold in bull markets
+            bull_leverage: Leverage multiplier in bull markets
+            bear_momentum_period: Momentum lookback in bear markets
+            bear_top_n: Number of sectors in bear markets
+            bear_min_momentum: Minimum momentum threshold in bear markets
+            bear_leverage: Leverage multiplier in bear markets
+        """
         self.sectors = sectors or [
             'XLK', 'XLF', 'XLE', 'XLV', 'XLI',
             'XLP', 'XLU', 'XLY', 'XLC', 'XLB', 'XLRE'
@@ -62,17 +98,8 @@ class SectorRotationAdaptive_v3(BaseModel):
 
         self.defensive_asset = defensive_asset
         self.all_assets = self.sectors + [defensive_asset]
-        self.vix_symbol = vix_symbol  # For vol calculation (not traded)
-
         self.assets = self.all_assets
         self.model_id = model_id
-
-        # Volatility targeting
-        self.use_vol_targeting = use_vol_targeting
-        self.target_vol = target_vol
-        self.vol_lookback = vol_lookback
-        self.max_scale = max_scale
-        self.min_scale = min_scale
 
         # ATR parameters
         self.atr_period = atr_period
@@ -97,20 +124,30 @@ class SectorRotationAdaptive_v3(BaseModel):
 
         super().__init__(
             name=model_id,
-            version="3.0.0",
+            version="1.0.0",
             universe=self.all_assets
         )
 
         # State tracking
         self.last_rebalance: Optional[pd.Timestamp] = None
-        self.entry_prices: Dict[str, float] = {}
-        self.entry_timestamps: Dict[str, pd.Timestamp] = {}
-        self.entry_atr: Dict[str, float] = {}
+        self.entry_prices: Dict[str, float] = {}  # symbol -> entry price
+        self.entry_timestamps: Dict[str, pd.Timestamp] = {}  # symbol -> entry time
+        self.entry_atr: Dict[str, float] = {}  # symbol -> ATR at entry
 
     def _calculate_atr(self, features: pd.DataFrame, period: int = None) -> float:
-        """Calculate Average True Range."""
+        """
+        Calculate Average True Range.
+
+        Args:
+            features: DataFrame with high, low, close columns
+            period: ATR period (default: self.atr_period)
+
+        Returns:
+            Current ATR value
+        """
         period = period or self.atr_period
 
+        # Get column names (handle both cases)
         high_col = 'High' if 'High' in features.columns else 'high'
         low_col = 'Low' if 'Low' in features.columns else 'low'
         close_col = 'Close' if 'Close' in features.columns else 'close'
@@ -119,11 +156,15 @@ class SectorRotationAdaptive_v3(BaseModel):
         low = features[low_col]
         close = features[close_col]
 
+        # Calculate True Range components
         tr1 = high - low
         tr2 = abs(high - close.shift(1))
         tr3 = abs(low - close.shift(1))
 
+        # True Range is max of the three
         tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+        # ATR is rolling average
         atr = tr.rolling(window=period).mean()
 
         return atr.iloc[-1] if len(atr) > 0 and not pd.isna(atr.iloc[-1]) else 0.0
@@ -133,58 +174,23 @@ class SectorRotationAdaptive_v3(BaseModel):
         close_col = 'Close' if 'Close' in features.columns else 'close'
         return features[close_col].iloc[-1]
 
-    def _calculate_vol_scale(self, context: Context) -> float:
-        """
-        Calculate volatility scaling factor.
-
-        Uses VIX as a proxy for market volatility.
-        Returns scale factor to apply to leverage.
-        """
-        if not self.use_vol_targeting:
-            return 1.0
-
-        # Try to get VIX data
-        if self.vix_symbol in context.asset_features:
-            vix_features = context.asset_features[self.vix_symbol]
-            close_col = 'Close' if 'Close' in vix_features.columns else 'close'
-
-            if len(vix_features) > 0:
-                current_vix = vix_features[close_col].iloc[-1]
-
-                # VIX is annualized implied vol in percentage points
-                # e.g., VIX=20 means 20% annualized vol
-                current_vol = current_vix / 100.0
-
-                if current_vol > 0:
-                    scale = self.target_vol / current_vol
-                    # Clamp to min/max bounds
-                    scale = max(self.min_scale, min(self.max_scale, scale))
-                    return scale
-
-        # Fallback: use realized vol from XLK
-        if 'XLK' in context.asset_features:
-            xlk_features = context.asset_features['XLK']
-            close_col = 'Close' if 'Close' in xlk_features.columns else 'close'
-
-            if len(xlk_features) >= self.vol_lookback:
-                returns = xlk_features[close_col].pct_change().dropna()
-                if len(returns) >= self.vol_lookback:
-                    realized_vol = returns.iloc[-self.vol_lookback:].std() * np.sqrt(252)
-
-                    if realized_vol > 0:
-                        scale = self.target_vol / realized_vol
-                        scale = max(self.min_scale, min(self.max_scale, scale))
-                        return scale
-
-        return 1.0  # Default: no scaling
-
     def _check_exit_conditions(
         self,
         symbol: str,
         current_price: float,
         current_time: pd.Timestamp
     ) -> tuple[bool, str]:
-        """Check if position should be exited based on ATR targets or stop loss."""
+        """
+        Check if position should be exited based on ATR targets or stop loss.
+
+        Args:
+            symbol: Asset symbol
+            current_price: Current price
+            current_time: Current timestamp
+
+        Returns:
+            Tuple of (should_exit, reason)
+        """
         if symbol not in self.entry_prices:
             return False, ""
 
@@ -192,12 +198,12 @@ class SectorRotationAdaptive_v3(BaseModel):
         entry_time = self.entry_timestamps[symbol]
         entry_atr = self.entry_atr.get(symbol, 0)
 
-        # PDT protection
+        # PDT protection: check minimum hold period
         days_held = (current_time - entry_time).days
         if days_held < self.min_hold_days:
             return False, "pdt_protection"
 
-        # Calculate P&L
+        # Calculate P&L in bps
         pnl_pct = (current_price - entry_price) / entry_price
         pnl_bps = pnl_pct * 10000
 
@@ -212,16 +218,21 @@ class SectorRotationAdaptive_v3(BaseModel):
             if current_price <= stop_loss_price:
                 return True, "stop_loss"
 
-        # Fee protection
+        # Fee protection: don't exit for tiny gains
         if pnl_bps > 0 and pnl_bps < self.min_profit_bps:
             return False, "fee_protection"
 
         return False, ""
 
     def generate_target_weights(self, context: Context) -> ModelOutput:
-        """Generate target weights with volatility-adjusted leverage."""
+        """
+        Generate target weights with internal regime switching and ATR exits.
 
-        # Determine regime using XLK > 200 MA
+        Returns:
+            ModelOutput with target weights
+        """
+        # Determine regime using internal detection based on XLK (tech sector as market proxy)
+        # Fall back to context.regime if XLK data not available
         is_bull = False
         if 'XLK' in context.asset_features:
             xlk_features = context.asset_features['XLK']
@@ -237,18 +248,14 @@ class SectorRotationAdaptive_v3(BaseModel):
             momentum_period = self.bull_momentum_period
             top_n = self.bull_top_n
             min_momentum = self.bull_min_momentum
-            base_leverage = self.bull_leverage
+            target_leverage = self.bull_leverage
         else:
             momentum_period = self.bear_momentum_period
             top_n = self.bear_top_n
             min_momentum = self.bear_min_momentum
-            base_leverage = self.bear_leverage
+            target_leverage = self.bear_leverage
 
-        # Apply volatility scaling
-        vol_scale = self._calculate_vol_scale(context)
-        target_leverage = base_leverage * vol_scale
-
-        # Check for ATR-based exits
+        # Check for ATR-based exits on current positions
         exits_triggered = {}
         for symbol, exposure in context.current_exposures.items():
             if exposure > 0 and symbol in context.asset_features:
@@ -259,6 +266,7 @@ class SectorRotationAdaptive_v3(BaseModel):
                 )
                 if should_exit:
                     exits_triggered[symbol] = reason
+                    # Clear entry tracking
                     if symbol in self.entry_prices:
                         del self.entry_prices[symbol]
                     if symbol in self.entry_timestamps:
@@ -266,10 +274,11 @@ class SectorRotationAdaptive_v3(BaseModel):
                     if symbol in self.entry_atr:
                         del self.entry_atr[symbol]
 
-        # Weekly rebalancing check (7 trading days - original v3 behavior)
+        # Weekly rebalancing check (unless exit triggered)
         if self.last_rebalance is not None and not exits_triggered:
             days_since_rebalance = (context.timestamp - self.last_rebalance).days
             if days_since_rebalance < 7:
+                # Hold current positions
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,
@@ -291,6 +300,7 @@ class SectorRotationAdaptive_v3(BaseModel):
             if len(features) < momentum_period + 1:
                 continue
 
+            # Get current and historical prices
             close_col = 'Close' if 'Close' in features.columns else 'close'
             current_price = features[close_col].iloc[-1]
             past_price = features[close_col].iloc[-(momentum_period + 1)]
@@ -298,11 +308,26 @@ class SectorRotationAdaptive_v3(BaseModel):
             if pd.isna(current_price) or pd.isna(past_price) or past_price == 0:
                 continue
 
+            # Calculate momentum
             momentum = (current_price - past_price) / past_price
             sector_momentum[sector] = momentum
 
+            # Calculate ATR for this sector
             atr = self._calculate_atr(features)
             sector_atr[sector] = atr
+
+        # Rank sectors by momentum
+        if len(sector_momentum) == 0:
+            weights = {asset: 0.0 for asset in self.all_assets}
+            weights[self.defensive_asset] = 1.0
+            return ModelOutput(
+                model_name=self.model_id,
+                timestamp=context.timestamp,
+                weights=weights
+            )
+
+        # Sort sectors by momentum (descending)
+        ranked_sectors = sorted(sector_momentum.items(), key=lambda x: x[1], reverse=True)
 
         # Initialize weights
         weights = {asset: 0.0 for asset in self.all_assets}
@@ -311,17 +336,7 @@ class SectorRotationAdaptive_v3(BaseModel):
         for symbol in exits_triggered:
             weights[symbol] = 0.0
 
-        # If no sectors have data, go defensive
-        if len(sector_momentum) == 0:
-            weights[self.defensive_asset] = 1.0
-            return ModelOutput(
-                model_name=self.model_id,
-                timestamp=context.timestamp,
-                weights=weights
-            )
-
-        # Rank sectors by momentum
-        ranked_sectors = sorted(sector_momentum.items(), key=lambda x: x[1], reverse=True)
+        # Select top sectors
         top_sectors = ranked_sectors[:top_n]
 
         # If all top sectors are bearish, go defensive
@@ -332,7 +347,7 @@ class SectorRotationAdaptive_v3(BaseModel):
             positive_sectors = [(s, m) for s, m in top_sectors if m >= min_momentum]
 
             if len(positive_sectors) > 0:
-                # Apply vol-adjusted leverage
+                # Apply leverage to weights (e.g., 1.3x means 130% exposure)
                 weight_per_sector = target_leverage / len(positive_sectors)
                 for sector, _ in positive_sectors:
                     weights[sector] = weight_per_sector
@@ -363,6 +378,7 @@ class SectorRotationAdaptive_v3(BaseModel):
 
     def __repr__(self):
         return (
-            f"SectorRotationAdaptive_v3(model_id='{self.model_id}', "
-            f"vol_targeting={self.use_vol_targeting}, target_vol={self.target_vol})"
+            f"SectorRotationAdaptive_v1(model_id='{self.model_id}', "
+            f"atr_period={self.atr_period}, "
+            f"bull_top_n={self.bull_top_n}, bear_top_n={self.bear_top_n})"
         )

@@ -34,13 +34,32 @@ When scoping new model development or modifications:
 - Make decisive calls on when to stop testing and report findings
 
 ### 5. Documentation
-**REQUIRED**: Create a scientific-style experiment report for EVERY experiment session.
+**REQUIRED**: Create experiment documentation following the established folder structure.
 
-Save to: `docs/research/experiments/XXX_YYYY-MM-DD_brief_name.md`
+#### Documentation Structure
+```
+docs/research/
+├── README.md              # Overview and navigation
+├── RESEARCH_SUMMARY.md    # Executive summary (update with key findings)
+├── WHAT_WORKED.md         # Add successful approaches
+├── WHAT_FAILED.md         # Document failures
+├── NEXT_STEPS.md          # Update roadmap
+├── experiments/           # Each experiment gets its own folder
+│   ├── INDEX.md           # Master index (update with new experiments)
+│   └── XXX_experiment_name/
+│       ├── README.md      # Main results document
+│       └── [supporting files]
+├── agents/                # Agent workflow docs
+└── reports/               # One-off analysis reports
+```
 
-Example: `001_2025-11-21_rebalancing_frequency.md`
+#### Creating a New Experiment
+1. Create folder: `docs/research/experiments/XXX_experiment_name/`
+2. Create main doc: `README.md` with format below
+3. Add supporting files (considerations.md, profiles.yaml, etc.)
+4. Update `docs/research/experiments/INDEX.md` with new entry
 
-**Format** (keep brief and concise):
+**README.md Format**:
 ```markdown
 # EXP-XXX: Title
 
@@ -65,7 +84,7 @@ Example: `001_2025-11-21_rebalancing_frequency.md`
 Key finding and recommended action. 2-3 sentences max.
 ```
 
-Use sequential experiment IDs (001, 002, etc.) with date in filename. Check existing files for next available ID.
+Use sequential experiment IDs (001, 002, etc.). Check `experiments/INDEX.md` for next available ID.
 
 ## Working Protocol
 
@@ -153,3 +172,32 @@ If you cannot find documented results for a model or experiment, report: "No bac
 6. **Respect the architecture** - Models output weights, Risk Engine enforces limits
 7. **Challenge assumptions** - If an approach keeps failing, suggest fundamentally different directions
 8. **Verify sources** - When reporting metrics, note where you found them
+
+## ⚠️ MODEL VERSIONING & REPRODUCIBILITY (MANDATORY)
+
+These rules exist because we lost a 19.73% CAGR result due to uncommitted code that was later modified. Never let this happen again.
+
+### Model Versioning
+- **NEVER modify an existing model** - Always create a new version (v1 → v2, etc.)
+- When changing model behavior (parameters, logic, rebalancing), create `model_name_vX+1.py`
+- Register new versions in `backtest/analyze_cli.py`
+- Old versions must remain unchanged for reproducibility
+
+### Before Running Any Test
+- **Commit all code changes first** - The backtest will warn if there are uncommitted changes
+- Ensure the model file exists and is committed
+- Use profiles from `configs/profiles.yaml` to ensure parameter reproducibility
+
+### Result Reproducibility
+Every result MUST have:
+- Git commit hash (logged automatically in metadata.json)
+- Full parameters used
+- Model source code snapshot (saved as model_source.py)
+- Complete config
+
+If you see "⚠️ UNCOMMITTED CHANGES" warning:
+1. STOP - do not continue with the test
+2. Commit the changes first
+3. Then run the test
+
+Results without reproducibility info are WORTHLESS - they cannot be trusted or recreated.

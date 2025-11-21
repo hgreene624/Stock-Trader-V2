@@ -1,14 +1,15 @@
 """
-SectorRotationAdaptive_v3
+SectorRotationAdaptive_v4
 
-Enhanced adaptive sector rotation with VOLATILITY TARGETING.
+Enhanced adaptive sector rotation with VOLATILITY TARGETING and MONTHLY REBALANCING.
 
 Key feature: Scales leverage based on current volatility vs target volatility.
 - When VIX is high (>25), reduces exposure to limit drawdowns
 - When VIX is normal (<20), stays fully invested
 - Preserves upside in calm markets, limits downside in turbulent ones
+- Uses 21-day (monthly) rebalancing for better performance (EXP-001)
 
-Based on v1 optimized parameters with added volatility targeting.
+Based on v3 with optimized rebalancing frequency.
 """
 
 import pandas as pd
@@ -20,14 +21,14 @@ sys.path.append('..')
 from models.base import BaseModel, Context, ModelOutput
 
 
-class SectorRotationAdaptive_v3(BaseModel):
+class SectorRotationAdaptive_v4(BaseModel):
     """
-    Adaptive sector rotation with volatility targeting.
+    Adaptive sector rotation with volatility targeting and monthly rebalancing.
     """
 
     def __init__(
         self,
-        model_id: str = "SectorRotationAdaptive_v3",
+        model_id: str = "SectorRotationAdaptive_v4",
         sectors: list[str] = None,
         defensive_asset: str = "TLT",
         # Volatility targeting parameters
@@ -97,7 +98,7 @@ class SectorRotationAdaptive_v3(BaseModel):
 
         super().__init__(
             name=model_id,
-            version="3.0.0",
+            version="4.0.0",
             universe=self.all_assets
         )
 
@@ -266,10 +267,10 @@ class SectorRotationAdaptive_v3(BaseModel):
                     if symbol in self.entry_atr:
                         del self.entry_atr[symbol]
 
-        # Weekly rebalancing check (7 trading days - original v3 behavior)
+        # Monthly rebalancing check (21 trading days - EXP-001 optimization)
         if self.last_rebalance is not None and not exits_triggered:
             days_since_rebalance = (context.timestamp - self.last_rebalance).days
-            if days_since_rebalance < 7:
+            if days_since_rebalance < 21:
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,
@@ -363,6 +364,7 @@ class SectorRotationAdaptive_v3(BaseModel):
 
     def __repr__(self):
         return (
-            f"SectorRotationAdaptive_v3(model_id='{self.model_id}', "
-            f"vol_targeting={self.use_vol_targeting}, target_vol={self.target_vol})"
+            f"SectorRotationAdaptive_v4(model_id='{self.model_id}', "
+            f"vol_targeting={self.use_vol_targeting}, target_vol={self.target_vol}, "
+            f"rebalance=21d)"
         )

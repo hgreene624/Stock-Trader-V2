@@ -2,6 +2,51 @@
 
 Real-time terminal dashboard for monitoring your production trading bot.
 
+## Quick Start (VPS)
+
+```bash
+# SSH shortcut - connects directly to dashboard inside container
+ssh dashboard
+```
+
+This runs the dashboard inside the Docker container on VPS (31.220.55.98).
+
+See [README.md](README.md) for full VPS configuration details.
+
+---
+
+## How Dashboard Connects to Trading Bot
+
+```
+Dashboard                           Trading Bot
+┌─────────────────┐                ┌─────────────────┐
+│ dashboard.py    │  HTTP :8080    │ health_monitor  │
+│                 │ ◄───────────── │ (per account)   │
+│ Status/Models   │                └─────────────────┘
+│                 │                ┌─────────────────┐
+│                 │  File Read     │ JSONL Logs      │
+│ Orders/Trades   │ ◄───────────── │ /app/logs/      │
+└─────────────────┘                └─────────────────┘
+```
+
+### Data Sources
+
+1. **Health Endpoint** (`localhost:{port}/health`)
+   - Status, regime, loaded models
+   - Refreshed every 5 seconds
+
+2. **JSONL Log Files** (`/app/logs/{account_id}/`)
+   - orders.jsonl, trades.jsonl, performance.jsonl, errors.jsonl
+   - Read on each refresh
+
+### Multi-Account Support
+
+When multiple accounts are configured, dashboard shows account selector:
+- Account PA3T8N36NVJK on port 8080 (3 models)
+- Account PA3I05031HZL on port 8081 (1 model)
+
+---
+
 ## Features
 
 - **Live Updates**: Auto-refreshes every 5 seconds (configurable)

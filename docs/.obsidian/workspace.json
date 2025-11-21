@@ -13,26 +13,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "reference/model_comparison.md",
+                "file": "Sub Agents Outline.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "model_comparison"
+              "title": "Sub Agents Outline"
             }
           },
           {
-            "id": "2e791a1120a90041",
+            "id": "7dfba212c45d3f8c",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Sub Agents.md",
+                "file": "research/README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Sub Agents"
+              "title": "README"
             }
           }
         ],
@@ -93,7 +93,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 480.5
   },
   "right": {
     "id": "080cd0f0620be17f",
@@ -109,7 +109,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Sub Agents.md",
+                "file": "research/README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -119,7 +119,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Sub Agents"
+              "title": "Backlinks for README"
             }
           },
           {
@@ -184,8 +184,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -198,15 +197,41 @@
       "bases:Create new base": false
     }
   },
-  "active": "2e791a1120a90041",
+  "active": "ca560f3b65d7ed2a",
   "lastOpenFiles": [
-    "reference/model_comparison.md",
-    "Sub Agents.md",
+    "guides/MODEL_VERSIONING.md",
+    "experiments.md",
+    "research/README.md",
+    "research/experiments/003_model_comparison/README.md",
+    "research/NEXT_STEPS.md",
+    "research/experiments/003_model_comparison/next_experiments.md",
+    "research/experiments/003_model_comparison/detailed_metrics.md",
+    "research/experiments/003_model_comparison",
+    "research/experiments/002_sector_rotation_improvements/testing_sequence.md",
+    "research/experiments/002_sector_rotation_improvements/README.md",
+    "research/experiments/001_rebalancing_frequency/README.md",
+    "research/reports/METRICS_CORRECTION_REPORT.md",
+    "research/Personal Research/sub-agents-best-practices.md",
+    "research/experiments/INDEX.md",
+    "My TODO.md",
+    "Sub Agents Outline.md",
     "reference/metrics_color_guide.md",
-    "guides/walk_forward.md",
-    "guides/validation_guide.md",
-    "guides/quickstart.md",
-    "guides/optimization_tracking.md",
-    "guides/monitoring_long_runs.md"
+    "research/RESEARCH_SUMMARY.md",
+    "research/METRICS_CORRECTION_REPORT.md",
+    "research/reports",
+    "research/agents/agents_research.md",
+    "research/agents/AGENT_CONTEXT.md",
+    "research/agents",
+    "research/experiments/002_2025-11-21_sector_rotation_improvements.md",
+    "research/experiments/002_sector_rotation_improvements/profile_configurations.yaml",
+    "research/experiments/002_sector_rotation_improvements/considerations.md",
+    "research/experiments/002_sector_rotation_improvements",
+    "research/experiments/001_rebalancing_frequency/v3_results.md",
+    "research/experiments/001_rebalancing_frequency",
+    "research/experiments/002_testing_sequence.md",
+    "research/experiments/002_considerations.md",
+    "models/SECTOR_ROTATION_SUMMARY.md",
+    "research/experiments/002_profile_configurations.yaml",
+    "research/experiments/002_2025-11-21_sector_rotation_improvements.md.tmp.97350.1763753305693"
   ]
 }

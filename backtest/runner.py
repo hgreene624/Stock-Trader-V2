@@ -161,7 +161,7 @@ class BacktestRunner:
         regime_config = self.config.get('regime', {})
 
         self.pipeline = DataPipeline(
-            data_dir=self.backtest_config.get('data_dir', 'data/equities'),
+            data_dir=self.backtest_config.get('data_dir', 'data'),
             regime_config=regime_config,
             logger=self.logger
         )

@@ -87,3 +87,4 @@ Thumbs.db
 # Ignore huge log files
 logs/
 *.log
+/production/local_logs/

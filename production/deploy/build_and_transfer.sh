@@ -1,13 +1,37 @@
 #!/bin/bash
 # Build and Transfer Script for Production Trading Bot
-# Usage: ./build_and_transfer.sh [VPS_HOST]
+# Usage: ./build_and_transfer.sh [--build-base] [VPS_HOST]
+#
+# Options:
+#   --build-base    Build the base image first (do this when requirements.txt changes)
+#
+# Examples:
+#   ./build_and_transfer.sh                    # Fast build using existing base
+#   ./build_and_transfer.sh --build-base       # Rebuild base + app (when requirements change)
 
 set -e  # Exit on error
 
+# Parse arguments
+BUILD_BASE=false
+VPS_HOST="31.220.55.98"
+
+for arg in "$@"; do
+    case $arg in
+        --build-base)
+            BUILD_BASE=true
+            shift
+            ;;
+        *)
+            VPS_HOST="$arg"
+            shift
+            ;;
+    esac
+done
+
 # Configuration
-VPS_HOST="${1:-31.220.55.98}"
 VPS_USER="root"
 IMAGE_NAME="trading-bot"
+BASE_IMAGE_NAME="trading-bot-base"
 
 # Read version from VERSION file (single source of truth)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -57,10 +81,38 @@ else
 fi
 echo ""
 
+# Step 0 (optional): Build base image
+if [ "$BUILD_BASE" = true ]; then
+    echo "🔧 Step 0: Building base image (this takes a while)..."
+    echo "--------------------------------------------------------------------------------"
+    if docker buildx build --platform linux/amd64 \
+        -t ${BASE_IMAGE_NAME}:latest \
+        -f production/docker/Dockerfile.base .; then
+        echo "✅ Base image built successfully"
+    else
+        echo "❌ ERROR: Base image build failed"
+        exit 1
+    fi
+    echo ""
+fi
+
 # Step 1: Build AMD64 image
-echo "📦 Step 1/3: Building AMD64 Docker image..."
+STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "1/4" || echo "1/3" )
+echo "📦 Step ${STEP_NUM}: Building AMD64 Docker image..."
 echo "--------------------------------------------------------------------------------"
+
+# Check if base image exists
+if ! docker image inspect ${BASE_IMAGE_NAME}:latest >/dev/null 2>&1; then
+    echo "⚠️  Base image not found. Building from scratch (slower)..."
+    echo "   Run with --build-base next time for faster builds."
+    BUILD_ARGS=""
+else
+    echo "✅ Using base image: ${BASE_IMAGE_NAME}:latest"
+    BUILD_ARGS="--build-arg BASE_IMAGE=${BASE_IMAGE_NAME}:latest"
+fi
+
 if docker buildx build --platform linux/amd64 --no-cache \
+    ${BUILD_ARGS} \
     -t ${IMAGE_NAME}:${IMAGE_TAG} \
     -f production/docker/Dockerfile .; then
     echo "✅ Build completed successfully"
@@ -71,7 +123,8 @@ fi
 echo ""
 
 # Step 2: Save and compress
-echo "💾 Step 2/3: Saving and compressing image..."
+STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "2/4" || echo "2/3" )
+echo "💾 Step ${STEP_NUM}: Saving and compressing image..."
 echo "--------------------------------------------------------------------------------"
 if docker save ${IMAGE_NAME}:${IMAGE_TAG} | gzip > ${LOCAL_TAR}; then
     IMAGE_SIZE=$(ls -lh ${LOCAL_TAR} | awk '{print $5}')
@@ -83,7 +136,8 @@ fi
 echo ""
 
 # Step 3: Transfer to VPS
-echo "📤 Step 3/3: Transferring to VPS..."
+STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "3/4" || echo "3/3" )
+echo "📤 Step ${STEP_NUM}: Transferring to VPS..."
 echo "--------------------------------------------------------------------------------"
 echo "Uploading to ${VPS_USER}@${VPS_HOST}:/tmp/"
 if scp ${LOCAL_TAR} ${VPS_USER}@${VPS_HOST}:/tmp/; then

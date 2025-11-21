@@ -1,0 +1,474 @@
+# Profile Configurations for EXP-002: Sector Rotation Improvements
+# Add these profiles to configs/profiles.yaml
+
+# ============================================
+# PHASE 1: Momentum Period Optimization
+# ============================================
+
+sector_rotation_mom_118:
+  description: Momentum optimization - 118 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 118
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+sector_rotation_mom_120:
+  description: Momentum optimization - 120 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 120
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+sector_rotation_mom_122:
+  description: Momentum optimization - 122 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 122
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+sector_rotation_mom_124:
+  description: Momentum optimization - 124 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 124
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+sector_rotation_mom_128:
+  description: Momentum optimization - 128 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 128
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+sector_rotation_mom_130:
+  description: Momentum optimization - 130 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 130
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+sector_rotation_mom_132:
+  description: Momentum optimization - 132 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 132
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+sector_rotation_mom_134:
+  description: Momentum optimization - 134 day lookback
+  model: SectorRotationModel_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: 134
+    top_n: 3
+    min_momentum: 0.0
+    target_leverage: 1.25
+
+# ============================================
+# PHASE 2: VIX-Based Dynamic Leverage
+# Note: Requires new model SectorRotationVIX_v1
+# ============================================
+
+sector_rotation_vix_10:
+  description: VIX dynamic leverage - 1.0x base
+  model: SectorRotationVIX_v1  # New model needed
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: 1.0
+    vix_scale_factor: 30
+    min_leverage: 0.75
+    max_leverage: 1.5
+
+sector_rotation_vix_11:
+  description: VIX dynamic leverage - 1.1x base
+  model: SectorRotationVIX_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: 1.1
+    vix_scale_factor: 30
+    min_leverage: 0.75
+    max_leverage: 1.5
+
+sector_rotation_vix_12:
+  description: VIX dynamic leverage - 1.2x base
+  model: SectorRotationVIX_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: 1.2
+    vix_scale_factor: 30
+    min_leverage: 0.75
+    max_leverage: 1.5
+
+sector_rotation_vix_13:
+  description: VIX dynamic leverage - 1.3x base
+  model: SectorRotationVIX_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: 1.3
+    vix_scale_factor: 30
+    min_leverage: 0.75
+    max_leverage: 1.5
+
+sector_rotation_vix_14:
+  description: VIX dynamic leverage - 1.4x base
+  model: SectorRotationVIX_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 200
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: 1.4
+    vix_scale_factor: 30
+    min_leverage: 0.75
+    max_leverage: 1.5
+
+# ============================================
+# PHASE 3: SPY Trend Confirmation Filter
+# Note: Requires new model SectorRotationSPYFilter_v1
+# ============================================
+
+sector_rotation_spy_150:
+  description: SPY trend filter - 150D MA
+  model: SectorRotationSPYFilter_v1  # New model needed
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 250
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: TBD  # Will use best from Phase 2
+    vix_scale_factor: TBD  # Will use best from Phase 2
+    spy_ma_period: 150
+    require_spy_uptrend: true
+
+sector_rotation_spy_200:
+  description: SPY trend filter - 200D MA
+  model: SectorRotationSPYFilter_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 250
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: TBD  # Will use best from Phase 2
+    vix_scale_factor: TBD  # Will use best from Phase 2
+    spy_ma_period: 200
+    require_spy_uptrend: true
+
+sector_rotation_spy_250:
+  description: SPY trend filter - 250D MA
+  model: SectorRotationSPYFilter_v1
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 250
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: TBD  # Will use best from Phase 2
+    vix_scale_factor: TBD  # Will use best from Phase 2
+    spy_ma_period: 250
+    require_spy_uptrend: true
+
+# ============================================
+# PHASE 4: Combined Optimization
+# ============================================
+
+sector_rotation_combined_v2:
+  description: Combined best momentum + VIX + SPY filter
+  model: SectorRotationCombined_v2  # New model needed
+  universe:
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - XLI
+  - XLP
+  - XLU
+  - XLY
+  - XLC
+  - XLB
+  - XLRE
+  - TLT
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  lookback_bars: 250
+  parameters:
+    momentum_period: TBD  # Will use best from Phase 1
+    top_n: 3
+    min_momentum: 0.0
+    base_leverage: TBD  # Will use best from Phase 2
+    vix_scale_factor: TBD  # Will use best from Phase 2
+    min_leverage: 0.75
+    max_leverage: 1.5
+    spy_ma_period: TBD  # Will use best from Phase 3
+    require_spy_uptrend: true

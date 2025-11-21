@@ -65,6 +65,44 @@ python3 -m deploy.export --models SectorRotationModel_v1 --stage live  # Export 
 
 ---
 
+## ⚠️ Model Versioning Policy (MANDATORY)
+
+**CRITICAL**: We lost a 19.73% CAGR result because code was modified instead of versioned, and never committed. These rules prevent that from ever happening again.
+
+### Never Modify Existing Models
+- **Create a new version** instead: `model_v1.py` → `model_v2.py`
+- Register new version in `backtest/analyze_cli.py`
+- Leave original model unchanged
+
+### Always Commit Before Testing
+- The backtest will warn: "⚠️ UNCOMMITTED CHANGES"
+- **STOP** if you see this warning
+- Commit first, then test
+
+### Reproducibility Requirements
+Every backtest result now automatically logs:
+- Git commit hash
+- Full parameters
+- Model source code (`model_source.py`)
+- Complete config
+
+**Results without this info are worthless** - they cannot be recreated.
+
+### Quick Reference
+```bash
+# WRONG: Modify existing model
+vim models/sector_rotation_v1.py  # NO!
+
+# RIGHT: Create new version
+cp models/sector_rotation_v1.py models/sector_rotation_v2.py
+vim models/sector_rotation_v2.py  # Make changes here
+# Then register in backtest/analyze_cli.py
+```
+
+See `docs/guides/MODEL_VERSIONING.md` for complete policy.
+
+---
+
 ## 🚀 Production Deployment
 
 **NEW**: Production runner for live/paper trading on VPS or local machine.

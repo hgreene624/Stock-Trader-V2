@@ -1,0 +1,37 @@
+# Base image with all dependencies pre-installed
+# Build this rarely (only when requirements.txt changes)
+# Usage: docker build -f production/docker/Dockerfile.base -t trading-bot-base:latest .
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    curl \
+    ca-certificates \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Claude CLI to PATH
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install Claude Code CLI
+RUN mkdir -p /root/.local/bin && \
+    VERSION=$(curl -fsSL https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/stable) && \
+    curl -fsSL -o /root/.local/bin/claude \
+      https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${VERSION}/linux-x64/claude && \
+    chmod +x /root/.local/bin/claude && \
+    /root/.local/bin/claude --version
+
+# Copy and install Python requirements
+COPY production/requirements.txt /app/production/requirements.txt
+RUN pip install --no-cache-dir -r /app/production/requirements.txt
+
+# Create directories
+RUN mkdir -p /app/data/equities /app/data/crypto /app/logs /app/production/docker
+
+# Set base environment
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1

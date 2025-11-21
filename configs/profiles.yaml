@@ -146,6 +146,232 @@ profiles:
       top_n: 3
       min_momentum: 0.0
       target_leverage: 1.25
+
+  # Phase 1: Momentum Period Fine-Tuning (118-134 days, 2-day increments)
+  sr_momentum_118:
+    description: Phase 1 test - 118-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 118
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_120:
+    description: Phase 1 test - 120-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 120
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_122:
+    description: Phase 1 test - 122-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 122
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_124:
+    description: Phase 1 test - 124-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 124
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_126:
+    description: Phase 1 test - 126-day momentum period (baseline)
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 126
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_128:
+    description: Phase 1 test - 128-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 128
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_130:
+    description: Phase 1 test - 130-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 130
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_132:
+    description: Phase 1 test - 132-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 132
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+
+  sr_momentum_134:
+    description: Phase 1 test - 134-day momentum period
+    model: SectorRotationModel_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
   equity_trend_daily:
     description: Daily bar version - full 2020-2024 history available!
     model: EquityTrendModel_v1_Daily
@@ -464,6 +690,259 @@ profiles:
       momentum_period: 90
       top_n: 5
       min_momentum: 0.0
+
+  # VIX-based leverage tests
+  sr_vix_base_1.0:
+    description: VIX-based leverage - base leverage 1.0x
+    model: SectorRotationVIX_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      base_leverage: 1.0
+
+  sr_vix_base_1.25:
+    description: VIX-based leverage - base leverage 1.25x
+    model: SectorRotationVIX_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      base_leverage: 1.25
+
+  sr_vix_base_1.5:
+    description: VIX-based leverage - base leverage 1.5x
+    model: SectorRotationVIX_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      base_leverage: 1.5
+
+  # SPY trend filter tests
+  sr_spy_filter_150:
+    description: SPY trend filter - 150-day MA
+    model: SectorRotationSPYFilter_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+      spy_ma_period: 150
+
+  sr_spy_filter_200:
+    description: SPY trend filter - 200-day MA
+    model: SectorRotationSPYFilter_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+      spy_ma_period: 200
+
+  sr_spy_filter_250:
+    description: SPY trend filter - 250-day MA
+    model: SectorRotationSPYFilter_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      target_leverage: 1.25
+      spy_ma_period: 250
+
+  # Experiment 003 Model Comparison Profiles
+  sr_regime_default:
+    description: Regime-aware sector rotation with default parameters - adjusts leverage and params based on market regime
+    model: SectorRotationRegime_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      rebalance_days: 7
+      bull_momentum_period: 80
+      bull_top_n: 4
+      bull_min_momentum: 0.03
+      bull_leverage: 1.3
+      bear_momentum_period: 126
+      bear_top_n: 2
+      bear_min_momentum: 0.10
+      bear_leverage: 1.0
+      neutral_momentum_period: 126
+      neutral_top_n: 3
+      neutral_min_momentum: 0.0
+      neutral_leverage: 1.25
+
+  sr_adaptive_v3_optimized:
+    description: Adaptive sector rotation v3 - aggressive volatility targeting (19.73% CAGR config)
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      target_vol: 0.25
+      max_scale: 1.3
+      min_scale: 0.3
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+      bull_min_momentum: 0.1
+      bear_min_momentum: 0.1
+      atr_period: 12
+      min_hold_days: 2
+      stop_loss_atr_mult: 1.0
+      take_profit_atr_mult: 2.0
+      vol_lookback: 20
+      use_vol_targeting: true
+
+  sr_vix_optimized:
+    description: VIX-based dynamic leverage - optimized parameters from experiment 002
+    model: SectorRotationVIX_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 134
+      top_n: 3
+      min_momentum: 0.0
+      base_leverage: 1.5
+
 universes:
   major_indices:
   - SPY

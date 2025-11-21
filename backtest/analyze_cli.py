@@ -25,6 +25,8 @@ import argparse
 import json
 import yaml
 import pandas as pd
+import subprocess
+import inspect
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -36,6 +38,11 @@ from utils.logging import StructuredLogger
 from models.sector_rotation_v1 import SectorRotationModel_v1
 from models.sector_rotation_bull_v1 import SectorRotationBull_v1
 from models.sector_rotation_bear_v1 import SectorRotationBear_v1
+from models.sector_rotation_vix_v1 import SectorRotationVIX_v1
+from models.sector_rotation_spy_filter_v1 import SectorRotationSPYFilter_v1
+from models.sector_rotation_regime_v1 import SectorRotationRegime_v1
+from models.sector_rotation_adaptive_v3 import SectorRotationAdaptive_v3
+from models.sector_rotation_adaptive_v4 import SectorRotationAdaptive_v4
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
 from models.cash_secured_put_v1 import CashSecuredPutModel_v1
@@ -73,6 +80,42 @@ class BacktestAnalyzer:
 
         print(f"\n📁 Analysis output directory: {self.output_dir}")
 
+    def get_git_info(self) -> Dict[str, Any]:
+        """Get git commit hash and dirty status for reproducibility."""
+        try:
+            # Get current commit hash
+            commit = subprocess.run(
+                ['git', 'rev-parse', 'HEAD'],
+                capture_output=True, text=True, check=True
+            ).stdout.strip()
+
+            # Check if working directory is dirty
+            status = subprocess.run(
+                ['git', 'status', '--porcelain'],
+                capture_output=True, text=True, check=True
+            ).stdout.strip()
+
+            is_dirty = len(status) > 0
+
+            return {
+                'commit': commit,
+                'is_dirty': is_dirty,
+                'warning': 'UNCOMMITTED CHANGES - Results may not be reproducible!' if is_dirty else None
+            }
+        except Exception as e:
+            return {
+                'commit': 'unknown',
+                'is_dirty': True,
+                'warning': f'Could not get git info: {e}'
+            }
+
+    def get_model_source(self, model_instance) -> str:
+        """Get the source code of the model for reproducibility."""
+        try:
+            return inspect.getsource(model_instance.__class__)
+        except Exception as e:
+            return f"Could not retrieve source: {e}"
+
     def instantiate_model(self, model_name: str, parameters: Dict[str, Any]):
         """
         Instantiate a model by name with parameters.
@@ -90,6 +133,16 @@ class BacktestAnalyzer:
             return SectorRotationBull_v1(**parameters)
         elif model_name == "SectorRotationBear_v1":
             return SectorRotationBear_v1(**parameters)
+        elif model_name == "SectorRotationVIX_v1":
+            return SectorRotationVIX_v1(**parameters)
+        elif model_name == "SectorRotationSPYFilter_v1":
+            return SectorRotationSPYFilter_v1(**parameters)
+        elif model_name == "SectorRotationRegime_v1":
+            return SectorRotationRegime_v1(**parameters)
+        elif model_name == "SectorRotationAdaptive_v3":
+            return SectorRotationAdaptive_v3(**parameters)
+        elif model_name == "SectorRotationAdaptive_v4":
+            return SectorRotationAdaptive_v4(**parameters)
         elif model_name == "EquityTrendModel_v1":
             return EquityTrendModel_v1(**parameters)
         elif model_name == "EquityTrendModel_v1_Daily":
@@ -270,6 +323,19 @@ class BacktestAnalyzer:
         print(f"  Sharpe: {results['metrics']['sharpe_ratio']:.3f}")
         print(f"  BPS: {results['metrics']['bps']:.3f}")
 
+        # Add reproducibility info
+        git_info = self.get_git_info()
+        if git_info.get('warning'):
+            print(f"\n⚠️  {git_info['warning']}")
+
+        results['reproducibility'] = {
+            'git': git_info,
+            'profile_name': profile_name,
+            'parameters': model_params,
+            'model_source': self.get_model_source(model_instance),
+            'full_config': base_config
+        }
+
         return results
 
     def run_analysis_custom(
@@ -406,7 +472,7 @@ class BacktestAnalyzer:
         # Export to CSVs
         self.reporter.export_to_csv(results, output_dir=str(self.output_dir))
 
-        # Save metadata
+        # Save metadata with full reproducibility info
         metadata = {
             'model': results['model_ids'][0] if results['model_ids'] else 'unknown',
             'start_date': results['start_date'],
@@ -414,6 +480,25 @@ class BacktestAnalyzer:
             'metrics': results['metrics'],
             'generated_at': datetime.now().isoformat()
         }
+
+        # Add reproducibility info if available
+        if 'reproducibility' in results:
+            repro = results['reproducibility']
+            metadata['reproducibility'] = {
+                'git_commit': repro['git']['commit'],
+                'git_dirty': repro['git']['is_dirty'],
+                'profile_name': repro.get('profile_name'),
+                'parameters': repro['parameters'],
+                'full_config': repro['full_config']
+            }
+            if repro['git'].get('warning'):
+                metadata['reproducibility']['warning'] = repro['git']['warning']
+
+            # Save model source separately (can be large)
+            source_path = self.output_dir / "model_source.py"
+            with open(source_path, 'w') as f:
+                f.write(repro['model_source'])
+            print(f"  ✓ Model source saved to: {source_path}")
 
         metadata_path = self.output_dir / "metadata.json"
         with open(metadata_path, 'w') as f:

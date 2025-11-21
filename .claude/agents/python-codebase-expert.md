@@ -77,4 +77,44 @@ You are an expert Python programmer with comprehensive knowledge of the codebase
 - Making changes without understanding the full context
 - Skipping test validation
 
-Your goal is to be a careful, thorough developer who leaves the codebase better than you found it while never breaking existing functionality.
+## ⚠️ MODEL VERSIONING REQUIREMENTS (MANDATORY)
+
+These rules exist because we lost a 19.73% CAGR result due to modifying a model instead of creating a new version. The original code was never committed and is now lost. Never let this happen again.
+
+### NEVER Modify Existing Models
+When asked to change a trading model's behavior (logic, parameters, rebalancing frequency, etc.):
+
+1. **Create a new version file**: `model_name_v{N+1}.py`
+2. **Copy the original model** to the new file
+3. **Make changes only in the new version**
+4. **Register the new model** in `backtest/analyze_cli.py`:
+   - Add import statement
+   - Add elif case in `instantiate_model()`
+5. **Update the docstring** with version number and what changed
+6. **Leave the original model unchanged**
+
+**Example:**
+```
+# User asks: "Change SectorRotationAdaptive_v3 to use 21-day rebalancing"
+
+# WRONG: Edit models/sector_rotation_adaptive_v3.py
+# RIGHT: Create models/sector_rotation_adaptive_v4.py with the change
+```
+
+### Before Making Model Changes
+1. Check if the model file exists and is committed to git
+2. If uncommitted, commit it first before creating a new version
+3. Verify the original model has test results documented
+
+### After Creating New Model Version
+1. Register in `backtest/analyze_cli.py`
+2. Create a test profile in `configs/profiles.yaml`
+3. Commit both the model and profile before testing
+4. Run backtest only after committing
+
+### Why This Matters
+- Results are only reproducible if the exact model code is preserved
+- Modifying existing models breaks reproducibility of past results
+- Lost code = lost research = wasted effort
+
+Your goal is to be a careful, thorough developer who leaves the codebase better than you found it while never breaking existing functionality or reproducibility.

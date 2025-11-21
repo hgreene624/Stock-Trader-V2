@@ -1,33 +1,19 @@
 # Production Trading Bot Dockerfile
-# Lightweight container for VPS deployment
+# Fast builds using pre-built base image with dependencies
+#
+# First time setup (or when requirements.txt changes):
+#   docker build -f production/docker/Dockerfile.base -t trading-bot-base:latest .
+#
+# Regular builds (fast - just copies code):
+#   docker build -f production/docker/Dockerfile -t trading-bot:latest .
 
-FROM python:3.11-slim
+# Use base image with all dependencies pre-installed
+# Fall back to python:3.11-slim if base not available (will be slower)
+ARG BASE_IMAGE=trading-bot-base:latest
+FROM ${BASE_IMAGE}
 
 # Set working directory
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    --no-install-recommends \
-    curl \
-    ca-certificates \
-    nano \
-    && rm -rf /var/lib/apt/lists/*
-
-# Add Claude CLI to PATH (before installation so directory is ready)
-ENV PATH="/root/.local/bin:${PATH}"
-
-# Install Claude Code CLI - Manual download (install script doesn't work in Docker)
-RUN mkdir -p /root/.local/bin && \
-    VERSION=$(curl -fsSL https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/stable) && \
-    curl -fsSL -o /root/.local/bin/claude \
-      https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${VERSION}/linux-x64/claude && \
-    chmod +x /root/.local/bin/claude && \
-    /root/.local/bin/claude --version
-
-# Copy production requirements and install
-COPY production/requirements.txt /app/production/requirements.txt
-RUN pip install --no-cache-dir -r /app/production/requirements.txt
 
 # Copy production runner, dashboard, and scripts
 COPY production/runner/ /app/production/runner/
