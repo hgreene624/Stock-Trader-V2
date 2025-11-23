@@ -444,7 +444,9 @@ class SectorRotationConsistent_v3(BaseModel):
 
     def calculate_momentum_scores(self, context: Context) -> Dict[str, float]:
         """
-        Calculate momentum scores for each sector with decay factor.
+        Calculate risk-adjusted momentum scores for each sector.
+        Uses momentum divided by volatility (Sharpe-like) to favor consistent returns
+        over volatile sectors that may be bouncing from extreme lows.
         """
         scores = {}
 
@@ -463,18 +465,28 @@ class SectorRotationConsistent_v3(BaseModel):
 
             # Recent momentum (last 20 days) - higher weight
             recent_momentum = returns.iloc[-20:].mean() * 252
+            recent_vol = returns.iloc[-20:].std() * (252 ** 0.5)
 
             # Medium-term momentum (last 60 days)
             medium_momentum = returns.iloc[-60:].mean() * 252
+            medium_vol = returns.iloc[-60:].std() * (252 ** 0.5)
 
             # Long-term momentum (full period)
             long_momentum = returns.iloc[-self.momentum_period:].mean() * 252
+            long_vol = returns.iloc[-self.momentum_period:].std() * (252 ** 0.5)
+
+            # Risk-adjust each momentum component (Sharpe-like)
+            # This penalizes volatile sectors like XLE that bounce from extreme lows
+            eps = 0.01  # Avoid division by zero
+            recent_score = recent_momentum / max(recent_vol, eps)
+            medium_score = medium_momentum / max(medium_vol, eps)
+            long_score = long_momentum / max(long_vol, eps)
 
             # Weighted score with decay
             score = (
-                recent_momentum * 1.0 +
-                medium_momentum * self.momentum_decay +
-                long_momentum * (self.momentum_decay ** 2)
+                recent_score * 1.0 +
+                medium_score * self.momentum_decay +
+                long_score * (self.momentum_decay ** 2)
             ) / (1 + self.momentum_decay + self.momentum_decay ** 2)
 
             scores[sector] = score
@@ -502,44 +514,49 @@ class SectorRotationConsistent_v3(BaseModel):
         """
         Get adaptive parameters based on current market conditions.
         Uses 4-state regime system for better consistency.
+
+        Now uses profile parameters (bull_leverage, bear_leverage, top_n_sectors)
+        as base values, with regime-specific multipliers.
         """
         market_regime = self.detect_market_regime(context)
 
-        # Regime-specific parameter sets optimized for consistency
-        # V2: Added 'recovery' regime and increased bear leverage
+        # Regime-specific multipliers that scale profile parameters
+        # leverage_mult: multiplier for bull_leverage (or bear_leverage in bear regime)
+        # top_n_adj: adjustment to top_n_sectors (-2 to +1)
         regime_params = {
             'steady_bull': {
                 'min_hold_days': 21,      # Hold longer in steady trends
-                'leverage': 1.0,          # Lower leverage - don't over-trade
-                'top_n': 2,               # Concentrate in top 2
+                'leverage_mult': 0.83,    # 83% of bull_leverage (was 1.0/1.2)
+                'top_n_adj': -2,          # top_n - 2 (concentrate more)
                 'stop_loss_mult': 2.5,    # Wider stops
                 'description': 'Patient holding in stable uptrends'
             },
             'volatile_bull': {
                 'min_hold_days': 7,       # Can rotate faster
-                'leverage': 1.25,         # Use available leverage
-                'top_n': 3,               # Diversify a bit more
+                'leverage_mult': 1.04,    # 104% of bull_leverage (was 1.25/1.2)
+                'top_n_adj': -1,          # top_n - 1
                 'stop_loss_mult': 2.0,    # Normal stops
                 'description': 'Active rotation in volatile uptrends'
             },
             'recovery': {
                 'min_hold_days': 5,       # Fast rotation during rebounds
-                'leverage': 1.25,         # Full leverage - ride the rebound!
-                'top_n': 3,               # Diversify across recovering sectors
+                'leverage_mult': 1.04,    # Full leverage - ride the rebound!
+                'top_n_adj': -1,          # top_n - 1
                 'stop_loss_mult': 1.8,    # Medium-tight stops
                 'description': 'Aggressive during post-crash rebounds (like Apr 2020)'
             },
             'bear': {
                 'min_hold_days': 5,       # Quick to exit
-                'leverage': 0.75,         # V2: Increased from 0.5 - don't miss rebounds
-                'top_n': 2,               # Only best ideas
+                'leverage_mult': 1.0,     # Use bear_leverage directly
+                'top_n_adj': -2,          # top_n - 2 (only best ideas)
                 'stop_loss_mult': 1.5,    # Tight stops
+                'use_bear_leverage': True,  # Flag to use bear_leverage instead
                 'description': 'Defensive but not too cautious'
             },
             'concentrated': {
                 'min_hold_days': 14,      # Medium hold
-                'leverage': 1.25,         # Full leverage on concentrated bet
-                'top_n': 1,               # Ride the winner
+                'leverage_mult': 1.04,    # Full leverage on concentrated bet
+                'top_n_adj': -3,          # top_n - 3 (ride the winner)
                 'stop_loss_mult': 2.0,    # Normal stops
                 'max_weight': 0.6,        # Allow 60% concentration
                 'description': 'Ride dominant sector (like 2024 tech)'
@@ -548,8 +565,16 @@ class SectorRotationConsistent_v3(BaseModel):
 
         params = regime_params.get(market_regime, regime_params['volatile_bull'])
 
-        # Never exceed max leverage for small accounts
-        params['leverage'] = min(params['leverage'], 1.25)
+        # Calculate actual leverage from profile parameter
+        if params.get('use_bear_leverage', False):
+            base_leverage = self.bear_leverage
+        else:
+            base_leverage = self.bull_leverage
+
+        params['leverage'] = base_leverage * params['leverage_mult']
+
+        # Calculate actual top_n from profile parameter
+        params['top_n'] = max(1, self.top_n_sectors + params['top_n_adj'])
 
         # Store regime for debugging
         params['regime'] = market_regime
