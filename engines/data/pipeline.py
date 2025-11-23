@@ -112,6 +112,74 @@ class DataPipeline:
 
         return asset_data
 
+    def load_reference_data(
+        self,
+        reference_assets: List[Dict],
+        daily_timeframe: str = '1D',
+        asset_class: str = 'equity'
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Load reference data for regime/crash detection (e.g., SPY, VIX).
+
+        Reference assets are loaded with daily-only data and are available
+        in context.asset_features but are not traded by models.
+
+        Args:
+            reference_assets: List of dicts with 'symbol' and 'required' keys
+            daily_timeframe: Daily timeframe identifier
+            asset_class: Asset class (equity or crypto)
+
+        Returns:
+            Dictionary mapping symbol to prepared DataFrame with features
+        """
+        if self.logger:
+            symbols = [r['symbol'] for r in reference_assets]
+            self.logger.info(f"Loading reference data for: {symbols}")
+
+        # Map asset class to directory
+        dir_map = {"equity": "equities", "crypto": "cryptos"}
+        data_subdir = self.data_dir / dir_map.get(asset_class, asset_class + "s")
+
+        reference_data = {}
+
+        for ref_asset in reference_assets:
+            symbol = ref_asset['symbol']
+            required = ref_asset.get('required', False)
+            safe_symbol = symbol.replace('/', '-').replace('^', '')
+
+            daily_file = data_subdir / f"{safe_symbol}_{daily_timeframe}.parquet"
+
+            if not daily_file.exists():
+                if required:
+                    raise FileNotFoundError(
+                        f"Required reference data missing for {symbol}. Expected: {daily_file}"
+                    )
+                else:
+                    if self.logger:
+                        self.logger.info(
+                            f"Optional reference data missing for {symbol}: {daily_file}"
+                        )
+                    continue
+
+            # Load daily data
+            df_daily = pd.read_parquet(daily_file)
+
+            # Ensure timestamp column is datetime
+            if 'timestamp' in df_daily.columns:
+                df_daily['timestamp'] = pd.to_datetime(df_daily['timestamp'], utc=True)
+                df_daily = df_daily.set_index('timestamp')
+            else:
+                df_daily.index = pd.to_datetime(df_daily.index, utc=True)
+
+            # Compute features for daily-only data
+            df_prepared = self._compute_features_daily_only(df_daily)
+            reference_data[symbol] = df_prepared
+
+            if self.logger:
+                self.logger.info(f"Loaded reference data for {symbol}: {len(df_prepared)} bars")
+
+        return reference_data
+
     def _compute_features_daily_only(self, df_daily: pd.DataFrame) -> pd.DataFrame:
         """
         Compute features for daily-only backtesting.

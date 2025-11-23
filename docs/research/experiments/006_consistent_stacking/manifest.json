@@ -1,0 +1,28 @@
+{
+  "experiment_id": "006",
+  "name": "consistent_stacking",
+  "title": "Consistent Yearly Alpha with Stacking Gains",
+  "date_created": "2025-11-23",
+  "status": "in_progress",
+  "model": "SectorRotationConsistent_v2",
+  "objective": "Beat SPY 5/5 years with gains that stack (no year-over-year give-back)",
+  "hypothesis": "Adding 'recovery' regime detection will capture 2020 rebound better, and higher bear leverage (0.75x) will prevent excessive defensiveness",
+  "v2_improvements": [
+    "Added 'recovery' regime for post-crash rebounds",
+    "Increased bear leverage from 0.5x to 0.75x",
+    "Faster regime detection using 50D and 20D MAs",
+    "Uses transitional periods more aggressively"
+  ],
+  "success_criteria": {
+    "years_beating_spy": "5/5",
+    "max_drawdown": "< 30%",
+    "stacking": "Each year-end NAV > previous year-end NAV",
+    "leverage_constraint": "1.0-1.25x (small account compatible)"
+  },
+  "files": {
+    "model": "models/sector_rotation_consistent_v2.py",
+    "profile": "consistent_alpha_v2",
+    "logs": "logs/",
+    "results": "results/"
+  }
+}

@@ -4,7 +4,8 @@ This document defines the standardized structure and workflow for all trading ex
 
 ## Directory Structure
 
-Every experiment MUST follow this directory structure:
+### Standard Structure (Single Model)
+For simple experiments with one model iteration:
 
 ```
 docs/research/experiments/XXX_experiment_name/
@@ -26,6 +27,50 @@ docs/research/experiments/XXX_experiment_name/
     │   ├── drawdown.png         # Drawdown chart
     │   └── *.png                # Additional visualizations
     └── summary.json             # Aggregated metrics
+```
+
+### Version-Based Structure (Multiple Model Iterations)
+For experiments with multiple model versions (v1, v2, v3, etc.):
+
+```
+docs/research/experiments/XXX_experiment_name/
+├── README.md                    # Master tracker with version summary table
+├── manifest.json                # Machine-readable metadata
+├── v1_baseline/
+│   ├── README.md               # V1-specific details
+│   ├── analysis/               # Charts (equity_curve.png, etc.)
+│   ├── config/                 # Profile used
+│   └── logs/                   # Backtest output
+├── v2_improved/
+│   ├── README.md
+│   ├── analysis/
+│   ├── config/
+│   └── logs/
+└── v3_final/
+    ├── README.md
+    ├── analysis/
+    ├── config/
+    └── logs/
+```
+
+**Use version-based structure when:**
+- Iterating on the same model with different approaches
+- Comparing multiple implementations of a concept
+- Tracking evolution of a model through improvements
+
+**Master README format for version-based experiments:**
+```markdown
+# Experiment XXX: Title
+
+## Version Summary
+| Version | Model | CAGR | Max DD | Sharpe | Status |
+|---------|-------|------|--------|--------|--------|
+| V1 | Model_v1 | X% | -X% | X.XX | Description |
+| V2 | Model_v2 | X% | -X% | X.XX | Description |
+
+## Version Details
+### [V1: Description](v1_baseline/README.md)
+### [V2: Description](v2_improved/README.md)
 ```
 
 ## Required Files

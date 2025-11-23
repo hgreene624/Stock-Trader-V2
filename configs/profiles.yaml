@@ -1108,6 +1108,214 @@ profiles:
       bull_leverage: 2.0
       bear_leverage: 1.38
 
+  consistent_alpha_baseline:
+    description: Baseline config for consistent yearly alpha experiment 005
+    model: SectorRotationConsistent_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY  # For regime detection
+    - ^VIX  # For volatility detection
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # Rotation controls
+      min_hold_days_low_vol: 15
+      min_hold_days_high_vol: 5
+      rotation_threshold: 0.05
+      # Conservative leverage
+      bull_leverage: 1.2
+      bear_leverage: 1.0
+      volatility_leverage_adj: true
+      # Adaptive stops
+      bull_stop_mult: 2.5
+      bear_stop_mult: 1.5
+      normal_stop_mult: 2.0
+      # Concentration
+      max_sector_weight: 0.5
+      concentration_momentum_threshold: 0.8
+      rebalance_threshold: 0.15
+      # Trend persistence
+      trend_lookback: 40
+      momentum_decay: 0.95
+      weakness_threshold: -0.05
+      # From EA optimization
+      atr_period: 21
+      take_profit_atr_mult: 2.5
+      # Momentum
+      momentum_period: 126
+      top_n_sectors: 4
+      min_momentum: 0.10
+
+  consistent_alpha_fast_rotation:
+    description: Faster rotation variant for experiment 005
+    model: SectorRotationConsistent_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # Faster rotation
+      min_hold_days_low_vol: 5
+      min_hold_days_high_vol: 2
+      rotation_threshold: 0.02
+      # Conservative leverage
+      bull_leverage: 1.15
+      bear_leverage: 1.0
+      volatility_leverage_adj: true
+      # Standard stops
+      bull_stop_mult: 2.0
+      bear_stop_mult: 1.5
+      normal_stop_mult: 1.75
+      # Less concentration
+      max_sector_weight: 0.4
+      concentration_momentum_threshold: 0.9
+      rebalance_threshold: 0.10
+      # Shorter trend
+      trend_lookback: 20
+      momentum_decay: 0.90
+      weakness_threshold: -0.03
+      # Standard ATR
+      atr_period: 14
+      take_profit_atr_mult: 2.0
+      # Momentum
+      momentum_period: 60
+      top_n_sectors: 3
+      min_momentum: 0.05
+
+  consistent_alpha_v2:
+    description: V2 with recovery regime - experiment 006
+    model: SectorRotationConsistent_v2
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # Rotation controls
+      min_hold_days_low_vol: 15
+      min_hold_days_high_vol: 5
+      rotation_threshold: 0.05
+      # Conservative leverage
+      bull_leverage: 1.2
+      bear_leverage: 1.0
+      volatility_leverage_adj: true
+      # Adaptive stops
+      bull_stop_mult: 2.5
+      bear_stop_mult: 1.5
+      normal_stop_mult: 2.0
+      # Concentration
+      max_sector_weight: 0.5
+      concentration_momentum_threshold: 0.8
+      rebalance_threshold: 0.15
+      # Trend
+      trend_lookback: 40
+      momentum_decay: 0.95
+      weakness_threshold: -0.05
+      # ATR
+      atr_period: 21
+      take_profit_atr_mult: 2.5
+      # Momentum
+      momentum_period: 126
+      top_n_sectors: 4
+      min_momentum: 0.10
+
+  consistent_alpha_v3:
+    description: V3 with crash protection + dip buying - experiment 006
+    model: SectorRotationConsistent_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # Crash protection parameters
+      crash_drop_threshold: -0.07
+      crash_drop_days: 5
+      vix_crash_threshold: 35
+      vix_recovery_threshold: 25
+      crash_exposure: 0.25
+      dip_buy_drawdown_threshold: -0.20
+      dip_buy_weeks: 4
+      # Rotation controls
+      min_hold_days_low_vol: 15
+      min_hold_days_high_vol: 5
+      rotation_threshold: 0.05
+      # Conservative leverage
+      bull_leverage: 1.2
+      bear_leverage: 1.0
+      volatility_leverage_adj: true
+      # Adaptive stops
+      bull_stop_mult: 2.5
+      bear_stop_mult: 1.5
+      normal_stop_mult: 2.0
+      # Concentration
+      max_sector_weight: 0.5
+      concentration_momentum_threshold: 0.8
+      rebalance_threshold: 0.15
+      # Trend
+      trend_lookback: 40
+      momentum_decay: 0.95
+      weakness_threshold: -0.05
+      # ATR
+      atr_period: 21
+      take_profit_atr_mult: 2.5
+      # Momentum
+      momentum_period: 126
+      top_n_sectors: 4
+      min_momentum: 0.10
+
   sr_vix_optimized:
     description: VIX-based dynamic leverage - optimized parameters from experiment 002
     model: SectorRotationVIX_v1

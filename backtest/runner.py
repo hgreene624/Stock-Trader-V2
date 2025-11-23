@@ -194,7 +194,7 @@ class BacktestRunner:
         for symbol in asset_data:
             asset_data[symbol] = asset_data[symbol][asset_data[symbol].index <= end_date_ts]
 
-        # Step 2: Get backtest timestamps
+        # Step 2: Get backtest timestamps (before merging reference data)
         timestamps = self.pipeline.get_timestamps(
             asset_data,
             start_date=start_date,
@@ -203,6 +203,25 @@ class BacktestRunner:
 
         if len(timestamps) == 0:
             raise ValueError("No common timestamps found for backtest period")
+
+        # Load reference data (SPY, VIX) for regime/crash detection
+        # This is merged AFTER get_timestamps to avoid timestamp intersection issues
+        reference_assets = self.config.get('system', {}).get('reference_assets', [])
+        if reference_assets:
+            self.logger.info(f"Loading reference data for crash/regime detection...")
+            reference_data = self.pipeline.load_reference_data(
+                reference_assets=reference_assets,
+                daily_timeframe=self.backtest_config.get('daily_timeframe', '1D'),
+                asset_class=self.backtest_config.get('asset_class', 'equity')
+            )
+            # Merge reference data into asset_data
+            # Reference assets won't be traded (models don't output weights for them)
+            for symbol, df in reference_data.items():
+                if symbol not in asset_data:
+                    # Filter to backtest period
+                    df = df[df.index <= end_date_ts]
+                    asset_data[symbol] = df
+                    self.logger.info(f"Added reference data: {symbol} ({len(df)} bars)")
 
         self.logger.info(f"Backtest period: {len(timestamps)} bars from {timestamps[0]} to {timestamps[-1]}")
 

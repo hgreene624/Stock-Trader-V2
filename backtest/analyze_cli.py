@@ -43,6 +43,9 @@ from models.sector_rotation_spy_filter_v1 import SectorRotationSPYFilter_v1
 from models.sector_rotation_regime_v1 import SectorRotationRegime_v1
 from models.sector_rotation_adaptive_v3 import SectorRotationAdaptive_v3
 from models.sector_rotation_adaptive_v4 import SectorRotationAdaptive_v4
+from models.sector_rotation_consistent_v1 import SectorRotationConsistent_v1
+from models.sector_rotation_consistent_v2 import SectorRotationConsistent_v2
+from models.sector_rotation_consistent_v3 import SectorRotationConsistent_v3
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
 from models.cash_secured_put_v1 import CashSecuredPutModel_v1
@@ -143,6 +146,12 @@ class BacktestAnalyzer:
             return SectorRotationAdaptive_v3(**parameters)
         elif model_name == "SectorRotationAdaptive_v4":
             return SectorRotationAdaptive_v4(**parameters)
+        elif model_name == "SectorRotationConsistent_v1":
+            return SectorRotationConsistent_v1(**parameters)
+        elif model_name == "SectorRotationConsistent_v2":
+            return SectorRotationConsistent_v2(**parameters)
+        elif model_name == "SectorRotationConsistent_v3":
+            return SectorRotationConsistent_v3(**parameters)
         elif model_name == "EquityTrendModel_v1":
             return EquityTrendModel_v1(**parameters)
         elif model_name == "EquityTrendModel_v1_Daily":
@@ -261,6 +270,12 @@ class BacktestAnalyzer:
         # Build base config
         base_config = {
             'mode': 'backtest',
+            'system': {
+                'reference_assets': [
+                    {'symbol': 'SPY', 'required': True},
+                    {'symbol': '^VIX', 'required': False}
+                ]
+            },
             'data': {
                 'primary_timeframe': '1D',
                 'data_dir': 'data'
@@ -385,6 +400,12 @@ class BacktestAnalyzer:
         # Build base config
         base_config = {
             'mode': 'backtest',
+            'system': {
+                'reference_assets': [
+                    {'symbol': 'SPY', 'required': True},
+                    {'symbol': '^VIX', 'required': False}
+                ]
+            },
             'data': {
                 'primary_timeframe': '1D',
                 'data_dir': 'data'
