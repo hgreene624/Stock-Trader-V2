@@ -73,6 +73,26 @@ chmod +x /root/vps_deploy.sh
 - ✅ Shows logs and status
 - ⚠️  Displays errors with diagnostics if anything fails
 
+## CRITICAL: Always Use Docker Compose
+
+**NEVER run manual `docker run` commands on the VPS.** Always use:
+
+```bash
+docker compose up -d
+```
+
+**Why?** The docker-compose.yml has correct individual file mounts that preserve image configs. Manual `docker run` with `-v directory:/app/configs` will shadow all configs and cause failures.
+
+**Correct mount (in docker-compose.yml):**
+```yaml
+- /root/configs/accounts.yaml:/app/configs/accounts.yaml  # File mount - only overrides one file
+```
+
+**Wrong mount (never do this):**
+```bash
+-v /root/configs:/app/configs  # Directory mount - shadows ALL configs!
+```
+
 ## Environment Variables
 
 Set these on the VPS before running `vps_deploy.sh` to override defaults:
