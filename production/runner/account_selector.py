@@ -176,6 +176,53 @@ def get_version() -> str:
     return "unknown"
 
 
+def display_accounts_from_config(accounts: Dict[str, Dict]) -> None:
+    """
+    Display accounts from config in standardized table format.
+    Used by dashboard.py for account selection.
+
+    Args:
+        accounts: Dict mapping account name/id to config dict
+    """
+    import requests
+
+    version = get_version()
+    print("\n" + "=" * 100)
+    print(f"Available Alpaca Accounts                                                    [v{version}]")
+    print("=" * 100)
+    print(f"{'#':<3} {'Port':<6} {'Account':<14} {'Type':<6} {'Status':<10} {'Profile':<15} {'Models':<25}")
+    print("-" * 100)
+
+    for i, (acc_id, acc_config) in enumerate(accounts.items(), 1):
+        models = acc_config.get('models', [])
+        # Shorten model names for display
+        short_models = []
+        for model in models[:3]:
+            short_name = model.replace('SectorRotation', 'SR').replace('_v1', '').replace('_v3', '')
+            short_models.append(short_name)
+        models_str = ', '.join(short_models) if short_models else 'None'
+        if len(models) > 3:
+            models_str += f' +{len(models)-3}'
+
+        paper = "PAPER" if acc_config.get('paper', True) else "LIVE"
+        health_port = acc_config.get('health_port', 8080)
+        profile = acc_config.get('param_profile', 'default')
+
+        # Check if bot is running on this account
+        is_running = False
+        try:
+            resp = requests.get(f'http://localhost:{health_port}/health', timeout=1)
+            if resp.status_code == 200:
+                is_running = True
+        except Exception:
+            pass
+
+        status = "running" if is_running else "stopped"
+        print(f"{i:<3} {health_port:<6} {acc_id:<14} {paper:<6} {status:<10} {profile:<15} {models_str:<25}")
+
+    print("=" * 100)
+
+
 def display_accounts(accounts_info: Dict[str, Dict], accounts_config: Dict[str, Dict]) -> None:
     """
     Display accounts in a formatted table.
