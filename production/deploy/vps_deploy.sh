@@ -114,18 +114,20 @@ else
 fi
 echo ""
 
-# Step 4: Start new container
+# Step 4: Start new container using docker-compose
 echo "🚀 Step 4/5: Starting container..."
 echo "--------------------------------------------------------------------------------"
-if docker run -d \
-    --name ${CONTAINER_NAME} \
-    --restart unless-stopped \
-    -p 8080:8080 \
-    -p 8081:8081 \
-    -p 8082:8082 \
-    -e MODE=${MODE} \
-    ${IMAGE_NAME}:${IMAGE_TAG}; then
 
+# Check for docker-compose.yml
+if [ ! -f "/root/docker-compose.yml" ]; then
+    echo "❌ ERROR: /root/docker-compose.yml not found"
+    echo "   Run build_and_transfer.sh which syncs this file automatically"
+    exit 1
+fi
+
+# Use docker compose to start (uses docker-compose.yml for ports, volumes, env)
+cd /root
+if docker compose up -d; then
     CONTAINER_ID=$(docker ps -q -f name=${CONTAINER_NAME})
     echo "✅ Container started successfully"
     echo "   Container ID: ${CONTAINER_ID}"
@@ -188,8 +190,8 @@ echo ""
 echo "Container Information:"
 echo "  Name: ${CONTAINER_NAME}"
 echo "  Image: ${IMAGE_NAME}:${IMAGE_TAG}"
-echo "  Mode: ${MODE}"
-echo "  Ports: 8080, 8081, 8082"
+echo "  Config: /root/docker-compose.yml"
+echo "  Ports: See docker-compose.yml (8080-8083)"
 echo ""
 echo "Useful commands:"
 echo "  View logs:       docker logs ${CONTAINER_NAME} -f"
