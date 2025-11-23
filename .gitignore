@@ -87,4 +87,6 @@ Thumbs.db
 # Ignore huge log files
 logs/
 *.log
+/docs/.obsidian/graph.json
+docs/.obsidian/
 /production/local_logs/

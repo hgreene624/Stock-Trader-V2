@@ -42,9 +42,74 @@ from utils.logging import StructuredLogger
 from utils.optimization_tracker import OptimizationTracker
 from backtest.runner import BacktestRunner
 from models.sector_rotation_v1 import SectorRotationModel_v1
+from models.sector_rotation_adaptive_v3 import SectorRotationAdaptive_v3
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
 from models.equity_trend_v2_daily import EquityTrendModel_v2_Daily
+
+
+# Picklable fitness function class for multiprocessing
+class BacktestFitnessEvaluator:
+    """
+    Callable class that runs backtests and returns fitness scores.
+    This class can be pickled for use with multiprocessing.
+    """
+
+    def __init__(self, base_config: str, target_model: str,
+                 start_date: str, end_date: str, metric: str = 'bps',
+                 lookback_bars: int = 200):
+        self.base_config = base_config
+        self.target_model = target_model
+        self.start_date = start_date
+        self.end_date = end_date
+        self.metric = metric
+        self.lookback_bars = lookback_bars
+        self._runner = None
+
+    def _get_runner(self):
+        """Lazy initialization of runner (can't be pickled)."""
+        if self._runner is None:
+            self._runner = BacktestRunner(self.base_config)
+        return self._runner
+
+    def __call__(self, params: Dict[str, Any]) -> float:
+        """Run backtest and return fitness score."""
+        try:
+            # Instantiate model with parameters
+            if self.target_model == "SectorRotationModel_v1":
+                model = SectorRotationModel_v1(**params)
+            elif self.target_model == "SectorRotationAdaptive_v3":
+                model = SectorRotationAdaptive_v3(**params)
+            elif self.target_model == "EquityTrendModel_v1":
+                model = EquityTrendModel_v1(**params)
+            elif self.target_model == "EquityTrendModel_v1_Daily":
+                model = EquityTrendModel_v1_Daily(**params)
+            elif self.target_model == "EquityTrendModel_v2_Daily":
+                model = EquityTrendModel_v2_Daily(**params)
+            else:
+                raise ValueError(f"Unknown model: {self.target_model}")
+
+            # Run backtest with proper lookback
+            runner = self._get_runner()
+            results = runner.run(
+                model=model,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                backtest_config_overrides={'lookback_bars': self.lookback_bars}
+            )
+
+            # Extract fitness metric
+            fitness = results['metrics'].get(self.metric, 0.0)
+            return fitness
+
+        except AssertionError as e:
+            # Weight limit violations - return low but not catastrophic fitness
+            # This allows the EA to learn to avoid these parameter combinations
+            return -10.0
+
+        except Exception as e:
+            # print(f"  Backtest failed for {params}: {e}")
+            return -999.0
 
 
 class OptimizationCLI:
@@ -345,7 +410,17 @@ class OptimizationCLI:
 
         # Create real fitness function that runs backtests
         print("\nCreating backtest fitness function...")
-        fitness_function = self.create_backtest_fitness_function(exp_config, collect_full_results=True)
+
+        # Use picklable class for multiprocessing compatibility
+        backtest_config = exp_config['backtest']
+        opt_config = exp_config['optimization']
+        fitness_function = BacktestFitnessEvaluator(
+            base_config=exp_config['base_config'],
+            target_model=exp_config['target_model'],
+            start_date=backtest_config['start_date'],
+            end_date=backtest_config['end_date'],
+            metric=opt_config.get('metric', 'bps')
+        )
 
         # Run optimization
         print("\nRunning evolutionary optimization with REAL backtests...")

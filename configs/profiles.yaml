@@ -918,6 +918,169 @@ profiles:
       vol_lookback: 20
       use_vol_targeting: true
 
+  # ATR Stop Loss Test Profiles
+  atr_baseline:
+    description: ATR baseline - current default parameters
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 12
+      stop_loss_atr_mult: 1.0
+      take_profit_atr_mult: 2.0
+      min_hold_days: 2
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+
+  atr_tight:
+    description: ATR tight stops - quick exits both ways
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 10
+      stop_loss_atr_mult: 0.5
+      take_profit_atr_mult: 1.5
+      min_hold_days: 2
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+
+  atr_loose:
+    description: ATR loose stops - give positions room to breathe
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 14
+      stop_loss_atr_mult: 1.5
+      take_profit_atr_mult: 3.0
+      min_hold_days: 2
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+
+  atr_quick_profit:
+    description: ATR quick profit taking - frequent small wins
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 12
+      stop_loss_atr_mult: 1.0
+      take_profit_atr_mult: 1.0
+      min_hold_days: 2
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+
+  atr_wide_stops:
+    description: ATR wide stops - avoid whipsaws
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 12
+      stop_loss_atr_mult: 2.0
+      take_profit_atr_mult: 2.0
+      min_hold_days: 2
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+
+  atr_long_period:
+    description: ATR long period - smoother volatility measurement
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 21
+      stop_loss_atr_mult: 1.0
+      take_profit_atr_mult: 2.5
+      min_hold_days: 2
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+
   sr_vix_optimized:
     description: VIX-based dynamic leverage - optimized parameters from experiment 002
     model: SectorRotationVIX_v1

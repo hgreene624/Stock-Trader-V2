@@ -1,0 +1,91 @@
+# Evolutionary Algorithm Optimization for ATR Stop Loss Parameters
+# Goal: Find optimal ATR settings + leverage to beat SPY (14.34% CAGR)
+
+experiment:
+  name: "adaptive_v3_atr_ea"
+  description: "EA optimization of ATR stop loss parameters and leverage for Adaptive v3"
+
+  # Optimization method
+  method: "evolutionary"
+
+  # Base configuration
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "SectorRotationAdaptive_v3"
+
+  # Configuration overrides
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      models:
+        - name: "SectorRotationAdaptive_v3"
+          version: "3.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter ranges for mutation
+  parameter_ranges:
+    models.SectorRotationAdaptive_v3.parameters.atr_period:
+      min: 7
+      max: 30
+
+    models.SectorRotationAdaptive_v3.parameters.stop_loss_atr_mult:
+      min: 0.5
+      max: 2.0
+
+    models.SectorRotationAdaptive_v3.parameters.take_profit_atr_mult:
+      min: 1.0
+      max: 4.0
+
+    models.SectorRotationAdaptive_v3.parameters.bull_leverage:
+      min: 1.3
+      max: 2.0
+
+    models.SectorRotationAdaptive_v3.parameters.bear_leverage:
+      min: 1.0
+      max: 1.5
+
+  # Evolutionary algorithm settings
+  evolutionary:
+    # Population settings
+    population_size: 50     # Number of individuals per generation
+    num_generations: 30     # Number of generations to evolve
+
+    # Genetic operators
+    mutation_rate: 0.2      # Probability of mutation per parameter
+    mutation_strength: 0.15 # Mutation noise magnitude
+    crossover_rate: 0.7     # Probability of crossover
+
+    # Selection
+    tournament_size: 3      # Tournament selection size
+    elitism_count: 3        # Top N individuals preserved each generation
+
+    # Seed with known good parameters from experiment 004
+    initial_population:
+      - {atr_period: 21, stop_loss_atr_mult: 1.0, take_profit_atr_mult: 2.5, bull_leverage: 1.5, bear_leverage: 1.5}   # Best from manual test
+      - {atr_period: 12, stop_loss_atr_mult: 1.0, take_profit_atr_mult: 2.0, bull_leverage: 1.5, bear_leverage: 1.5}   # Baseline
+      - {atr_period: 14, stop_loss_atr_mult: 1.5, take_profit_atr_mult: 3.0, bull_leverage: 1.5, bear_leverage: 1.5}   # Loose
+      - {atr_period: 25, stop_loss_atr_mult: 1.0, take_profit_atr_mult: 3.0, bull_leverage: 1.8, bear_leverage: 1.3}   # High leverage test
+
+    # Reproducibility
+    seed: 42
+
+  # Backtest period (training set)
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization objective
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 20  # Save top 20 solutions
+
+  # Results storage
+  results:
+    database: "results/adaptive_v3_atr_ea.db"
+    summary_csv: "results/adaptive_v3_atr_ea_top_20.csv"
+    track_generations: true  # Save best/avg fitness per generation
