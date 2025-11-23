@@ -36,7 +36,7 @@ COPY models/base.py /app/models/base.py
 COPY production/models/ /app/models/
 
 # Copy production config template
-COPY production/configs/ /app/configs/
+COPY production/configs/ /app/production/configs/
 
 # Copy agent documentation
 COPY production/AGENTS.md /app/AGENTS.md
