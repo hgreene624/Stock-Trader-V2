@@ -44,7 +44,7 @@ accounts:
     paper: false
     health_port: 8082
     models:
-      - SectorRotationAdaptive_v1
+      - SectorRotationAdaptive_v3
 
 # Default models to use when no models specified
 default_models:

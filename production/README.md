@@ -182,24 +182,38 @@ services:
 - Docker installed locally with buildx
 - SSH key configured for VPS access
 
-### Standard Deployment
+### Standard Deployment (Simplified - 2 Commands!)
 
 ```bash
-# 1. Make code changes locally
-# 2. Commit changes
+# 1. Make code changes locally and commit
 git add -A && git commit -m "description"
 
-# 3. Build and transfer (auto-bumps VERSION)
+# 2. Build, transfer, and sync configs (auto-bumps VERSION)
 ./production/deploy/build_and_transfer.sh
 
-# 4. Deploy on VPS
-ssh root@31.220.55.98 'docker load -i /tmp/trading-bot-amd64-vXX.tar.gz && \
-    sed -i "s/trading-bot:amd64-v[0-9]*/trading-bot:amd64-vXX/" docker-compose.yml && \
-    docker compose down && docker compose up -d'
+# The script now automatically syncs:
+#   - docker-compose.yml (with correct image version and mount paths)
+#   - accounts.yaml (from configs/accounts.yaml)
+#   - vps_deploy.sh (deployment script)
 
-# 5. Verify
+# 3. Deploy on VPS
+ssh root@31.220.55.98 './vps_deploy.sh amd64-vXX'
+
+# 4. Verify
 ssh dashboard
 ```
+
+### What Gets Synced
+
+The `build_and_transfer.sh` script automatically syncs these files to VPS:
+
+| Local File | VPS Destination | Purpose |
+|------------|-----------------|---------|
+| `production/deploy/docker-compose.vps.yaml` | `/root/docker-compose.yml` | Container config with correct mount paths |
+| `configs/accounts.yaml` | `/root/configs/accounts.yaml` | Account credentials and model assignments |
+| `production/deploy/vps_deploy.sh` | `/root/vps_deploy.sh` | Deployment script |
+
+**Important**: Edit `production/deploy/docker-compose.vps.yaml` for VPS container settings, NOT the VPS file directly.
 
 ### Rebuild Base Image (when requirements.txt changes)
 

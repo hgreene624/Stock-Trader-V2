@@ -97,7 +97,7 @@ if [ "$BUILD_BASE" = true ]; then
 fi
 
 # Step 1: Build AMD64 image
-STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "1/4" || echo "1/3" )
+STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "1/5" || echo "1/4" )
 echo "📦 Step ${STEP_NUM}: Building AMD64 Docker image..."
 echo "--------------------------------------------------------------------------------"
 
@@ -123,7 +123,7 @@ fi
 echo ""
 
 # Step 2: Save and compress
-STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "2/4" || echo "2/3" )
+STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "2/5" || echo "2/4" )
 echo "💾 Step ${STEP_NUM}: Saving and compressing image..."
 echo "--------------------------------------------------------------------------------"
 if docker save ${IMAGE_NAME}:${IMAGE_TAG} | gzip > ${LOCAL_TAR}; then
@@ -136,7 +136,7 @@ fi
 echo ""
 
 # Step 3: Transfer to VPS
-STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "3/4" || echo "3/3" )
+STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "3/5" || echo "3/4" )
 echo "📤 Step ${STEP_NUM}: Transferring to VPS..."
 echo "--------------------------------------------------------------------------------"
 echo "Uploading to ${VPS_USER}@${VPS_HOST}:/tmp/"
@@ -148,14 +148,56 @@ else
 fi
 echo ""
 
+# Step 4: Sync configs to VPS
+STEP_NUM=$( [ "$BUILD_BASE" = true ] && echo "4/5" || echo "4/4" )
+echo "🔧 Step ${STEP_NUM}: Syncing configs to VPS..."
+echo "--------------------------------------------------------------------------------"
+
+# Get project root (parent of deploy directory)
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+
+# Sync docker-compose template with version replaced
+COMPOSE_TEMPLATE="${SCRIPT_DIR}/docker-compose.vps.yaml"
+if [ -f "$COMPOSE_TEMPLATE" ]; then
+    echo "📄 Syncing docker-compose.yml with version ${IMAGE_TAG}..."
+    sed "s/IMAGE_TAG/${IMAGE_TAG}/" "$COMPOSE_TEMPLATE" | \
+        ssh ${VPS_USER}@${VPS_HOST} 'cat > /root/docker-compose.yml'
+    echo "✅ docker-compose.yml updated on VPS"
+else
+    echo "⚠️  WARNING: docker-compose.vps.yaml not found at $COMPOSE_TEMPLATE"
+    echo "   VPS docker-compose.yml will not be updated"
+fi
+
+# Sync accounts.yaml
+ACCOUNTS_FILE="${PROJECT_ROOT}/configs/accounts.yaml"
+if [ -f "$ACCOUNTS_FILE" ]; then
+    echo "📄 Syncing accounts.yaml..."
+    ssh ${VPS_USER}@${VPS_HOST} 'mkdir -p /root/configs'
+    scp "$ACCOUNTS_FILE" ${VPS_USER}@${VPS_HOST}:/root/configs/accounts.yaml
+    echo "✅ accounts.yaml synced to VPS"
+else
+    echo "⚠️  WARNING: accounts.yaml not found at $ACCOUNTS_FILE"
+fi
+
+# Sync vps_deploy.sh script
+DEPLOY_SCRIPT="${SCRIPT_DIR}/vps_deploy.sh"
+if [ -f "$DEPLOY_SCRIPT" ]; then
+    echo "📄 Syncing vps_deploy.sh..."
+    scp "$DEPLOY_SCRIPT" ${VPS_USER}@${VPS_HOST}:/root/vps_deploy.sh
+    ssh ${VPS_USER}@${VPS_HOST} 'chmod +x /root/vps_deploy.sh'
+    echo "✅ vps_deploy.sh synced to VPS"
+fi
+echo ""
+
 echo "=================================================================================="
-echo "✅ Build and transfer complete!"
+echo "✅ Build, transfer, and sync complete!"
 echo "=================================================================================="
 echo ""
-echo "Next steps:"
-echo "  1. SSH into your VPS: ssh ${VPS_USER}@${VPS_HOST}"
-echo "  2. Run deployment script: ./vps_deploy.sh ${IMAGE_TAG}"
+echo "Configs synced to VPS:"
+echo "  - /root/docker-compose.yml (image: trading-bot:${IMAGE_TAG})"
+echo "  - /root/configs/accounts.yaml"
+echo "  - /root/vps_deploy.sh"
 echo ""
-echo "Or run remotely:"
-echo "  ssh ${VPS_USER}@${VPS_HOST} 'bash -s ${IMAGE_TAG}' < production/deploy/vps_deploy.sh"
+echo "Next step - deploy on VPS:"
+echo "  ssh ${VPS_USER}@${VPS_HOST} './vps_deploy.sh ${IMAGE_TAG}'"
 echo ""

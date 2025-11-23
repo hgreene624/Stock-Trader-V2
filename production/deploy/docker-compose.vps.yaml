@@ -1,0 +1,28 @@
+# VPS Docker Compose Configuration
+# This file is the source of truth for VPS deployment.
+# It gets copied to /root/docker-compose.yml on the VPS during deployment.
+#
+# IMPORTANT: The IMAGE_TAG placeholder gets replaced with the actual version
+# during deployment (e.g., trading-bot:amd64-v29)
+#
+# Mount paths must match what the code expects:
+# - accounts.yaml: /app/configs/accounts.yaml (code reads from configs/)
+# - logs: /app/logs (JSONL audit logs)
+
+services:
+  trading-bot:
+    image: trading-bot:IMAGE_TAG
+    container_name: trading-bot
+    ports:
+      - "8080:8080"  # PA3T8N36NVJK health
+      - "8081:8081"  # PA3I05031HZL health
+      - "8082:8082"  # 935928263 health (live)
+      - "8083:8083"  # PA3569BUXRYA health
+    environment:
+      - SKIP_FIRST_CYCLE_VALIDATION=true
+    volumes:
+      # CRITICAL: Mount path must be /app/configs/accounts.yaml
+      # The code reads from configs/ directory, NOT production/configs/
+      - /root/configs/accounts.yaml:/app/configs/accounts.yaml
+      - /root/trading-bot-logs:/app/logs
+    restart: unless-stopped
