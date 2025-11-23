@@ -41,15 +41,14 @@ accounts:
     models:
       - SectorRotationAdaptive_v3
 
-  # Individual Account (Real - unfunded)
+  # Individual Account (Real - unfunded, no models running)
   "935928263":
     api_key: AKG5WRWYMB66AXEOHRTMYPDFCD
     secret_key: 5jtp3zbUwGjxMZ3fKtxiTKAcrJY8eT5CfYbVZGuWfack
     paper: false
     health_port: 8082
     param_profile: default
-    models:
-      - SectorRotationAdaptive_v3
+    models: []
 
 # Default models to use when no models specified
 default_models:
