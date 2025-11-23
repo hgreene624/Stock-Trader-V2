@@ -62,30 +62,43 @@ echo "✅ Docker daemon is running"
 
 echo ""
 
-# Step 1: Stop and remove old container
-echo "🛑 Step 1/5: Stopping old container..."
+# Step 1: Stop and remove ALL trading-bot containers (safety check)
+echo "🛑 Step 1/5: Stopping ALL trading-bot containers..."
 echo "--------------------------------------------------------------------------------"
-if docker ps -q -f name=${CONTAINER_NAME} | grep -q .; then
-    echo "Stopping running container: ${CONTAINER_NAME}"
-    if docker stop ${CONTAINER_NAME}; then
-        echo "✅ Container stopped"
-    else
-        echo "⚠️  WARNING: Failed to stop container (may not exist)"
-    fi
+
+# Find ALL containers using trading-bot images (regardless of name)
+TRADING_CONTAINERS=$(docker ps -aq --filter "ancestor=${IMAGE_NAME}" 2>/dev/null)
+if [ -n "$TRADING_CONTAINERS" ]; then
+    echo "Found containers using trading-bot images:"
+    docker ps -a --filter "ancestor=${IMAGE_NAME}" --format "  {{.Names}} ({{.Image}}) - {{.Status}}"
+    echo ""
+    echo "Stopping and removing all trading-bot containers..."
+    docker stop $TRADING_CONTAINERS 2>/dev/null || true
+    docker rm $TRADING_CONTAINERS 2>/dev/null || true
+    echo "✅ All trading-bot containers removed"
 else
-    echo "ℹ️  No running container found"
+    echo "ℹ️  No containers using trading-bot images found"
+fi
+
+# Also check by container name (in case image was deleted)
+if docker ps -q -f name=${CONTAINER_NAME} | grep -q .; then
+    echo "Stopping container by name: ${CONTAINER_NAME}"
+    docker stop ${CONTAINER_NAME} 2>/dev/null || true
 fi
 
 if docker ps -aq -f name=${CONTAINER_NAME} | grep -q .; then
-    echo "Removing container: ${CONTAINER_NAME}"
-    if docker rm ${CONTAINER_NAME}; then
-        echo "✅ Container removed"
-    else
-        echo "⚠️  WARNING: Failed to remove container"
-    fi
-else
-    echo "ℹ️  No container to remove"
+    echo "Removing container by name: ${CONTAINER_NAME}"
+    docker rm ${CONTAINER_NAME} 2>/dev/null || true
 fi
+
+# Final safety check: ensure no trading-bot containers remain
+REMAINING=$(docker ps -q --filter "ancestor=${IMAGE_NAME}" 2>/dev/null)
+if [ -n "$REMAINING" ]; then
+    echo "❌ ERROR: Failed to stop all trading-bot containers!"
+    echo "   Please manually stop: docker stop \$(docker ps -q --filter ancestor=${IMAGE_NAME})"
+    exit 1
+fi
+echo "✅ No trading-bot containers running"
 echo ""
 
 # Step 2: Remove old image (optional)
@@ -180,6 +193,22 @@ if curl -s http://localhost:8080/health > /dev/null 2>&1; then
     curl -s http://localhost:8080/health | python3 -m json.tool 2>/dev/null || curl -s http://localhost:8080/health
 else
     echo "⚠️  WARNING: Health endpoint not responding yet (may still be starting up)"
+fi
+
+# Step 6: Clean up old images (prevent accidental use)
+echo ""
+echo "🧹 Cleaning up old trading-bot images..."
+echo "--------------------------------------------------------------------------------"
+OLD_IMAGES=$(docker images ${IMAGE_NAME} --format "{{.Tag}}" | grep -v "^${IMAGE_TAG}$" || true)
+if [ -n "$OLD_IMAGES" ]; then
+    echo "Removing old images:"
+    for tag in $OLD_IMAGES; do
+        echo "  - ${IMAGE_NAME}:${tag}"
+        docker rmi ${IMAGE_NAME}:${tag} 2>/dev/null || true
+    done
+    echo "✅ Old images cleaned up"
+else
+    echo "ℹ️  No old images to clean up"
 fi
 
 echo ""
