@@ -1,0 +1,425 @@
+
+================================================================================
+EVOLUTIONARY ALGORITHM: adaptive_v3_atr_ea
+================================================================================
+Description: EA optimization of ATR stop loss parameters and leverage for Adaptive v3
+
+Parameter ranges:
+  atr_period: [7, 30]
+  stop_loss_atr_mult: [0.5, 2.0]
+  take_profit_atr_mult: [1.0, 4.0]
+  bull_leverage: [1.3, 2.0]
+  bear_leverage: [1.0, 1.5]
+
+Evolutionary settings:
+  Population size: 50
+  Generations: 30
+  Mutation rate: 0.2
+  Crossover rate: 0.7
+  Elitism: 3
+  Seed: 42
+
+Initial population: 50 individuals
+
+Creating backtest fitness function...
+
+Running evolutionary optimization with REAL backtests...
+This will run ~1500 backtests.
+(This may take a while...)
+
+
+================================================================================
+EVOLUTIONARY OPTIMIZATION - PROGRESS TRACKING
+================================================================================
+Total backtests to run: 1500
+Population size: 50
+Generations: 30
+Parallel processes: 7
+⚡ PARALLEL MODE: Using 7 cores (~7x speedup)
+================================================================================
+
+  Gen 1/30 | Completed: 50 individuals | Progress: 3.3% | Est. remaining: 32.0 min | Best BPS: 0.831 | Avg BPS: -1.542
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 1/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 66.3s
+  Best BPS: 0.8305
+  Avg BPS: -1.5424
+  Overall Progress: 3.3%
+  Elapsed: 1.1 min | Remaining: 32.0 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 2/30 | Completed: 50 individuals | Progress: 6.7% | Est. remaining: 32.0 min | Best BPS: 0.831 | Avg BPS: -0.647
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 2/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 70.9s
+  Best BPS: 0.8305
+  Avg BPS: -0.6470
+  Overall Progress: 6.7%
+  Elapsed: 2.3 min | Remaining: 32.0 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 3/30 | Completed: 50 individuals | Progress: 10.0% | Est. remaining: 30.6 min | Best BPS: 0.831 | Avg BPS: -0.398
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 3/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 67.1s
+  Best BPS: 0.8305
+  Avg BPS: -0.3983
+  Overall Progress: 10.0%
+  Elapsed: 3.4 min | Remaining: 30.6 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 4/30 | Completed: 50 individuals | Progress: 13.3% | Est. remaining: 29.6 min | Best BPS: 0.831 | Avg BPS: 0.061
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 4/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 69.1s
+  Best BPS: 0.8305
+  Avg BPS: 0.0609
+  Overall Progress: 13.3%
+  Elapsed: 4.6 min | Remaining: 29.6 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 5/30 | Completed: 50 individuals | Progress: 16.7% | Est. remaining: 30.0 min | Best BPS: 0.850 | Avg BPS: -0.346
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 5/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 86.3s
+  Best BPS: 0.8504
+  Avg BPS: -0.3461
+  Overall Progress: 16.7%
+  Elapsed: 6.0 min | Remaining: 30.0 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 6/30 | Completed: 50 individuals | Progress: 20.0% | Est. remaining: 30.6 min | Best BPS: 0.940 | Avg BPS: -0.337
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 6/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 99.2s
+  Best BPS: 0.9402
+  Avg BPS: -0.3371
+  Overall Progress: 20.0%
+  Elapsed: 7.6 min | Remaining: 30.6 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 7/30 | Completed: 50 individuals | Progress: 23.3% | Est. remaining: 29.8 min | Best BPS: 0.940 | Avg BPS: 0.318
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 7/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 84.9s
+  Best BPS: 0.9402
+  Avg BPS: 0.3180
+  Overall Progress: 23.3%
+  Elapsed: 9.1 min | Remaining: 29.8 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 8/30 | Completed: 50 individuals | Progress: 26.7% | Est. remaining: 28.8 min | Best BPS: 0.940 | Avg BPS: 0.111
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 8/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 84.8s
+  Best BPS: 0.9402
+  Avg BPS: 0.1110
+  Overall Progress: 26.7%
+  Elapsed: 10.5 min | Remaining: 28.8 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 9/30 | Completed: 50 individuals | Progress: 30.0% | Est. remaining: 27.7 min | Best BPS: 0.940 | Avg BPS: -2.061
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 9/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 84.6s
+  Best BPS: 0.9402
+  Avg BPS: -2.0611
+  Overall Progress: 30.0%
+  Elapsed: 11.9 min | Remaining: 27.7 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 10/30 | Completed: 50 individuals | Progress: 33.3% | Est. remaining: 26.8 min | Best BPS: 0.940 | Avg BPS: -1.396
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 10/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 91.7s
+  Best BPS: 0.9402
+  Avg BPS: -1.3958
+  Overall Progress: 33.3%
+  Elapsed: 13.4 min | Remaining: 26.8 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 11/30 | Completed: 50 individuals | Progress: 36.7% | Est. remaining: 25.9 min | Best BPS: 0.940 | Avg BPS: -0.060
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 11/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 93.9s
+  Best BPS: 0.9403
+  Avg BPS: -0.0600
+  Overall Progress: 36.7%
+  Elapsed: 15.0 min | Remaining: 25.9 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 12/30 | Completed: 50 individuals | Progress: 40.0% | Est. remaining: 24.9 min | Best BPS: 0.950 | Avg BPS: -0.258
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 12/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 97.8s
+  Best BPS: 0.9497
+  Avg BPS: -0.2576
+  Overall Progress: 40.0%
+  Elapsed: 16.6 min | Remaining: 24.9 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 13/30 | Completed: 50 individuals | Progress: 43.3% | Est. remaining: 23.7 min | Best BPS: 0.954 | Avg BPS: -0.017
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 13/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 92.4s
+  Best BPS: 0.9540
+  Avg BPS: -0.0171
+  Overall Progress: 43.3%
+  Elapsed: 18.1 min | Remaining: 23.7 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 14/30 | Completed: 50 individuals | Progress: 46.7% | Est. remaining: 22.4 min | Best BPS: 0.954 | Avg BPS: 0.630
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 14/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 87.5s
+  Best BPS: 0.9545
+  Avg BPS: 0.6303
+  Overall Progress: 46.7%
+  Elapsed: 19.6 min | Remaining: 22.4 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 15/30 | Completed: 50 individuals | Progress: 50.0% | Est. remaining: 21.2 min | Best BPS: 0.959 | Avg BPS: 0.217
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 15/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 92.7s
+  Best BPS: 0.9591
+  Avg BPS: 0.2165
+  Overall Progress: 50.0%
+  Elapsed: 21.2 min | Remaining: 21.2 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 16/30 | Completed: 50 individuals | Progress: 53.3% | Est. remaining: 19.9 min | Best BPS: 0.971 | Avg BPS: 0.666
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 16/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 97.5s
+  Best BPS: 0.9711
+  Avg BPS: 0.6657
+  Overall Progress: 53.3%
+  Elapsed: 22.8 min | Remaining: 19.9 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 17/30 | Completed: 50 individuals | Progress: 56.7% | Est. remaining: 19.0 min | Best BPS: 0.971 | Avg BPS: -0.226
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 17/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 120.5s
+  Best BPS: 0.9711
+  Avg BPS: -0.2264
+  Overall Progress: 56.7%
+  Elapsed: 24.8 min | Remaining: 19.0 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 18/30 | Completed: 50 individuals | Progress: 60.0% | Est. remaining: 17.6 min | Best BPS: 0.976 | Avg BPS: -0.199
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 18/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 97.0s
+  Best BPS: 0.9760
+  Avg BPS: -0.1989
+  Overall Progress: 60.0%
+  Elapsed: 26.4 min | Remaining: 17.6 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 19/30 | Completed: 50 individuals | Progress: 63.3% | Est. remaining: 16.3 min | Best BPS: 0.978 | Avg BPS: 0.219
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 19/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 100.6s
+  Best BPS: 0.9776
+  Avg BPS: 0.2193
+  Overall Progress: 63.3%
+  Elapsed: 28.1 min | Remaining: 16.3 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 20/30 | Completed: 50 individuals | Progress: 66.7% | Est. remaining: 14.9 min | Best BPS: 0.978 | Avg BPS: -0.668
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 20/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 101.4s
+  Best BPS: 0.9776
+  Avg BPS: -0.6682
+  Overall Progress: 66.7%
+  Elapsed: 29.8 min | Remaining: 14.9 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 21/30 | Completed: 50 individuals | Progress: 70.0% | Est. remaining: 13.5 min | Best BPS: 0.978 | Avg BPS: -0.246
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 21/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 104.2s
+  Best BPS: 0.9776
+  Avg BPS: -0.2460
+  Overall Progress: 70.0%
+  Elapsed: 31.5 min | Remaining: 13.5 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 22/30 | Completed: 50 individuals | Progress: 73.3% | Est. remaining: 12.1 min | Best BPS: 1.002 | Avg BPS: 0.020
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 22/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 101.2s
+  Best BPS: 1.0019
+  Avg BPS: 0.0197
+  Overall Progress: 73.3%
+  Elapsed: 33.2 min | Remaining: 12.1 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 23/30 | Completed: 50 individuals | Progress: 76.7% | Est. remaining: 10.6 min | Best BPS: 1.002 | Avg BPS: 0.436
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 23/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 104.4s
+  Best BPS: 1.0019
+  Avg BPS: 0.4362
+  Overall Progress: 76.7%
+  Elapsed: 34.9 min | Remaining: 10.6 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 24/30 | Completed: 50 individuals | Progress: 80.0% | Est. remaining: 9.2 min | Best BPS: 1.002 | Avg BPS: 0.470
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 24/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 105.6s
+  Best BPS: 1.0019
+  Avg BPS: 0.4700
+  Overall Progress: 80.0%
+  Elapsed: 36.7 min | Remaining: 9.2 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 25/30 | Completed: 50 individuals | Progress: 83.3% | Est. remaining: 7.7 min | Best BPS: 1.002 | Avg BPS: -0.630
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 25/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 103.6s
+  Best BPS: 1.0019
+  Avg BPS: -0.6303
+  Overall Progress: 83.3%
+  Elapsed: 38.4 min | Remaining: 7.7 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 26/30 | Completed: 50 individuals | Progress: 86.7% | Est. remaining: 6.2 min | Best BPS: 1.002 | Avg BPS: 0.024
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 26/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 93.8s
+  Best BPS: 1.0023
+  Avg BPS: 0.0243
+  Overall Progress: 86.7%
+  Elapsed: 40.0 min | Remaining: 6.2 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 27/30 | Completed: 50 individuals | Progress: 90.0% | Est. remaining: 4.6 min | Best BPS: 1.006 | Avg BPS: 0.026
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 27/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 87.0s
+  Best BPS: 1.0063
+  Avg BPS: 0.0263
+  Overall Progress: 90.0%
+  Elapsed: 41.4 min | Remaining: 4.6 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 28/30 | Completed: 50 individuals | Progress: 93.3% | Est. remaining: 3.1 min | Best BPS: 1.021 | Avg BPS: 0.685
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 28/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 88.2s
+  Best BPS: 1.0205
+  Avg BPS: 0.6849
+  Overall Progress: 93.3%
+  Elapsed: 42.9 min | Remaining: 3.1 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 29/30 | Completed: 50 individuals | Progress: 96.7% | Est. remaining: 1.5 min | Best BPS: 1.028 | Avg BPS: -0.377
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 29/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 96.4s
+  Best BPS: 1.0280
+  Avg BPS: -0.3768
+  Overall Progress: 96.7%
+  Elapsed: 44.5 min | Remaining: 1.5 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 30/30 | Completed: 50 individuals | Progress: 100.0% | Est. remaining: 0.0 min | Best BPS: 1.028 | Avg BPS: -0.615
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 30/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 97.1s
+  Best BPS: 1.0280
+  Avg BPS: -0.6150
+  Overall Progress: 100.0%
+  Elapsed: 46.1 min | Remaining: 0.0 min
+────────────────────────────────────────────────────────────────────────────────
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 714, in <module>
+    main()
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 706, in main
+    cli.run_experiment(args.experiment)
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 570, in run_experiment
+    parameter_sets = self.run_evolutionary(exp_config)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 447, in run_evolutionary
+    self._save_to_tracker(exp_config, self.full_results)
+                                      ^^^^^^^^^^^^^^^^^
+AttributeError: 'OptimizationCLI' object has no attribute 'full_results'. Did you mean: 'save_results'?
+
+Top 5 solutions:
+  1. {'atr_period': 21, 'stop_loss_atr_mult': 1.601769995139545, 'take_profit_atr_mult': 2.4833380301241013, 'bull_leverage': 2.0, 'bear_leverage': 1.3817794746943743} → fitness=1.0280
+  2. {'atr_period': 21, 'stop_loss_atr_mult': 1.601769995139545, 'take_profit_atr_mult': 2.4833380301241013, 'bull_leverage': 2.0, 'bear_leverage': 1.2775196186727111} → fitness=1.0266
+  3. {'atr_period': 21, 'stop_loss_atr_mult': 1.601769995139545, 'take_profit_atr_mult': 2.4833380301241013, 'bull_leverage': 1.940308703605013, 'bear_leverage': 1.2775196186727111} → fitness=1.0205
+  4. {'atr_period': 21, 'stop_loss_atr_mult': 1.601769995139545, 'take_profit_atr_mult': 2.4833380301241013, 'bull_leverage': 1.940308703605013, 'bear_leverage': 1.2775196186727111} → fitness=1.0205
+  5. {'atr_period': 21, 'stop_loss_atr_mult': 1.601769995139545, 'take_profit_atr_mult': 2.4833380301241013, 'bull_leverage': 1.8759686682722316, 'bear_leverage': 1.2775196186727111} → fitness=1.0129
+
+================================================================================
+SAVING TO OPTIMIZATION TRACKER
+================================================================================

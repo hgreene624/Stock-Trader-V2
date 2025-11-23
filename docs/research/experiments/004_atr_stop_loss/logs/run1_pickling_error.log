@@ -1,0 +1,69 @@
+
+================================================================================
+EVOLUTIONARY ALGORITHM: adaptive_v3_atr_ea
+================================================================================
+Description: EA optimization of ATR stop loss parameters and leverage for Adaptive v3
+
+Parameter ranges:
+  atr_period: [7, 30]
+  stop_loss_atr_mult: [0.5, 2.0]
+  take_profit_atr_mult: [1.0, 4.0]
+  bull_leverage: [1.3, 2.0]
+  bear_leverage: [1.0, 1.5]
+
+Evolutionary settings:
+  Population size: 50
+  Generations: 30
+  Mutation rate: 0.2
+  Crossover rate: 0.7
+  Elitism: 3
+  Seed: 42
+
+Initial population: 50 individuals
+
+Creating backtest fitness function...
+
+Running evolutionary optimization with REAL backtests...
+This will run ~1500 backtests.
+(This may take a while...)
+
+
+================================================================================
+EVOLUTIONARY OPTIMIZATION - PROGRESS TRACKING
+================================================================================
+Total backtests to run: 1500
+Population size: 50
+Generations: 30
+Parallel processes: 7
+⚡ PARALLEL MODE: Using 7 cores (~7x speedup)
+================================================================================
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 639, in <module>
+    main()
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 631, in main
+    cli.run_experiment(args.experiment)
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 495, in run_experiment
+    parameter_sets = self.run_evolutionary(exp_config)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/cli.py", line 355, in run_evolutionary
+    final_population, final_fitness = optimizer.optimize(
+                                      ^^^^^^^^^^^^^^^^^^^
+  File "/Users/holden/PycharmProjects/PythonProject/engines/optimization/evolutionary.py", line 354, in optimize
+    fitness_scores = pool.map(fitness_function, population)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/pool.py", line 367, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/pool.py", line 774, in get
+    raise self._value
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/pool.py", line 540, in _handle_tasks
+    put(task)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/connection.py", line 205, in send
+    self._send_bytes(_ForkingPickler.dumps(obj))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/reduction.py", line 51, in dumps
+    cls(buf, protocol).dump(obj)
+AttributeError: Can't pickle local object 'OptimizationCLI.create_backtest_fitness_function.<locals>.fitness_function'

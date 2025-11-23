@@ -1,0 +1,100 @@
+
+================================================================================
+EVOLUTIONARY ALGORITHM: adaptive_v3_atr_ea
+================================================================================
+Description: EA optimization of ATR stop loss parameters and leverage for Adaptive v3
+
+Parameter ranges:
+  atr_period: [7, 30]
+  stop_loss_atr_mult: [0.5, 2.0]
+  take_profit_atr_mult: [1.0, 4.0]
+  bull_leverage: [1.3, 2.0]
+  bear_leverage: [1.0, 1.5]
+
+Evolutionary settings:
+  Population size: 50
+  Generations: 30
+  Mutation rate: 0.2
+  Crossover rate: 0.7
+  Elitism: 3
+  Seed: 42
+
+Initial population: 50 individuals
+
+Creating backtest fitness function...
+
+Running evolutionary optimization with REAL backtests...
+This will run ~1500 backtests.
+(This may take a while...)
+
+
+================================================================================
+EVOLUTIONARY OPTIMIZATION - PROGRESS TRACKING
+================================================================================
+Total backtests to run: 1500
+Population size: 50
+Generations: 30
+Parallel processes: 7
+⚡ PARALLEL MODE: Using 7 cores (~7x speedup)
+================================================================================
+
+  Gen 1/30 | Completed: 50 individuals | Progress: 3.3% | Est. remaining: 21.0 min | Best BPS: -0.289 | Avg BPS: -0.289
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 1/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 43.4s
+  Best BPS: -0.2893
+  Avg BPS: -0.2893
+  Overall Progress: 3.3%
+  Elapsed: 0.7 min | Remaining: 21.0 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 2/30 | Completed: 50 individuals | Progress: 6.7% | Est. remaining: 20.2 min | Best BPS: -0.289 | Avg BPS: -0.289
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 2/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 43.3s
+  Best BPS: -0.2893
+  Avg BPS: -0.2893
+  Overall Progress: 6.7%
+  Elapsed: 1.4 min | Remaining: 20.2 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 3/30 | Completed: 50 individuals | Progress: 10.0% | Est. remaining: 19.5 min | Best BPS: -0.289 | Avg BPS: -0.289
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 3/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 43.6s
+  Best BPS: -0.2893
+  Avg BPS: -0.2893
+  Overall Progress: 10.0%
+  Elapsed: 2.2 min | Remaining: 19.5 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 4/30 | Completed: 50 individuals | Progress: 13.3% | Est. remaining: 18.8 min | Best BPS: -0.289 | Avg BPS: -0.289
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 4/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 43.5s
+  Best BPS: -0.2893
+  Avg BPS: -0.2893
+  Overall Progress: 13.3%
+  Elapsed: 2.9 min | Remaining: 18.8 min
+────────────────────────────────────────────────────────────────────────────────
+
+  Gen 5/30 | Completed: 50 individuals | Progress: 16.7% | Est. remaining: 18.3 min | Best BPS: -0.289 | Avg BPS: -0.289
+
+────────────────────────────────────────────────────────────────────────────────
+GENERATION 5/30 COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+  Time: 46.1s
+  Best BPS: -0.2893
+  Avg BPS: -0.2893
+  Overall Progress: 16.7%
+  Elapsed: 3.7 min | Remaining: 18.3 min
+────────────────────────────────────────────────────────────────────────────────
+
