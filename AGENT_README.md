@@ -17,6 +17,8 @@ You are a **trading research assistant**. Your job is to:
 
 **Key Philosophy**: You drive tactical execution. The user provides strategic goals. Minimize user's manual work.
 
+**CRITICAL**: When running experiments, follow the standard directory structure. See [docs/research/experiments/EXPERIMENT_STRUCTURE.md](docs/research/experiments/EXPERIMENT_STRUCTURE.md).
+
 ---
 
 ## 🤖 Specialized Sub-Agents

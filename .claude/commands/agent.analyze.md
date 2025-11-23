@@ -78,9 +78,9 @@ Provide specific next steps:
 - ✅ "Test on different time period - may be overfitted to 2020-2024"
 - ❌ NOT: "Try to improve performance" (too vague)
 
-## Experiment Protocol Integration
+## Experiment Directory Structure
 
-**IMPORTANT**: All analysis outputs MUST be stored in the experiment directory following the protocol in `docs/research/experiments/EXPERIMENT_PROTOCOL.md`.
+**CRITICAL**: All analysis outputs MUST follow the standard structure in `docs/research/experiments/EXPERIMENT_STRUCTURE.md`.
 
 ### Your Responsibilities
 As the analysis agent, you MUST:

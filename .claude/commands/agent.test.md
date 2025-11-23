@@ -115,33 +115,39 @@ python3 -m engines.data.cli download --symbols A,B,C --start-date YYYY-MM-DD --t
    - Parameters: `rsi_period`, `rsi_oversold`, `rsi_overbought`, `bb_period`, `bb_std`
    - Universe: Typically SPY, QQQ, DIA
 
-## Experiment Protocol Integration
+## Experiment Directory Structure
 
-**IMPORTANT**: All test outputs MUST be stored in the experiment directory following the protocol in `docs/research/experiments/EXPERIMENT_PROTOCOL.md`.
+**CRITICAL**: All test outputs MUST follow the standard structure in `docs/research/experiments/EXPERIMENT_STRUCTURE.md`.
 
-### Output Locations
-When running tests as part of an experiment:
+### Required Structure
+```
+experiment_name/
+├── analysis/           # Backtest results and visualizations
+│   ├── equity_curve.png
+│   ├── metadata.json
+│   └── ...
+├── config/             # Configuration and parameters
+│   └── metadata.json
+├── logs/               # Execution logs
+│   └── {experiment}.log
+└── README.md           # Experiment documentation
+```
+
+### Workflow
 ```bash
-# Set experiment directory
-EXP_DIR="docs/research/experiments/004_atr_stop_loss"
+# Create structure
+EXP=/path/to/experiments/006_experiment/v1_test
+mkdir -p "$EXP/analysis" "$EXP/config" "$EXP/logs"
 
-# Save backtest results to experiment
-python3 -m backtest.analyze_cli --profile my_test \
-  --output-dir "$EXP_DIR/results/backtests" \
-  2>&1 | tee "$EXP_DIR/logs/validation.log"
+# Run backtest (outputs to results/analysis/TIMESTAMP/)
+python3 -m backtest.analyze_cli --profile my_profile 2>&1 | tee /tmp/my_profile.log
 
-# Save figures to experiment
-python3 -m backtest.analyze_cli --profile my_test \
-  --charts "$EXP_DIR/analysis/figures"
-```
+# Move results to experiment
+mv results/analysis/TIMESTAMP/* "$EXP/analysis/"
+cp /tmp/my_profile.log "$EXP/logs/"
+cp "$EXP/analysis/metadata.json" "$EXP/config/"
 
-### Experiment Directory Structure
-```
-{EXP_DIR}/
-├── config/profiles.yaml    # Store profiles used
-├── logs/*.log              # All run logs
-├── results/backtests/*.json # Backtest results
-└── analysis/figures/*.png   # Charts and visualizations
+# Document in README
 ```
 
 ### Handoff to /agent.analyze

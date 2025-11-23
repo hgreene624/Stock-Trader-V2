@@ -605,6 +605,7 @@ Check:
 
 ## Additional Resources
 
+- **EXPERIMENT STRUCTURE (CRITICAL)**: [docs/research/experiments/EXPERIMENT_STRUCTURE.md](docs/research/experiments/EXPERIMENT_STRUCTURE.md) - **MUST follow this structure for all experiments**
 - **Walk-Forward Guide**: [docs/guides/walk_forward.md](docs/guides/walk_forward.md) - Prevent overfitting with out-of-sample validation
 - **Walk-Forward Implementation**: [docs/guides/walk_forward.md](docs/guides/walk_forward.md#implementation-notes) - Technical details
 - **Monitoring Long Runs**: [docs/guides/monitoring_long_runs.md](docs/guides/monitoring_long_runs.md) - Real-time progress monitoring for EA optimization

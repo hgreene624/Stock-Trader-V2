@@ -2,6 +2,8 @@
 
 The trading platform now includes specialized sub-agents for different aspects of the research workflow. Each sub-agent is invoked via a slash command and operates autonomously within its domain.
 
+**CRITICAL**: All experiment outputs MUST follow the standard directory structure. See [docs/research/experiments/EXPERIMENT_STRUCTURE.md](docs/research/experiments/EXPERIMENT_STRUCTURE.md).
+
 ---
 
 ## Available Sub-Agents

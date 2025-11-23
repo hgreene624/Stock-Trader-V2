@@ -49,9 +49,9 @@ results:
   save_format: "both"  # csv and duckdb
 ```
 
-## Experiment Protocol Integration
+## Experiment Directory Structure
 
-**IMPORTANT**: All optimization outputs MUST be stored in the experiment directory following the protocol in `docs/research/experiments/EXPERIMENT_PROTOCOL.md`.
+**CRITICAL**: All optimization outputs MUST follow the standard structure in `docs/research/experiments/EXPERIMENT_STRUCTURE.md`.
 
 ### Output Locations
 When running optimization as part of an experiment:
