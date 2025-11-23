@@ -1,6 +1,6 @@
 {
   "model": "SectorRotationAdaptive_v3",
-  "model_id": "SectorRotationAdaptive_v3::p-3472939f",
+  "model_id": "SectorRotationAdaptive_v3::m-204f26b3::p-3472939f",
   "param_id": "p-3472939f",
   "param_summary": "bull_lev=2, bear_lev=1.4, atr=21, tp=2.5",
   "start_date": "2020-01-01",
@@ -88,5 +88,6 @@
       }
     },
     "warning": "UNCOMMITTED CHANGES - Results may not be reproducible!"
-  }
+  },
+  "model_hash": "m-204f26b3"
 }

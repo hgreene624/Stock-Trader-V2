@@ -35,7 +35,7 @@ from backtest.runner import BacktestRunner
 from backtest.reporting import BacktestReporter
 from backtest.visualization import BacktestVisualizer
 from utils.logging import StructuredLogger
-from utils.model_id import generate_param_id, generate_model_id, get_param_summary
+from utils.model_id import generate_param_id, generate_model_id, generate_model_hash, get_param_summary
 from models.sector_rotation_v1 import SectorRotationModel_v1
 from models.sector_rotation_bull_v1 import SectorRotationBull_v1
 from models.sector_rotation_bear_v1 import SectorRotationBear_v1
@@ -504,13 +504,22 @@ class BacktestAnalyzer:
         # Generate model and parameter IDs for consistent tracking
         model_name = results['model_ids'][0] if results['model_ids'] else 'unknown'
         params = results.get('reproducibility', {}).get('parameters', {})
+
+        # Get model source for hashing (read from saved file if exists)
+        model_source = None
+        source_path = self.output_dir / "model_source.py"
+        if source_path.exists():
+            model_source = source_path.read_text()
+
         param_id = generate_param_id(params)
-        full_model_id = generate_model_id(model_name, params)
+        model_hash = generate_model_hash(model_source) if model_source else None
+        full_model_id = generate_model_id(model_name, params, model_source)
         param_summary = get_param_summary(params)
 
         metadata = {
             'model': model_name,
             'model_id': full_model_id,
+            'model_hash': model_hash,
             'param_id': param_id,
             'param_summary': param_summary,
             'start_date': results['start_date'],

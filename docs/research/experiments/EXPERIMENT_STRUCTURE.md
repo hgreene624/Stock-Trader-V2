@@ -32,18 +32,20 @@ Every experiment's `metadata.json` includes unique identifiers for consistent tr
 ```json
 {
   "model": "SectorRotationConsistent_v3",
-  "model_id": "SectorRotationConsistent_v3::p-ea90f831",
+  "model_id": "SectorRotationConsistent_v3::m-fb91869b::p-ea90f831",
+  "model_hash": "m-fb91869b",
   "param_id": "p-ea90f831",
   "param_summary": "mom=126, top_n=4, bull_lev=1.2, bear_lev=1, min_mom=0.1",
   ...
 }
 ```
 
-- **model_id**: `ModelName::p-XXXXXXXX` - Full identifier combining model and parameter hash
+- **model_id**: `ModelName::m-XXXXXXXX::p-YYYYYYYY` - Full identifier combining model name, code hash, and parameter hash
+- **model_hash**: `m-XXXXXXXX` - 8-character hash of model source code (detects code changes)
 - **param_id**: `p-XXXXXXXX` - 8-character deterministic hash of parameters (same params = same ID)
 - **param_summary**: Human-readable summary of key parameters
 
-These IDs ensure we can always identify exactly which model+parameters produced a result, even across sessions.
+These IDs ensure we can always identify exactly which model+parameters produced a result, even across sessions. The model_hash changes when code is modified, while param_id changes when parameters change.
 
 ## README.md Template
 

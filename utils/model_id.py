@@ -6,7 +6,8 @@ Provides consistent identification for models and their parameter sets.
 
 import hashlib
 import json
-from typing import Dict, Any
+import inspect
+from typing import Dict, Any, Optional
 
 
 def generate_param_id(parameters: Dict[str, Any]) -> str:
@@ -28,19 +29,48 @@ def generate_param_id(parameters: Dict[str, Any]) -> str:
     return f"p-{hash_digest}"
 
 
-def generate_model_id(model_name: str, parameters: Dict[str, Any]) -> str:
+def generate_model_hash(model_class_or_source: Any) -> str:
     """
-    Generate a full model identifier combining model name and parameter ID.
+    Generate a hash of the model source code.
+
+    Args:
+        model_class_or_source: Either a class object or source code string
+
+    Returns:
+        Model hash in format 'm-XXXXXXXX' (8 char hash)
+    """
+    if isinstance(model_class_or_source, str):
+        source = model_class_or_source
+    else:
+        try:
+            source = inspect.getsource(model_class_or_source)
+        except (TypeError, OSError):
+            # Fallback to class name if source not available
+            source = str(model_class_or_source)
+
+    hash_digest = hashlib.sha256(source.encode()).hexdigest()[:8]
+    return f"m-{hash_digest}"
+
+
+def generate_model_id(model_name: str, parameters: Dict[str, Any], model_source: Optional[str] = None) -> str:
+    """
+    Generate a full model identifier combining model hash and parameter ID.
 
     Args:
         model_name: Name of the model class
         parameters: Dictionary of parameter names and values
+        model_source: Optional model source code for hashing
 
     Returns:
-        Full ID in format 'ModelName::p-XXXXXXXX'
+        Full ID in format 'ModelName::m-XXXXXXXX::p-YYYYYYYY'
     """
     param_id = generate_param_id(parameters)
-    return f"{model_name}::{param_id}"
+
+    if model_source:
+        model_hash = generate_model_hash(model_source)
+        return f"{model_name}::{model_hash}::{param_id}"
+    else:
+        return f"{model_name}::{param_id}"
 
 
 def parse_model_id(full_id: str) -> tuple:

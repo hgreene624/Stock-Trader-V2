@@ -1,6 +1,6 @@
 {
   "model": "SectorRotationConsistent_v5",
-  "model_id": "SectorRotationConsistent_v5::p-549ac9ac",
+  "model_id": "SectorRotationConsistent_v5::m-cc1e67ff::p-549ac9ac",
   "param_id": "p-549ac9ac",
   "param_summary": "mom=126, top_n=4, bull_lev=1.4, bear_lev=1, min_mom=0.1",
   "start_date": "2020-01-01",
@@ -146,5 +146,6 @@
       }
     },
     "warning": "UNCOMMITTED CHANGES - Results may not be reproducible!"
-  }
+  },
+  "model_hash": "m-cc1e67ff"
 }
