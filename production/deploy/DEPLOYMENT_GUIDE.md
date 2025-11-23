@@ -119,6 +119,49 @@ docker exec -it trading-bot bash
 python -m production.dashboard --logs /app/logs
 ```
 
+## Post-Deploy Verification (Important!)
+
+The `vps_deploy.sh` script now includes an **automated smoke test** that verifies:
+- ✅ Dashboard shows correct version `[vNN]`
+- ✅ Dashboard uses new table format (Port, Account, Type, Status, Profile, Models)
+
+### Manual Verification
+
+Always test the actual user flow before declaring deployment complete:
+
+```bash
+# From your LOCAL machine - this is what users actually run
+ssh dashboard
+
+# Expected output shows version and table format:
+# ====================================================================================================
+# Available Alpaca Accounts                                                    [v33]
+# ====================================================================================================
+# #   Port   Account        Type   Status     Profile         Models
+# ----------------------------------------------------------------------------------------------------
+# 1   8080   PA3T8N36NVJK   PAPER  running    default         SRModel, SRBull, SRBear
+# ...
+```
+
+### Agent Guidelines for Dashboard Changes
+
+**IMPORTANT**: When modifying dashboard account selection display:
+
+1. **Edit the correct file**: `production/dashboard.py` lines 1275-1320 (inline code)
+   - NOT `production/runner/account_selector.py` (different code path)
+
+2. **Always test from user perspective**: Run `ssh dashboard` (not just docker exec)
+
+3. **Check deployed version**:
+   ```bash
+   ssh root@31.220.55.98 'docker exec trading-bot cat /app/VERSION'
+   ```
+
+4. **Verify code is deployed**:
+   ```bash
+   ssh root@31.220.55.98 'docker exec trading-bot grep "YOUR_EXPECTED_STRING" /app/production/dashboard.py'
+   ```
+
 ## Troubleshooting
 
 ### Transfer fails with "Permission denied"
