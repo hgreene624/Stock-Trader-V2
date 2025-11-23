@@ -49,6 +49,40 @@ results:
   save_format: "both"  # csv and duckdb
 ```
 
+## Experiment Protocol Integration
+
+**IMPORTANT**: All optimization outputs MUST be stored in the experiment directory following the protocol in `docs/research/experiments/EXPERIMENT_PROTOCOL.md`.
+
+### Output Locations
+When running optimization as part of an experiment:
+```bash
+# Set experiment directory
+EXP_DIR="docs/research/experiments/004_atr_stop_loss"
+
+# Run optimization with outputs to experiment
+python3 -m engines.optimization.cli run \
+  --experiment "$EXP_DIR/config/experiment.yaml" \
+  2>&1 | tee "$EXP_DIR/logs/optimization.log"
+
+# Results saved to $EXP_DIR/results/optimization/
+```
+
+### Required Outputs
+After optimization completes:
+1. Save results to `results/optimization/ea_final.json`
+2. Save all logs to `logs/`
+3. Update `manifest.json` with best results
+4. Hand off to `/agent.test` for validation
+
+### Handoff to /agent.test
+After finding optimal parameters:
+```
+Invoke /agent.test with:
+- Optimal parameters found
+- Request to create validation profile
+- Output directory in experiment
+```
+
 **Random Search Example:**
 ```yaml
 # configs/experiments/mean_reversion_random.yaml

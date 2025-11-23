@@ -115,6 +115,41 @@ python3 -m engines.data.cli download --symbols A,B,C --start-date YYYY-MM-DD --t
    - Parameters: `rsi_period`, `rsi_oversold`, `rsi_overbought`, `bb_period`, `bb_std`
    - Universe: Typically SPY, QQQ, DIA
 
+## Experiment Protocol Integration
+
+**IMPORTANT**: All test outputs MUST be stored in the experiment directory following the protocol in `docs/research/experiments/EXPERIMENT_PROTOCOL.md`.
+
+### Output Locations
+When running tests as part of an experiment:
+```bash
+# Set experiment directory
+EXP_DIR="docs/research/experiments/004_atr_stop_loss"
+
+# Save backtest results to experiment
+python3 -m backtest.analyze_cli --profile my_test \
+  --output-dir "$EXP_DIR/results/backtests" \
+  2>&1 | tee "$EXP_DIR/logs/validation.log"
+
+# Save figures to experiment
+python3 -m backtest.analyze_cli --profile my_test \
+  --charts "$EXP_DIR/analysis/figures"
+```
+
+### Experiment Directory Structure
+```
+{EXP_DIR}/
+├── config/profiles.yaml    # Store profiles used
+├── logs/*.log              # All run logs
+├── results/backtests/*.json # Backtest results
+└── analysis/figures/*.png   # Charts and visualizations
+```
+
+### Handoff to /agent.analyze
+After running backtests, invoke `/agent.analyze` with:
+- Experiment directory path
+- Results files to analyze
+- Request for specific charts/metrics
+
 ## Best Practices
 
 ### ✅ DO:
@@ -123,8 +158,10 @@ python3 -m engines.data.cli download --symbols A,B,C --start-date YYYY-MM-DD --t
 - Create profiles via CLI instead of editing YAML
 - Check existing profiles before creating duplicates
 - Use templates for new models
-- Compare results to SPY baseline (14.63% CAGR)
+- Compare results to SPY baseline (14.34% CAGR)
 - Provide clear hypotheses for each test
+- **Store ALL outputs in experiment directory**
+- **Invoke /agent.analyze after running tests**
 
 ### ❌ DON'T:
 - Manually edit YAML files (use CLI)
@@ -132,6 +169,8 @@ python3 -m engines.data.cli download --symbols A,B,C --start-date YYYY-MM-DD --t
 - Skip experiment logging
 - Test without a clear hypothesis
 - Ignore risk metrics (max drawdown, Sharpe)
+- **Save results to /tmp or scattered locations**
+- **Skip the analysis phase**
 
 ## Success Criteria
 

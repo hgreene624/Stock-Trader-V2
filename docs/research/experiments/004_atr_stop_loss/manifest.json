@@ -1,0 +1,45 @@
+{
+  "experiment_id": "004",
+  "name": "atr_stop_loss",
+  "title": "ATR Stop Loss EA Optimization",
+  "date_created": "2025-11-22",
+  "date_completed": "2025-11-23",
+  "status": "completed",
+  "model": "SectorRotationAdaptive_v3",
+  "method": "evolutionary",
+  "optimization_results": {
+    "generations": 30,
+    "population": 50,
+    "total_backtests": 1500,
+    "duration_minutes": 46.1,
+    "best_bps": 1.028
+  },
+  "best_result": {
+    "bps": 1.028,
+    "params": {
+      "atr_period": 21,
+      "stop_loss_atr_mult": 1.6,
+      "take_profit_atr_mult": 2.48,
+      "bull_leverage": 2.0,
+      "bear_leverage": 1.38
+    }
+  },
+  "validation": {
+    "status": "completed",
+    "cagr": 0.1764,
+    "sharpe": 2.238,
+    "bps": 1.020,
+    "trades": 1286,
+    "final_nav": 224072.26,
+    "beats_spy": true,
+    "spy_cagr": 0.1434,
+    "alpha": 0.033
+  },
+  "files": {
+    "config": "config/ea_config.yaml",
+    "optimization_logs": "logs/run3_success.log",
+    "validation_log": "logs/validation.log",
+    "analysis_figures": "analysis/figures/",
+    "summary_report": "analysis/summary_report.txt"
+  }
+}

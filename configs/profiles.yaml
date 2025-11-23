@@ -1081,6 +1081,33 @@ profiles:
       bull_leverage: 1.5
       bear_leverage: 1.5
 
+  ea_optimized_atr:
+    description: EA-optimized ATR parameters from experiment 004 (BPS=1.028)
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 21
+      stop_loss_atr_mult: 1.6
+      take_profit_atr_mult: 2.48
+      min_hold_days: 2
+      bull_leverage: 2.0
+      bear_leverage: 1.38
+
   sr_vix_optimized:
     description: VIX-based dynamic leverage - optimized parameters from experiment 002
     model: SectorRotationVIX_v1

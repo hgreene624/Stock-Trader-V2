@@ -27,13 +27,13 @@ Tested three advanced sector rotation variants to improve upon the base SectorRo
 
 ## Results Summary
 
-| Model | CAGR | Sharpe | Max DD | Trades | BPS | Status |
-|-------|------|--------|--------|--------|-----|--------|
-| **SectorRotationVIX_v1** | **14.11%** | **1.678** | -11.8% | ~200 | **0.771** | ✅ Production Ready |
-| SectorRotationRegime_v1 | 6.85% | 1.235 | -8.2% | ~200 | 0.582 | ⚠️ Needs Regime Engine |
-| SectorRotationAdaptive_v3 | 3.58% | 0.800 | - | 1177 | 0.399 | ❌ Excessive Trading |
-| *SPY Benchmark* | *14.34%* | *~1.0* | *-24.5%* | *-* | *-* | *Target* |
-| *Base Model (v1)* | *13.01%* | *1.712* | *-9.4%* | *~200* | *0.784* | *Previous Best* |
+| Model                     | CAGR       | Sharpe    | Max DD   | Trades | BPS       | Status                 |
+| ------------------------- | ---------- | --------- | -------- | ------ | --------- | ---------------------- |
+| **SectorRotationVIX_v1**  | **14.11%** | **1.678** | -11.8%   | ~200   | **0.771** | ✅ Production Ready     |
+| SectorRotationRegime_v1   | 6.85%      | 1.235     | -8.2%    | ~200   | 0.582     | ⚠️ Needs Regime Engine |
+| SectorRotationAdaptive_v3 | 3.58%      | 0.800     | -        | 1177   | 0.399     | ❌ Excessive Trading    |
+| *SPY Benchmark*           | *14.34%*   | *~1.0*    | *-24.5%* | *-*    | *-*       | *Target*               |
+| *Base Model (v1)*         | *13.01%*   | *1.712*   | *-9.4%*  | *~200* | *0.784*   | *Previous Best*        |
 
 ## Detailed Analysis
 

@@ -1,0 +1,89 @@
+{
+  "model": "SectorRotationAdaptive_v3",
+  "start_date": "2020-01-01",
+  "end_date": "2024-12-31",
+  "metrics": {
+    "total_return": 1.2508563924345675,
+    "cagr": 0.17640398063775198,
+    "sharpe_ratio": 2.237508972028594,
+    "max_drawdown": 0.27687373558674355,
+    "win_rate": 0.5,
+    "total_trades": 1286,
+    "initial_nav": 99549.78228032128,
+    "final_nav": 224072.26381113057,
+    "bps": 1.020237409444089
+  },
+  "generated_at": "2025-11-23T08:48:09.782636",
+  "reproducibility": {
+    "git_commit": "5ae11a96d6d142fab0b81141c68f026cd3937ce4",
+    "git_dirty": true,
+    "profile_name": "ea_optimized_atr",
+    "parameters": {
+      "atr_period": 21,
+      "stop_loss_atr_mult": 1.6,
+      "take_profit_atr_mult": 2.48,
+      "min_hold_days": 2,
+      "bull_leverage": 2.0,
+      "bear_leverage": 1.38
+    },
+    "full_config": {
+      "mode": "backtest",
+      "data": {
+        "primary_timeframe": "1D",
+        "data_dir": "data"
+      },
+      "backtest": {
+        "lookback_bars": 200
+      },
+      "portfolio": {
+        "leverage_multiplier": 1.0
+      },
+      "risk": {
+        "max_leverage": 1.0,
+        "max_position_size": 0.4,
+        "max_asset_class_allocation": {
+          "equity": 1.0,
+          "crypto": 0.2
+        },
+        "max_drawdown_threshold": 0.15
+      },
+      "models": {
+        "SectorRotationAdaptive_v3": {
+          "enabled": true,
+          "budget": 1.0,
+          "parameters": {
+            "atr_period": 21,
+            "stop_loss_atr_mult": 1.6,
+            "take_profit_atr_mult": 2.48,
+            "min_hold_days": 2,
+            "bull_leverage": 2.0,
+            "bear_leverage": 1.38
+          },
+          "universe": [
+            "XLK",
+            "XLF",
+            "XLE",
+            "XLV",
+            "XLI",
+            "XLP",
+            "XLU",
+            "XLY",
+            "XLC",
+            "XLB",
+            "XLRE",
+            "TLT"
+          ],
+          "asset_classes": [
+            "equity"
+          ]
+        }
+      },
+      "execution": {
+        "initial_capital": 100000.0,
+        "commission_rate": 0.001,
+        "slippage_bps": 5.0
+      }
+    },
+    "warning": "UNCOMMITTED CHANGES - Results may not be reproducible!"
+  }
+}

@@ -78,6 +78,50 @@ Provide specific next steps:
 - ✅ "Test on different time period - may be overfitted to 2020-2024"
 - ❌ NOT: "Try to improve performance" (too vague)
 
+## Experiment Protocol Integration
+
+**IMPORTANT**: All analysis outputs MUST be stored in the experiment directory following the protocol in `docs/research/experiments/EXPERIMENT_PROTOCOL.md`.
+
+### Your Responsibilities
+As the analysis agent, you MUST:
+1. Generate figures in `analysis/figures/`
+2. Create `analysis/summary.json` with aggregated metrics
+3. Update README.md with results tables and conclusions
+4. Update `manifest.json` with completion status
+
+### Output Locations
+When analyzing experiment results:
+```bash
+# Set experiment directory
+EXP_DIR="docs/research/experiments/004_atr_stop_loss"
+
+# Generate analysis outputs
+# 1. Equity curve
+python3 -m backtest.analyze_cli --profile ea_optimized \
+  --chart-equity "$EXP_DIR/analysis/figures/equity_curve.png"
+
+# 2. Drawdown chart
+python3 -m backtest.analyze_cli --profile ea_optimized \
+  --chart-drawdown "$EXP_DIR/analysis/figures/drawdown.png"
+
+# 3. Summary metrics
+python3 -m backtest.analyze_cli --profile ea_optimized \
+  --output-json "$EXP_DIR/analysis/summary.json"
+```
+
+### Required Deliverables
+After analysis:
+1. **Figures**: equity_curve.png, drawdown.png, comparison charts
+2. **Summary**: analysis/summary.json with all metrics
+3. **Documentation**: Update README.md with results table
+4. **Metadata**: Update manifest.json with final status
+
+### Receiving Handoffs
+You will receive analysis requests from:
+- `/agent.test` after validation backtests
+- `/agent.optimize` after optimization runs
+- Direct user requests for existing results
+
 ## Analysis Templates
 
 ### Single Result Analysis
