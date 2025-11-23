@@ -35,6 +35,7 @@ from backtest.runner import BacktestRunner
 from backtest.reporting import BacktestReporter
 from backtest.visualization import BacktestVisualizer
 from utils.logging import StructuredLogger
+from utils.model_id import generate_param_id, generate_model_id, get_param_summary
 from models.sector_rotation_v1 import SectorRotationModel_v1
 from models.sector_rotation_bull_v1 import SectorRotationBull_v1
 from models.sector_rotation_bear_v1 import SectorRotationBear_v1
@@ -46,6 +47,8 @@ from models.sector_rotation_adaptive_v4 import SectorRotationAdaptive_v4
 from models.sector_rotation_consistent_v1 import SectorRotationConsistent_v1
 from models.sector_rotation_consistent_v2 import SectorRotationConsistent_v2
 from models.sector_rotation_consistent_v3 import SectorRotationConsistent_v3
+from models.sector_rotation_consistent_v4 import SectorRotationConsistent_v4
+from models.sector_rotation_consistent_v5 import SectorRotationConsistent_v5
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
 from models.cash_secured_put_v1 import CashSecuredPutModel_v1
@@ -152,6 +155,10 @@ class BacktestAnalyzer:
             return SectorRotationConsistent_v2(**parameters)
         elif model_name == "SectorRotationConsistent_v3":
             return SectorRotationConsistent_v3(**parameters)
+        elif model_name == "SectorRotationConsistent_v4":
+            return SectorRotationConsistent_v4(**parameters)
+        elif model_name == "SectorRotationConsistent_v5":
+            return SectorRotationConsistent_v5(**parameters)
         elif model_name == "EquityTrendModel_v1":
             return EquityTrendModel_v1(**parameters)
         elif model_name == "EquityTrendModel_v1_Daily":
@@ -494,8 +501,18 @@ class BacktestAnalyzer:
         self.reporter.export_to_csv(results, output_dir=str(self.output_dir))
 
         # Save metadata with full reproducibility info
+        # Generate model and parameter IDs for consistent tracking
+        model_name = results['model_ids'][0] if results['model_ids'] else 'unknown'
+        params = results.get('reproducibility', {}).get('parameters', {})
+        param_id = generate_param_id(params)
+        full_model_id = generate_model_id(model_name, params)
+        param_summary = get_param_summary(params)
+
         metadata = {
-            'model': results['model_ids'][0] if results['model_ids'] else 'unknown',
+            'model': model_name,
+            'model_id': full_model_id,
+            'param_id': param_id,
+            'param_summary': param_summary,
             'start_date': results['start_date'],
             'end_date': results['end_date'],
             'metrics': results['metrics'],

@@ -1,26 +1,26 @@
 {
-  "model": "SectorRotationConsistent_v5",
-  "model_id": "SectorRotationConsistent_v5::p-9c6a6173",
-  "param_id": "p-9c6a6173",
+  "model": "SectorRotationConsistent_v4",
+  "model_id": "SectorRotationConsistent_v4::p-d869d1fc",
+  "param_id": "p-d869d1fc",
   "param_summary": "mom=126, top_n=4, bull_lev=1.4, bear_lev=1, min_mom=0.1",
   "start_date": "2020-01-01",
   "end_date": "2024-12-31",
   "metrics": {
-    "total_return": 0.9373178000452717,
-    "cagr": 0.14159229583927413,
-    "sharpe_ratio": 1.7592462021678346,
-    "max_drawdown": 0.3591585598122276,
+    "total_return": 0.6326370132087534,
+    "cagr": 0.10313953588542657,
+    "sharpe_ratio": 1.4236862385905236,
+    "max_drawdown": 0.3254654453367398,
     "win_rate": 0.5,
-    "total_trades": 1368,
+    "total_trades": 1390,
     "initial_nav": 99781.53113906436,
-    "final_nav": 193308.53639148094,
-    "bps": 0.8102603136376934
+    "final_nav": 162907.02097227826,
+    "bps": 0.6678698116681634
   },
-  "generated_at": "2025-11-23T12:05:24.664146",
+  "generated_at": "2025-11-23T11:40:53.865711",
   "reproducibility": {
     "git_commit": "2c576dfda5c30032b37f40325f04cbc4de5bc7a5",
     "git_dirty": true,
-    "profile_name": "v5_wide_trailing",
+    "profile_name": "consistent_alpha_v4",
     "parameters": {
       "crash_drop_threshold": -0.07,
       "crash_drop_days": 5,
@@ -46,10 +46,14 @@
       "weakness_threshold": -0.05,
       "atr_period": 21,
       "take_profit_atr_mult": 2.5,
-      "trailing_atr_mult": 3.0,
       "momentum_period": 126,
       "top_n_sectors": 4,
-      "min_momentum": 0.1
+      "min_momentum": 0.1,
+      "trend_sma_period": 20,
+      "vix_scale_threshold": 25,
+      "vix_max_threshold": 35,
+      "min_vix_exposure": 0.5,
+      "strict_hold_enforcement": true
     },
     "full_config": {
       "mode": "backtest",
@@ -85,7 +89,7 @@
         "max_drawdown_threshold": 0.15
       },
       "models": {
-        "SectorRotationConsistent_v5": {
+        "SectorRotationConsistent_v4": {
           "enabled": true,
           "budget": 1.0,
           "parameters": {
@@ -113,10 +117,14 @@
             "weakness_threshold": -0.05,
             "atr_period": 21,
             "take_profit_atr_mult": 2.5,
-            "trailing_atr_mult": 3.0,
             "momentum_period": 126,
             "top_n_sectors": 4,
-            "min_momentum": 0.1
+            "min_momentum": 0.1,
+            "trend_sma_period": 20,
+            "vix_scale_threshold": 25,
+            "vix_max_threshold": 35,
+            "min_vix_exposure": 0.5,
+            "strict_hold_enforcement": true
           },
           "universe": [
             "XLK",

@@ -1,5 +1,8 @@
 {
   "model": "SectorRotationAdaptive_v3",
+  "model_id": "SectorRotationAdaptive_v3::p-3472939f",
+  "param_id": "p-3472939f",
+  "param_summary": "bull_lev=2, bear_lev=1.4, atr=21, tp=2.5",
   "start_date": "2020-01-01",
   "end_date": "2024-12-31",
   "metrics": {

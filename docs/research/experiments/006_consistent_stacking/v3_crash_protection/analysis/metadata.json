@@ -1,5 +1,8 @@
 {
   "model": "SectorRotationConsistent_v3",
+  "model_id": "SectorRotationConsistent_v3::p-ea90f831",
+  "param_id": "p-ea90f831",
+  "param_summary": "mom=126, top_n=4, bull_lev=1.2, bear_lev=1, min_mom=0.1",
   "start_date": "2020-01-01",
   "end_date": "2024-12-31",
   "metrics": {
