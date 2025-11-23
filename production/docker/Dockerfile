@@ -41,6 +41,9 @@ COPY configs/ /app/configs/
 # Copy agent documentation
 COPY production/AGENTS.md /app/AGENTS.md
 
+# Copy VERSION file for dashboard display
+COPY production/deploy/VERSION /app/VERSION
+
 # Copy entrypoint scripts
 COPY production/docker/entrypoint.sh /app/entrypoint.sh
 COPY production/docker/dashboard-entrypoint.sh /app/dashboard-entrypoint.sh

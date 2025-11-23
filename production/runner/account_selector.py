@@ -152,6 +152,30 @@ def format_models(models: list) -> str:
         return f"{len(models)} models"
 
 
+def get_version() -> str:
+    """Get the deployed version from environment or VERSION file."""
+    # Check environment variable first (set by Docker)
+    version = os.getenv('BOT_VERSION')
+    if version:
+        return version
+
+    # Try reading VERSION file
+    version_paths = [
+        Path('/app/VERSION'),  # Docker
+        Path(__file__).parent.parent.parent / 'production' / 'deploy' / 'VERSION',
+        Path('production/deploy/VERSION'),
+    ]
+
+    for path in version_paths:
+        if path.exists():
+            try:
+                return path.read_text().strip()
+            except:
+                pass
+
+    return "unknown"
+
+
 def display_accounts(accounts_info: Dict[str, Dict], accounts_config: Dict[str, Dict]) -> None:
     """
     Display accounts in a formatted table.
@@ -160,8 +184,9 @@ def display_accounts(accounts_info: Dict[str, Dict], accounts_config: Dict[str, 
         accounts_info: Dict mapping account name to account info
         accounts_config: Dict mapping account name to config (with 'paper' field)
     """
+    version = get_version()
     print("\n" + "=" * 120)
-    print("Available Alpaca Accounts")
+    print(f"Available Alpaca Accounts                                                              [v{version}]")
     print("=" * 120)
     print(f"{'#':<3} {'Port':<6} {'Account':<14} {'Type':<6} {'Balance':<12} {'Profile':<15} {'Models':<30}")
     print("-" * 120)
