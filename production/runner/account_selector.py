@@ -88,7 +88,10 @@ def load_accounts_config(config_path: Optional[Path] = None) -> Dict:
         accounts[name] = {
             'api_key': api_key,
             'secret_key': secret_key,
-            'paper': account.get('paper', True)
+            'paper': account.get('paper', True),
+            'health_port': account.get('health_port', 8080),
+            'models': account.get('models', []),
+            'param_profile': account.get('param_profile', 'default')
         }
 
     return accounts
@@ -132,6 +135,23 @@ def format_currency(amount: float) -> str:
     return f"${amount:,.2f}"
 
 
+def format_models(models: list) -> str:
+    """Format model list for display."""
+    if not models:
+        return "None"
+    if len(models) == 1:
+        return models[0].replace('SectorRotation', 'SR')
+    elif len(models) <= 3:
+        # Abbreviate model names
+        abbrev = []
+        for m in models:
+            m = m.replace('SectorRotation', 'SR').replace('_v1', '').replace('_v3', '')
+            abbrev.append(m)
+        return ', '.join(abbrev)
+    else:
+        return f"{len(models)} models"
+
+
 def display_accounts(accounts_info: Dict[str, Dict], accounts_config: Dict[str, Dict]) -> None:
     """
     Display accounts in a formatted table.
@@ -140,28 +160,30 @@ def display_accounts(accounts_info: Dict[str, Dict], accounts_config: Dict[str, 
         accounts_info: Dict mapping account name to account info
         accounts_config: Dict mapping account name to config (with 'paper' field)
     """
-    print("\n" + "=" * 100)
+    print("\n" + "=" * 120)
     print("Available Alpaca Accounts")
-    print("=" * 100)
-    print(f"{'#':<4} {'Name':<20} {'Account #':<15} {'Type':<8} {'Balance':<15} {'Cash':<15} {'Status':<10}")
-    print("-" * 100)
+    print("=" * 120)
+    print(f"{'#':<3} {'Port':<6} {'Account':<14} {'Type':<6} {'Balance':<12} {'Profile':<15} {'Models':<30}")
+    print("-" * 120)
 
     for idx, (name, info) in enumerate(accounts_info.items(), 1):
+        config = accounts_config.get(name, {})
+        port = str(config.get('health_port', 'N/A'))
+        profile = config.get('param_profile', 'default')
+        models = format_models(config.get('models', []))
+
         if 'error' in info:
-            print(f"{idx:<4} {name:<20} {'ERROR':<15} {'N/A':<8} {'N/A':<15} {'N/A':<15} {info['status']:<10}")
-            print(f"     Error: {info['error']}")
+            print(f"{idx:<3} {port:<6} {name:<14} {'ERR':<6} {'N/A':<12} {profile:<15} {models:<30}")
+            print(f"    Error: {info['error']}")
         else:
             # Use config to determine if paper or live
-            is_paper = accounts_config.get(name, {}).get('paper', True)
+            is_paper = config.get('paper', True)
             account_type = "PAPER" if is_paper else "LIVE"
             balance = format_currency(info['portfolio_value'])
-            cash = format_currency(info['cash'])
-            status = info['status']
-            account_num = info['account_number'][-6:]  # Last 6 digits
 
-            print(f"{idx:<4} {name:<20} {account_num:<15} {account_type:<8} {balance:<15} {cash:<15} {status:<10}")
+            print(f"{idx:<3} {port:<6} {name:<14} {account_type:<6} {balance:<12} {profile:<15} {models:<30}")
 
-    print("=" * 100)
+    print("=" * 120)
 
 
 def select_account(account_name: Optional[str] = None, skip_selection: bool = False) -> Tuple[str, str, Dict]:
