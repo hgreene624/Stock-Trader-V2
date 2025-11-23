@@ -80,3 +80,37 @@ models:
     execution:
       urgency: "normal"
       horizon: "position"
+
+  SectorRotationAdaptive_v3:
+    version: "3.0.0"
+    description: "EA-optimized sector rotation with ATR-based stops (17.64% CAGR, Sharpe 2.24)"
+
+    universe:
+      - "XLK"
+      - "XLF"
+      - "XLE"
+      - "XLV"
+      - "XLI"
+      - "XLP"
+      - "XLU"
+      - "XLY"
+      - "XLC"
+      - "XLB"
+      - "XLRE"
+      - "TLT"
+
+    asset_classes:
+      - "equity"
+
+    # EA-optimized parameters (m-204f26b3::p-3472939f)
+    parameters:
+      atr_period: 21
+      stop_loss_atr_mult: 1.6
+      take_profit_atr_mult: 2.48
+      min_hold_days: 2
+      bull_leverage: 2.0
+      bear_leverage: 1.38
+
+    execution:
+      urgency: "normal"
+      horizon: "position"

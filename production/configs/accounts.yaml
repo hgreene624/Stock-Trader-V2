@@ -28,6 +28,15 @@ accounts:
     models:
       - SectorRotationAdaptive_v3
 
+  # Paper account #3 - EA-optimized Adaptive v3 (best model: m-204f26b3::p-3472939f)
+  PA3569BUXRYA:
+    api_key: PK5IS7UDIKUUR6PZXC7JJG6H6D
+    secret_key: Fc81zZdSbiqezthSnN2oRHjyc4paqQbH5WPg3qEWbYrC
+    paper: true
+    health_port: 8083
+    models:
+      - SectorRotationAdaptive_v3
+
   # Individual Account (Real - unfunded)
   "935928263":
     api_key: AKG5WRWYMB66AXEOHRTMYPDFCD
