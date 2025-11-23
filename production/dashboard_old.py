@@ -14,7 +14,7 @@ Usage:
     python -m production.dashboard
 
     # With custom config
-    python -m production.dashboard --config production/configs/production.yaml
+    python -m production.dashboard --config configs/production.yaml
 
     # Custom log directory
     python -m production.dashboard --logs production/local_logs

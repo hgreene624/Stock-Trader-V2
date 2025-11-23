@@ -41,7 +41,7 @@ def load_accounts_config(config_path: Optional[Path] = None) -> Dict:
         # Try multiple locations
         possible_paths = [
             Path(__file__).parent.parent / 'configs' / 'accounts.yaml',
-            Path('production/configs/accounts.yaml'),
+            Path('configs/accounts.yaml'),
             Path('/app/configs/accounts.yaml'),  # Docker
         ]
 

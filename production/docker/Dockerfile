@@ -35,8 +35,8 @@ COPY models/base.py /app/models/base.py
 # Copy exported models (will be populated during build)
 COPY production/models/ /app/models/
 
-# Copy production config template
-COPY production/configs/ /app/production/configs/
+# Copy all configs (accounts, models, profiles, etc.)
+COPY configs/ /app/configs/
 
 # Copy agent documentation
 COPY production/AGENTS.md /app/AGENTS.md

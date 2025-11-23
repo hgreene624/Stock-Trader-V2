@@ -8,7 +8,7 @@ Each account runs in its own process with isolated credentials and health endpoi
 Usage:
     python -m production.runner.multi_main
     python -m production.runner.multi_main --accounts PA3T8N36NVJK PA3I05031HZL
-    python -m production.runner.multi_main --config production/configs/accounts.yaml
+    python -m production.runner.multi_main --config configs/accounts.yaml
 """
 
 import argparse
@@ -212,7 +212,7 @@ def main():
     )
     parser.add_argument(
         '--config',
-        default='production/configs/accounts.yaml',
+        default='configs/accounts.yaml',
         help='Path to accounts configuration file'
     )
     parser.add_argument(

@@ -56,7 +56,7 @@ Local Machine                          VPS (31.220.55.98)
 ### 1. Multi-Account Runner (`multi_main.py`)
 
 The Docker container runs `multi_main.py` which:
-1. Reads `/app/production/configs/accounts.yaml`
+1. Reads `/app/configs/accounts.yaml`
 2. Spawns a subprocess for each account
 3. Sets environment variables per account:
    - `ACCOUNT` - Account ID for model filtering
@@ -164,7 +164,7 @@ services:
     environment:
       - SKIP_FIRST_CYCLE_VALIDATION=true
     volumes:
-      - /root/configs/accounts.yaml:/app/production/configs/accounts.yaml
+      - /root/configs/accounts.yaml:/app/configs/accounts.yaml
       - /root/trading-bot-logs:/app/logs
     restart: unless-stopped
 ```
