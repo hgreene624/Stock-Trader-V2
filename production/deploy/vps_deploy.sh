@@ -195,6 +195,33 @@ else
     echo "⚠️  WARNING: Health endpoint not responding yet (may still be starting up)"
 fi
 
+# Smoke test: verify dashboard shows correct version
+echo ""
+echo "🧪 Smoke test: Dashboard verification..."
+echo "--------------------------------------------------------------------------------"
+DASHBOARD_OUTPUT=$(docker exec ${CONTAINER_NAME} python -m production.dashboard --logs /app/logs 2>&1 | head -20)
+
+# Check version in output
+EXPECTED_VERSION=$(echo "${IMAGE_TAG}" | sed 's/amd64-v//')
+if echo "$DASHBOARD_OUTPUT" | grep -q "\[v${EXPECTED_VERSION}\]"; then
+    echo "✅ Dashboard shows correct version [v${EXPECTED_VERSION}]"
+else
+    echo "⚠️  WARNING: Dashboard version mismatch or not found"
+    echo "   Expected: [v${EXPECTED_VERSION}]"
+fi
+
+# Check for new table format
+if echo "$DASHBOARD_OUTPUT" | grep -q "Port.*Account.*Type.*Status.*Profile.*Models"; then
+    echo "✅ Dashboard shows new table format"
+else
+    echo "⚠️  WARNING: Dashboard may be using old format"
+fi
+
+# Show first part of dashboard output
+echo ""
+echo "Dashboard preview:"
+echo "$DASHBOARD_OUTPUT" | head -10
+
 # Step 6: Clean up old images (prevent accidental use)
 echo ""
 echo "🧹 Cleaning up old trading-bot images..."
