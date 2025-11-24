@@ -13,6 +13,9 @@ Experiments with complete documentation in dedicated folders:
 |----|--------|-------------|------|--------|
 | 001 | [001_rebalancing_frequency/](001_rebalancing_frequency/) | Optimal rebalancing frequency for SectorRotationAdaptive_v3 | Nov 21, 2025 | ✅ Complete |
 | 002 | [002_sector_rotation_improvements/](002_sector_rotation_improvements/) | Momentum tuning (118-134d), VIX leverage, SPY filter | Nov 21, 2025 | ✅ Complete |
+| 004 | [004_atr_stop_loss/](004_atr_stop_loss/) | ATR-based stop loss optimization | Nov 22, 2025 | ✅ Complete |
+| 006 | [006_consistent_stacking/](006_consistent_stacking/) | Consistent yearly alpha with crash protection | Nov 23, 2025 | ✅ Complete |
+| 007 | [007_v5_improvements/](007_v5_improvements/) | V5 improvements: crash tuning, relative strength, correlation | Nov 23, 2025 | ❌ Failed |
 
 ### Folder Structure
 
@@ -81,13 +84,15 @@ These experiments were conducted but lack dedicated documentation folders. Infor
 
 ## Current Best Results
 
-| Model | CAGR | Sharpe | Config | Status |
-|-------|------|--------|--------|--------|
-| SectorRotationVIX_v1 | **14.11%** | 1.678 | 134d/3pos/1.5x VIX-scaled | Ready for paper |
-| SectorRotationModel_v1 | 13.01% | 1.712 | 126d/3pos/1.25x | Production |
-| SectorRotationAdaptive_v3 | 13.13% | 2.079 | 126d/21-day rebalance | Paper testing |
+**See [BEST_RESULTS.md](../BEST_RESULTS.md) for authoritative, verified results.**
 
-**Target**: SPY 14.34% CAGR (2020-2024)
+| Model | CAGR | Sharpe | DD | Profile | Status |
+|-------|------|--------|-----|---------|--------|
+| **SectorRotationAdaptive_v3** | **17.64%** | **2.238** | 27.7% | `ea_optimized_atr` | **Champion** |
+| SectorRotationConsistent_v3 | 15.33% | 1.904 | 24.0% | `consistent_alpha_v3` | Verified |
+| SectorRotationModel_v1 | 13.01% | 1.712 | 31.4% | `sector_rotation_leverage_1.25x` | Verified |
+
+**Target**: SPY 14.34% CAGR (2020-2024) - **BEATEN!**
 
 ---
 

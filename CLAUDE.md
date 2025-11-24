@@ -12,10 +12,11 @@
 
 **Current Goal**: Beat SPY's 14.34% CAGR (2020-2024)
 
-**Best Model So Far**: SectorRotationModel_v1 @ 13.01% CAGR (126-day momentum + 1.25x leverage)
-- Sharpe: 1.712, BPS: 0.784
-- Within 1.33% of SPY (close!)
-- See `docs/guides/walk_forward.md` for optimization methodology
+**Best Model So Far**: SectorRotationAdaptive_v3 @ 17.64% CAGR (EA-optimized ATR params)
+- Sharpe: 2.238, BPS: 1.020, Max DD: 27.7%
+- **BEATS SPY by 3.3%!**
+- Profile: `ea_optimized_atr`
+- See `docs/research/BEST_RESULTS.md` for full details and verification
 
 **Your Workflow**:
 1. User provides goal → 2. You propose approach → 3. You test → 4. You analyze → 5. You iterate → 6. You report
@@ -605,7 +606,9 @@ Check:
 
 ## Additional Resources
 
-- **EXPERIMENT STRUCTURE (CRITICAL)**: [docs/research/experiments/EXPERIMENT_STRUCTURE.md](docs/research/experiments/EXPERIMENT_STRUCTURE.md) - **MUST follow this structure for all experiments**
+- **BEST RESULTS (START HERE)**: [docs/research/BEST_RESULTS.md](docs/research/BEST_RESULTS.md) - Current champion and what to beat
+- **RESEARCH PROTOCOL (CRITICAL)**: [docs/research/RESEARCH_PROTOCOL.md](docs/research/RESEARCH_PROTOCOL.md) - **MUST follow for all experiments**
+- **Experiment Structure**: [docs/research/experiments/EXPERIMENT_STRUCTURE.md](docs/research/experiments/EXPERIMENT_STRUCTURE.md) - Directory structure standard
 - **Walk-Forward Guide**: [docs/guides/walk_forward.md](docs/guides/walk_forward.md) - Prevent overfitting with out-of-sample validation
 - **Walk-Forward Implementation**: [docs/guides/walk_forward.md](docs/guides/walk_forward.md#implementation-notes) - Technical details
 - **Monitoring Long Runs**: [docs/guides/monitoring_long_runs.md](docs/guides/monitoring_long_runs.md) - Real-time progress monitoring for EA optimization

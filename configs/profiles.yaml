@@ -1931,6 +1931,133 @@ profiles:
       min_momentum: 0.0
       base_leverage: 1.5
 
+  # Experiment 007: V5 Improvement Tests
+  v5_tuned_crash:
+    description: V5 with tuned crash thresholds only (no rel strength, no correlation)
+    model: SectorRotationConsistent_v5
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # Tuned crash protection (V5 defaults)
+      crash_drop_threshold: -0.05
+      crash_drop_days: 5
+      vix_crash_threshold: 30
+      vix_recovery_threshold: 25
+      crash_exposure: 0.40
+      dip_buy_drawdown_threshold: -0.15
+      dip_buy_weeks: 2
+      # Disable new features
+      use_relative_strength: false
+      use_correlation_sizing: false
+      # Standard params
+      bull_leverage: 1.2
+      bear_leverage: 1.0
+      momentum_period: 126
+      top_n_sectors: 4
+      min_momentum: 0.10
+
+  v5_relative_strength:
+    description: V5 with tuned crash + relative strength filter
+    model: SectorRotationConsistent_v5
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # Tuned crash protection
+      crash_drop_threshold: -0.05
+      crash_drop_days: 5
+      vix_crash_threshold: 30
+      vix_recovery_threshold: 25
+      crash_exposure: 0.40
+      dip_buy_drawdown_threshold: -0.15
+      dip_buy_weeks: 2
+      # Enable relative strength
+      use_relative_strength: true
+      relative_strength_period: 63
+      # Disable correlation
+      use_correlation_sizing: false
+      # Standard params
+      bull_leverage: 1.2
+      bear_leverage: 1.0
+      momentum_period: 126
+      top_n_sectors: 4
+      min_momentum: 0.10
+
+  v5_all_improvements:
+    description: V5 with all improvements - tuned crash + rel strength + correlation
+    model: SectorRotationConsistent_v5
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # Tuned crash protection
+      crash_drop_threshold: -0.05
+      crash_drop_days: 5
+      vix_crash_threshold: 30
+      vix_recovery_threshold: 25
+      crash_exposure: 0.40
+      dip_buy_drawdown_threshold: -0.15
+      dip_buy_weeks: 2
+      # Enable all improvements
+      use_relative_strength: true
+      relative_strength_period: 63
+      use_correlation_sizing: true
+      correlation_lookback: 60
+      correlation_threshold: 0.75
+      correlation_weight_reduction: 0.5
+      # Standard params
+      bull_leverage: 1.2
+      bear_leverage: 1.0
+      momentum_period: 126
+      top_n_sectors: 4
+      min_momentum: 0.10
+
 universes:
   major_indices:
   - SPY

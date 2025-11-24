@@ -1,16 +1,12 @@
 """
-SectorRotationConsistent_v1
+SectorRotationConsistent_v5
 
-Optimized for CONSISTENT yearly outperformance of SPY.
+V5 improvements over v3 (Experiment 007):
+1. Tuned crash thresholds (faster detection, quicker recovery)
+2. Relative strength filter (only trade sectors > SPY)
+3. Correlation-based sizing (reduce weight for correlated sectors)
 
-Key improvements over v3:
-1. Adaptive rotation frequency based on market volatility
-2. Lower, conservative leverage (1.0-1.25x max)
-3. Regime-aware stop losses (wider in bull markets)
-4. Allows concentration in winning sectors
-5. Trend persistence filter to reduce whipsaws
-
-Target: Beat SPY in at least 4 out of 5 years (2020-2024)
+Target: Beat SPY 14.34% CAGR with DD < 25%
 """
 
 import pandas as pd
@@ -24,14 +20,7 @@ from models.base import BaseModel, Context, ModelOutput
 
 class SectorRotationConsistent_v5(BaseModel):
     """
-    Consistent yearly alpha with CRASH PROTECTION + DIP BUYING + TRAILING STOPS.
-
-    V5 improvements over v3:
-    - Trailing ATR-based stops to lock in gains
-    - Exit when price drops X ATR from high watermark
-    - Preserves all V3 functionality
-
-    Philosophy: Lock in gains, cut losses early
+    V5: Tuned crash protection + relative strength + correlation sizing.
     """
 
     def __init__(
@@ -40,58 +29,65 @@ class SectorRotationConsistent_v5(BaseModel):
         sectors: list[str] = None,
         defensive_asset: str = "TLT",
 
-        # Crash protection parameters
-        crash_drop_threshold: float = -0.07,  # -7% in 5 days = crash
+        # V5: Tuned crash protection (faster detection, quicker recovery)
+        crash_drop_threshold: float = -0.05,  # Was -0.07, now -5%
         crash_drop_days: int = 5,
-        vix_crash_threshold: float = 35,  # VIX > 35 = crash
-        vix_recovery_threshold: float = 25,  # VIX < 25 = recovery starting
-        crash_exposure: float = 0.25,  # Reduce to 25% during crash
-        dip_buy_drawdown_threshold: float = -0.20,  # After 20% drop, enable dip buying
-        dip_buy_weeks: int = 4,  # Scale in over 4 weeks
+        vix_crash_threshold: float = 30,  # Was 35, now 30
+        vix_recovery_threshold: float = 25,
+        crash_exposure: float = 0.40,  # Was 0.25, less defensive
+        dip_buy_drawdown_threshold: float = -0.15,  # Was -0.20
+        dip_buy_weeks: int = 2,  # Was 4, faster recovery
+
+        # V5: Relative strength filter
+        use_relative_strength: bool = True,  # Only trade sectors > SPY
+        relative_strength_period: int = 63,  # 3-month lookback
+
+        # V5: Correlation-based sizing
+        use_correlation_sizing: bool = True,
+        correlation_lookback: int = 60,
+        correlation_threshold: float = 0.75,  # Reduce weight if corr > 0.75
+        correlation_weight_reduction: float = 0.5,  # Reduce to 50% of normal weight
 
         # Rotation frequency controls
-        min_hold_days_low_vol: int = 15,  # Hold longer in trending markets
-        min_hold_days_high_vol: int = 5,  # Can rotate faster in volatile markets
-        rotation_threshold: float = 0.05,  # Min score difference to trigger rotation
+        min_hold_days_low_vol: int = 15,
+        min_hold_days_high_vol: int = 5,
+        rotation_threshold: float = 0.05,
 
         # Conservative leverage settings
-        bull_leverage: float = 1.2,  # Max 1.25x for small accounts
-        bear_leverage: float = 1.0,  # No leverage in bear markets
-        volatility_leverage_adj: bool = True,  # Reduce leverage when vol is high
+        bull_leverage: float = 1.2,
+        bear_leverage: float = 1.0,
+        volatility_leverage_adj: bool = True,
 
         # Adaptive stop losses
-        bull_stop_mult: float = 2.5,  # Wider stops in bull markets
-        bear_stop_mult: float = 1.5,  # Tighter stops in bear markets
-        normal_stop_mult: float = 2.0,  # Default
+        bull_stop_mult: float = 2.5,
+        bear_stop_mult: float = 1.5,
+        normal_stop_mult: float = 2.0,
 
         # Concentration controls
-        max_sector_weight: float = 0.5,  # Allow up to 50% in best sector
-        concentration_momentum_threshold: float = 0.8,  # Momentum score for concentration
-        rebalance_threshold: float = 0.15,  # Rebalance if deviation > 15%
+        max_sector_weight: float = 0.5,
+        concentration_momentum_threshold: float = 0.8,
+        rebalance_threshold: float = 0.15,
 
         # Trend persistence
-        trend_lookback: int = 40,  # Days to measure trend strength
-        momentum_decay: float = 0.95,  # Decay factor for momentum scoring
-        weakness_threshold: float = -0.05,  # Rotate out if return < -5%
+        trend_lookback: int = 40,
+        momentum_decay: float = 0.95,
+        weakness_threshold: float = -0.05,
 
-        # ATR parameters (from optimized v3)
-        atr_period: int = 21,  # Optimized from EA
+        # ATR parameters
+        atr_period: int = 21,
         take_profit_atr_mult: float = 2.5,
 
-        # V5: Trailing stop parameters
-        trailing_atr_mult: float = 2.0,  # Exit if price drops X ATR from high
-
         # Momentum parameters
-        momentum_period: int = 126,  # 6-month momentum
-        top_n_sectors: int = 4,  # Number of sectors to hold
-        min_momentum: float = 0.10,  # Minimum momentum to invest
+        momentum_period: int = 126,
+        top_n_sectors: int = 4,
+        min_momentum: float = 0.10,
 
         # Volatility regime detection
         vol_lookback: int = 20,
-        vol_percentile_low: float = 0.3,  # Below 30th percentile = low vol
-        vol_percentile_high: float = 0.7,  # Above 70th percentile = high vol
-        vix_threshold_low: float = 15,  # VIX < 15 = low vol
-        vix_threshold_high: float = 25,  # VIX > 25 = high vol
+        vol_percentile_low: float = 0.3,
+        vol_percentile_high: float = 0.7,
+        vix_threshold_low: float = 15,
+        vix_threshold_high: float = 25,
     ):
         self.sectors = sectors or [
             'XLK', 'XLF', 'XLE', 'XLV', 'XLI',
@@ -99,7 +95,6 @@ class SectorRotationConsistent_v5(BaseModel):
         ]
 
         self.defensive_asset = defensive_asset
-        # Only tradeable assets in universe (SPY/VIX come from profile)
         self.all_assets = self.sectors + [defensive_asset]
         self.assets = self.all_assets
         self.model_id = model_id
@@ -127,7 +122,6 @@ class SectorRotationConsistent_v5(BaseModel):
 
         self.atr_period = atr_period
         self.take_profit_atr_mult = take_profit_atr_mult
-        self.trailing_atr_mult = trailing_atr_mult
 
         self.momentum_period = momentum_period
         self.top_n_sectors = top_n_sectors
@@ -139,14 +133,18 @@ class SectorRotationConsistent_v5(BaseModel):
         self.vix_threshold_low = vix_threshold_low
         self.vix_threshold_high = vix_threshold_high
 
+        # V5: New parameters
+        self.use_relative_strength = use_relative_strength
+        self.relative_strength_period = relative_strength_period
+        self.use_correlation_sizing = use_correlation_sizing
+        self.correlation_lookback = correlation_lookback
+        self.correlation_threshold = correlation_threshold
+        self.correlation_weight_reduction = correlation_weight_reduction
+
         # State tracking
         self.current_positions = {}
         self.position_entry_dates = {}
         self.last_rotation_date = None
-
-        # V5: Trailing stop tracking
-        self.position_high_watermarks = {}  # Track high watermark per position
-        self.position_entry_prices = {}  # Track entry price per position
 
         # Drawdown protection state
         self.peak_nav = None
@@ -158,7 +156,7 @@ class SectorRotationConsistent_v5(BaseModel):
         self.profit_lock_floor = None
         self.last_month_end_nav = None
 
-        # V3: Crash protection state
+        # Crash protection state
         self.crash_drop_threshold = crash_drop_threshold
         self.crash_drop_days = crash_drop_days
         self.vix_crash_threshold = vix_crash_threshold
@@ -181,10 +179,7 @@ class SectorRotationConsistent_v5(BaseModel):
         )
 
     def detect_volatility_regime(self, context: Context) -> str:
-        """
-        Detect current volatility regime (low/normal/high).
-        """
-        # Try to use VIX if available
+        """Detect current volatility regime (low/normal/high)."""
         if '^VIX' in context.asset_features:
             vix_data = context.asset_features['^VIX']
             if len(vix_data) > 0:
@@ -196,7 +191,6 @@ class SectorRotationConsistent_v5(BaseModel):
                 else:
                     return 'normal'
 
-        # Fallback: Use SPY volatility
         if 'SPY' in context.asset_features:
             spy_data = context.asset_features['SPY']
             if len(spy_data) > self.vol_lookback:
@@ -212,17 +206,10 @@ class SectorRotationConsistent_v5(BaseModel):
                 else:
                     return 'normal'
 
-        return 'normal'  # Default
+        return 'normal'
 
     def detect_crash_and_recovery(self, context: Context) -> tuple[bool, float]:
-        """
-        V3: Fast crash detection and dip-buy recovery logic.
-
-        Returns:
-            (is_crash_mode, exposure_multiplier)
-            - is_crash_mode: True if we should be defensive
-            - exposure_multiplier: 0.25 during crash, gradual scale up during recovery
-        """
+        """V5: Tuned crash detection with faster recovery."""
         if 'SPY' not in context.asset_features:
             return False, 1.0
 
@@ -233,28 +220,23 @@ class SectorRotationConsistent_v5(BaseModel):
         current_price = spy_data['close'].iloc[-1]
         current_date = context.timestamp
 
-        # Track SPY peak for drawdown calculation
         if self.spy_peak_price is None:
             self.spy_peak_price = current_price
         else:
             self.spy_peak_price = max(self.spy_peak_price, current_price)
 
-        # Calculate recent drop (5-day return)
         price_n_days_ago = spy_data['close'].iloc[-self.crash_drop_days - 1]
         recent_return = (current_price - price_n_days_ago) / price_n_days_ago
 
-        # Calculate drawdown from peak
         drawdown_from_peak = (current_price - self.spy_peak_price) / self.spy_peak_price
         self.max_drawdown_seen = min(self.max_drawdown_seen, drawdown_from_peak)
 
-        # Get VIX if available
         current_vix = None
         if '^VIX' in context.asset_features:
             vix_data = context.asset_features['^VIX']
             if len(vix_data) > 0:
                 current_vix = vix_data['close'].iloc[-1]
 
-        # CRASH DETECTION: SPY down >7% in 5 days OR VIX > 35
         crash_triggered = (
             recent_return < self.crash_drop_threshold or
             (current_vix is not None and current_vix > self.vix_crash_threshold)
@@ -265,135 +247,101 @@ class SectorRotationConsistent_v5(BaseModel):
             self.dip_buy_mode_active = False
             self.dip_buy_start_date = None
 
-        # EXIT CRASH MODE: VIX < 25 and SPY above 10D MA
         if self.crash_mode_active:
             sma_10 = spy_data['close'].rolling(10).mean().iloc[-1]
             vix_ok = current_vix is None or current_vix < self.vix_recovery_threshold
             price_ok = current_price > sma_10
 
             if vix_ok and price_ok:
-                # Check if we should enter dip-buy mode (after big drawdown)
                 if self.max_drawdown_seen < self.dip_buy_drawdown_threshold:
                     self.crash_mode_active = False
                     self.dip_buy_mode_active = True
                     self.dip_buy_start_date = current_date
                 else:
-                    # Smaller drawdown, just exit crash mode normally
                     self.crash_mode_active = False
 
-        # DIP-BUY MODE: Gradual scale-in over N weeks
         if self.dip_buy_mode_active:
             if self.dip_buy_start_date is not None:
                 days_since_start = (current_date - self.dip_buy_start_date).days
                 weeks_elapsed = days_since_start / 7.0
 
                 if weeks_elapsed >= self.dip_buy_weeks:
-                    # Fully scaled back in
                     self.dip_buy_mode_active = False
                     self.dip_buy_start_date = None
-                    self.max_drawdown_seen = 0.0  # Reset for next crash
+                    self.max_drawdown_seen = 0.0
                     return False, 1.0
                 else:
-                    # Gradual scale-in: 25% per week
                     exposure = self.crash_exposure + (1 - self.crash_exposure) * (weeks_elapsed / self.dip_buy_weeks)
                     return False, exposure
 
-        # Return crash mode status
         if self.crash_mode_active:
             return True, self.crash_exposure
 
         return False, 1.0
 
     def detect_market_regime(self, context: Context) -> str:
-        """
-        Detect market regime with 5 states: steady_bull, volatile_bull, recovery, bear, concentrated.
-
-        V2: Added 'recovery' regime for fast detection of post-crash rebounds (like April 2020).
-        """
+        """Detect market regime with 5 states."""
         if 'SPY' not in context.asset_features:
-            return 'volatile_bull'  # Default to cautious
+            return 'volatile_bull'
 
         spy_data = context.asset_features['SPY']
         if len(spy_data) < 200:
             return 'volatile_bull'
 
-        # Use multiple timeframe MAs
         sma_200 = spy_data['close'].rolling(200).mean().iloc[-1]
         sma_50 = spy_data['close'].rolling(50).mean().iloc[-1]
         sma_20 = spy_data['close'].rolling(20).mean().iloc[-1]
         current_price = spy_data['close'].iloc[-1]
 
-        # Get volatility regime
         vol_regime = self.detect_volatility_regime(context)
 
-        # Check for concentrated market (one sector dominates)
         scores = self.calculate_momentum_scores(context)
         if scores:
             dispersion = self.calculate_sector_dispersion(scores)
-            if dispersion > 0.15:  # High dispersion = one sector dominates
+            if dispersion > 0.15:
                 return 'concentrated'
 
-        # V2: Detect RECOVERY regime - price below 200D but 50D crossing up
-        # This catches the April-May 2020 rebound while still below 200D MA
         if current_price < sma_200 and sma_50 < sma_200:
-            # Check if we're recovering: 20D > 50D and price > 20D
             if current_price > sma_20 and sma_20 > sma_50:
-                return 'recovery'  # Aggressive during post-crash rebounds
+                return 'recovery'
             return 'bear'
         elif current_price > sma_200 and sma_50 > sma_200:
-            # Distinguish steady vs volatile bull
             if vol_regime == 'low':
                 return 'steady_bull'
             else:
                 return 'volatile_bull'
         else:
-            # Transitional: use 50D MA for faster regime change
             if current_price > sma_50:
                 return 'volatile_bull'
             else:
-                return 'recovery'  # Give benefit of doubt to recoveries
+                return 'recovery'
 
     def calculate_sector_dispersion(self, scores: Dict[str, float]) -> float:
-        """
-        Calculate dispersion of sector momentum scores.
-        High dispersion = concentrated market (one sector dominates).
-        """
+        """Calculate dispersion of sector momentum scores."""
         if not scores or len(scores) < 2:
             return 0.0
 
         values = list(scores.values())
         sorted_vals = sorted(values, reverse=True)
 
-        # Ratio of top sector to average
         top_score = sorted_vals[0]
         avg_score = np.mean(values)
 
         if avg_score == 0:
             return 0.0
 
-        # Dispersion = how much top sector exceeds average
         dispersion = (top_score - avg_score) / abs(avg_score) if avg_score != 0 else 0
         return max(0, dispersion)
 
     def calculate_drawdown_protection_factor(self, context: Context) -> float:
-        """
-        Calculate position size multiplier based on drawdown protection rules.
-        Returns value between 0.0 (full exit) and 1.0 (full position).
-
-        Rules:
-        1. If down 10% from peak, reduce to 50%
-        2. If up 15% YTD and down 5% from YTD high, reduce to 50%
-        3. Never give back more than 5% of previous month's gains
-        """
-        # Get current NAV from context
+        """Calculate position size multiplier based on drawdown protection rules."""
         current_nav = context.portfolio_value if hasattr(context, 'portfolio_value') else None
         if current_nav is None:
-            return 1.0  # No protection if no NAV available
+            return 1.0
 
         current_date = context.timestamp
         current_year = current_date.year
 
-        # Initialize year tracking
         if self.current_year != current_year:
             self.current_year = current_year
             self.ytd_start_nav = current_nav
@@ -401,7 +349,6 @@ class SectorRotationConsistent_v5(BaseModel):
             self.profit_lock_active = False
             self.profit_lock_floor = None
 
-        # Update peaks
         if self.peak_nav is None:
             self.peak_nav = current_nav
         else:
@@ -412,7 +359,6 @@ class SectorRotationConsistent_v5(BaseModel):
         else:
             self.ytd_high_nav = max(self.ytd_high_nav, current_nav)
 
-        # Calculate drawdowns
         drawdown_from_peak = (current_nav - self.peak_nav) / self.peak_nav if self.peak_nav > 0 else 0
 
         ytd_return = (current_nav - self.ytd_start_nav) / self.ytd_start_nav if self.ytd_start_nav > 0 else 0
@@ -420,96 +366,139 @@ class SectorRotationConsistent_v5(BaseModel):
 
         protection_factor = 1.0
 
-        # Rule 1: Down 10% from all-time peak
         if drawdown_from_peak < -0.10:
             protection_factor = min(protection_factor, 0.5)
             self.is_in_drawdown_protection = True
 
-        # Rule 2: Profit lock - if up 15% YTD, protect gains
         if ytd_return > 0.15:
             self.profit_lock_active = True
             if self.profit_lock_floor is None:
-                self.profit_lock_floor = current_nav * 0.95  # Lock in 95% of current value
+                self.profit_lock_floor = current_nav * 0.95
             else:
-                # Ratchet up the floor as we make more gains
                 new_floor = current_nav * 0.95
                 self.profit_lock_floor = max(self.profit_lock_floor, new_floor)
 
-            # If we've fallen below the floor, reduce exposure
             if current_nav < self.profit_lock_floor:
                 protection_factor = min(protection_factor, 0.5)
 
-        # Rule 3: Down 5% from YTD high (when we have profits)
         if ytd_return > 0.10 and drawdown_from_ytd_high < -0.05:
             protection_factor = min(protection_factor, 0.5)
 
-        # Exit protection mode if we recover
         if drawdown_from_peak > -0.05 and self.is_in_drawdown_protection:
             self.is_in_drawdown_protection = False
 
         return protection_factor
 
-    def check_trailing_stops(self, context: Context) -> set:
+    def calculate_relative_strength(self, context: Context) -> Dict[str, float]:
         """
-        V5: Check trailing stops for all current positions.
-
-        Updates high watermarks and returns set of symbols that should be exited.
-        Exit if price drops more than X ATR from high watermark.
+        V5: Calculate relative strength vs SPY for each sector.
+        Returns dict of sector -> relative performance (positive = outperforming SPY)
         """
-        exits = set()
+        relative_strength = {}
 
-        for symbol in list(self.current_positions.keys()):
-            if symbol not in context.asset_features:
+        if 'SPY' not in context.asset_features:
+            return {sector: 0.0 for sector in self.sectors}
+
+        spy_data = context.asset_features['SPY']
+        if len(spy_data) < self.relative_strength_period:
+            return {sector: 0.0 for sector in self.sectors}
+
+        spy_return = (
+            spy_data['close'].iloc[-1] / spy_data['close'].iloc[-self.relative_strength_period] - 1
+        )
+
+        for sector in self.sectors:
+            if sector not in context.asset_features:
+                relative_strength[sector] = -1.0
                 continue
 
-            data = context.asset_features[symbol]
-            if len(data) < self.atr_period + 1:
+            data = context.asset_features[sector]
+            if len(data) < self.relative_strength_period:
+                relative_strength[sector] = -1.0
                 continue
 
-            current_price = data['close'].iloc[-1]
-
-            # Initialize tracking if new position
-            if symbol not in self.position_high_watermarks:
-                self.position_high_watermarks[symbol] = current_price
-                self.position_entry_prices[symbol] = current_price
-
-            # Update high watermark
-            self.position_high_watermarks[symbol] = max(
-                self.position_high_watermarks[symbol],
-                current_price
+            sector_return = (
+                data['close'].iloc[-1] / data['close'].iloc[-self.relative_strength_period] - 1
             )
 
-            # Calculate ATR
-            high = data['high'].iloc[-self.atr_period:]
-            low = data['low'].iloc[-self.atr_period:]
-            close = data['close'].iloc[-self.atr_period:]
+            relative_strength[sector] = sector_return - spy_return
 
-            tr = pd.DataFrame()
-            tr['hl'] = high - low
-            tr['hc'] = abs(high - close.shift(1))
-            tr['lc'] = abs(low - close.shift(1))
-            atr = tr.max(axis=1).mean()
+        return relative_strength
 
-            # Check trailing stop
-            high_watermark = self.position_high_watermarks[symbol]
-            trailing_stop_level = high_watermark - (atr * self.trailing_atr_mult)
+    def calculate_correlations(self, context: Context) -> Dict[str, Dict[str, float]]:
+        """
+        V5: Calculate pairwise correlations between sectors.
+        """
+        correlations = {}
+        returns_data = {}
 
-            if current_price < trailing_stop_level:
-                exits.add(symbol)
-                # Clean up tracking for exited position
-                if symbol in self.position_high_watermarks:
-                    del self.position_high_watermarks[symbol]
-                if symbol in self.position_entry_prices:
-                    del self.position_entry_prices[symbol]
+        for sector in self.sectors:
+            if sector not in context.asset_features:
+                continue
 
-        return exits
+            data = context.asset_features[sector]
+            if len(data) < self.correlation_lookback:
+                continue
+
+            returns = data['close'].pct_change().iloc[-self.correlation_lookback:]
+            returns_data[sector] = returns
+
+        for sector in returns_data:
+            correlations[sector] = {}
+            for other_sector in returns_data:
+                if sector == other_sector:
+                    correlations[sector][other_sector] = 1.0
+                else:
+                    corr = returns_data[sector].corr(returns_data[other_sector])
+                    correlations[sector][other_sector] = corr if not np.isnan(corr) else 0.0
+
+        return correlations
+
+    def apply_correlation_sizing(self, weights: Dict[str, float], context: Context) -> Dict[str, float]:
+        """V5: Reduce weights for highly correlated sectors."""
+        if not self.use_correlation_sizing or len(weights) < 2:
+            return weights
+
+        correlations = self.calculate_correlations(context)
+        if not correlations:
+            return weights
+
+        adjusted_weights = weights.copy()
+        sectors_in_portfolio = [s for s in weights if s in self.sectors and weights[s] > 0]
+
+        processed_pairs = set()
+
+        for sector in sectors_in_portfolio:
+            if sector not in correlations:
+                continue
+
+            for other_sector in sectors_in_portfolio:
+                if sector == other_sector:
+                    continue
+
+                pair = tuple(sorted([sector, other_sector]))
+                if pair in processed_pairs:
+                    continue
+                processed_pairs.add(pair)
+
+                if other_sector not in correlations.get(sector, {}):
+                    continue
+
+                corr = correlations[sector][other_sector]
+
+                if corr > self.correlation_threshold:
+                    if adjusted_weights.get(sector, 0) < adjusted_weights.get(other_sector, 0):
+                        lower_sector = sector
+                    else:
+                        lower_sector = other_sector
+
+                    if lower_sector in adjusted_weights:
+                        adjusted_weights[lower_sector] *= self.correlation_weight_reduction
+
+        return adjusted_weights
 
     def calculate_momentum_scores(self, context: Context) -> Dict[str, float]:
-        """
-        Calculate risk-adjusted momentum scores for each sector.
-        Uses momentum divided by volatility (Sharpe-like) to favor consistent returns
-        over volatile sectors that may be bouncing from extreme lows.
-        """
+        """Calculate risk-adjusted momentum scores for each sector."""
         scores = {}
 
         for sector in self.sectors:
@@ -522,29 +511,22 @@ class SectorRotationConsistent_v5(BaseModel):
                 scores[sector] = 0.0
                 continue
 
-            # Calculate momentum with decay
             returns = data['close'].pct_change()
 
-            # Recent momentum (last 20 days) - higher weight
             recent_momentum = returns.iloc[-20:].mean() * 252
             recent_vol = returns.iloc[-20:].std() * (252 ** 0.5)
 
-            # Medium-term momentum (last 60 days)
             medium_momentum = returns.iloc[-60:].mean() * 252
             medium_vol = returns.iloc[-60:].std() * (252 ** 0.5)
 
-            # Long-term momentum (full period)
             long_momentum = returns.iloc[-self.momentum_period:].mean() * 252
             long_vol = returns.iloc[-self.momentum_period:].std() * (252 ** 0.5)
 
-            # Risk-adjust each momentum component (Sharpe-like)
-            # This penalizes volatile sectors like XLE that bounce from extreme lows
-            eps = 0.01  # Avoid division by zero
+            eps = 0.01
             recent_score = recent_momentum / max(recent_vol, eps)
             medium_score = medium_momentum / max(medium_vol, eps)
             long_score = long_momentum / max(long_vol, eps)
 
-            # Weighted score with decay
             score = (
                 recent_score * 1.0 +
                 medium_score * self.momentum_decay +
@@ -557,119 +539,89 @@ class SectorRotationConsistent_v5(BaseModel):
 
     def should_rotate(self, current_sector: str, best_sector: str,
                      scores: Dict[str, float]) -> bool:
-        """
-        Determine if rotation is warranted based on score difference.
-        """
+        """Determine if rotation is warranted based on score difference."""
         if current_sector not in scores or best_sector not in scores:
             return True
 
         score_diff = scores[best_sector] - scores[current_sector]
 
-        # Check if current sector is showing weakness
         if scores[current_sector] < self.weakness_threshold:
             return True
 
-        # Check if difference exceeds threshold
         return score_diff > self.rotation_threshold
 
     def get_adaptive_parameters(self, context: Context) -> Dict:
-        """
-        Get adaptive parameters based on current market conditions.
-        Uses 4-state regime system for better consistency.
-
-        Now uses profile parameters (bull_leverage, bear_leverage, top_n_sectors)
-        as base values, with regime-specific multipliers.
-        """
+        """Get adaptive parameters based on current market conditions."""
         market_regime = self.detect_market_regime(context)
 
-        # Regime-specific multipliers that scale profile parameters
-        # leverage_mult: multiplier for bull_leverage (or bear_leverage in bear regime)
-        # top_n_adj: adjustment to top_n_sectors (-2 to +1)
         regime_params = {
             'steady_bull': {
-                'min_hold_days': 21,      # Hold longer in steady trends
-                'leverage_mult': 0.83,    # 83% of bull_leverage (was 1.0/1.2)
-                'top_n_adj': -2,          # top_n - 2 (concentrate more)
-                'stop_loss_mult': 2.5,    # Wider stops
-                'description': 'Patient holding in stable uptrends'
+                'min_hold_days': 21,
+                'leverage_mult': 0.83,
+                'top_n_adj': -2,
+                'stop_loss_mult': 2.5,
             },
             'volatile_bull': {
-                'min_hold_days': 7,       # Can rotate faster
-                'leverage_mult': 1.04,    # 104% of bull_leverage (was 1.25/1.2)
-                'top_n_adj': -1,          # top_n - 1
-                'stop_loss_mult': 2.0,    # Normal stops
-                'description': 'Active rotation in volatile uptrends'
+                'min_hold_days': 7,
+                'leverage_mult': 1.04,
+                'top_n_adj': -1,
+                'stop_loss_mult': 2.0,
             },
             'recovery': {
-                'min_hold_days': 5,       # Fast rotation during rebounds
-                'leverage_mult': 1.04,    # Full leverage - ride the rebound!
-                'top_n_adj': -1,          # top_n - 1
-                'stop_loss_mult': 1.8,    # Medium-tight stops
-                'description': 'Aggressive during post-crash rebounds (like Apr 2020)'
+                'min_hold_days': 5,
+                'leverage_mult': 1.04,
+                'top_n_adj': -1,
+                'stop_loss_mult': 1.8,
             },
             'bear': {
-                'min_hold_days': 5,       # Quick to exit
-                'leverage_mult': 1.0,     # Use bear_leverage directly
-                'top_n_adj': -2,          # top_n - 2 (only best ideas)
-                'stop_loss_mult': 1.5,    # Tight stops
-                'use_bear_leverage': True,  # Flag to use bear_leverage instead
-                'description': 'Defensive but not too cautious'
+                'min_hold_days': 5,
+                'leverage_mult': 1.0,
+                'top_n_adj': -2,
+                'stop_loss_mult': 1.5,
+                'use_bear_leverage': True,
             },
             'concentrated': {
-                'min_hold_days': 14,      # Medium hold
-                'leverage_mult': 1.04,    # Full leverage on concentrated bet
-                'top_n_adj': -3,          # top_n - 3 (ride the winner)
-                'stop_loss_mult': 2.0,    # Normal stops
-                'max_weight': 0.6,        # Allow 60% concentration
-                'description': 'Ride dominant sector (like 2024 tech)'
+                'min_hold_days': 14,
+                'leverage_mult': 1.04,
+                'top_n_adj': -3,
+                'stop_loss_mult': 2.0,
+                'max_weight': 0.6,
             }
         }
 
         params = regime_params.get(market_regime, regime_params['volatile_bull'])
 
-        # Calculate actual leverage from profile parameter
         if params.get('use_bear_leverage', False):
             base_leverage = self.bear_leverage
         else:
             base_leverage = self.bull_leverage
 
         params['leverage'] = base_leverage * params['leverage_mult']
-
-        # Calculate actual top_n from profile parameter
         params['top_n'] = max(1, self.top_n_sectors + params['top_n_adj'])
-
-        # Store regime for debugging
         params['regime'] = market_regime
 
         return params
 
     def apply_concentration_boost(self, weights: Dict[str, float],
                                  scores: Dict[str, float]) -> Dict[str, float]:
-        """
-        Allow concentration in strongly trending sectors.
-        """
+        """Allow concentration in strongly trending sectors."""
         if not scores:
             return weights
 
-        # Find the best sector
         best_sector = max(scores, key=scores.get)
         best_score = scores[best_sector]
 
-        # Normalize scores to [0, 1]
         min_score = min(scores.values())
         max_score = max(scores.values())
         score_range = max_score - min_score if max_score != min_score else 1.0
 
         normalized_score = (best_score - min_score) / score_range
 
-        # If best sector has strong momentum, allow concentration
         if normalized_score >= self.concentration_momentum_threshold:
             if best_sector in weights:
-                # Boost weight up to max_sector_weight
                 original_weight = weights[best_sector]
                 boosted_weight = min(original_weight * 1.5, self.max_sector_weight)
 
-                # Adjust other weights proportionally
                 boost_amount = boosted_weight - original_weight
                 other_total = sum(w for s, w in weights.items() if s != best_sector)
 
@@ -679,7 +631,6 @@ class SectorRotationConsistent_v5(BaseModel):
                         if sector == best_sector:
                             adjusted_weights[sector] = boosted_weight
                         else:
-                            # Reduce other weights proportionally
                             reduction = (weight / other_total) * boost_amount
                             adjusted_weights[sector] = max(0, weight - reduction)
 
@@ -688,51 +639,31 @@ class SectorRotationConsistent_v5(BaseModel):
         return weights
 
     def generate_target_weights(self, context: Context) -> ModelOutput:
-        """
-        Generate portfolio weights using adaptive parameters and crash protection.
-
-        V3: Crash protection takes precedence over normal allocation.
-        """
+        """Generate portfolio weights with V5 improvements."""
         weights = {}
         current_date = context.timestamp
 
-        # V5: Check trailing stops FIRST - exit positions that hit stops
-        trailing_stop_exits = self.check_trailing_stops(context)
-
-        # Remove stopped-out positions from current holdings
-        for symbol in trailing_stop_exits:
-            if symbol in self.current_positions:
-                del self.current_positions[symbol]
-
-        # V3: Check crash protection - this overrides normal allocation
         is_crash_mode, crash_exposure_mult = self.detect_crash_and_recovery(context)
-
-        # Get adaptive parameters (now with regime-specific settings)
         params = self.get_adaptive_parameters(context)
-
-        # Get drawdown protection factor
         protection_factor = self.calculate_drawdown_protection_factor(context)
-
-        # V3: Apply crash exposure multiplier (lowest of crash and protection)
         effective_exposure = min(crash_exposure_mult, protection_factor)
 
-        # Calculate momentum scores
         scores = self.calculate_momentum_scores(context)
 
-        # Sort sectors by momentum
+        # V5: Apply relative strength filter
+        if self.use_relative_strength:
+            relative_strength = self.calculate_relative_strength(context)
+            for sector in scores:
+                if relative_strength.get(sector, 0) < 0:
+                    scores[sector] = 0.0
+
         sorted_sectors = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-
-        # Check if we should be in defensive mode
         top_momentum = sorted_sectors[0][1] if sorted_sectors else 0
-
-        # Use regime-specific top_n
         top_n = params.get('top_n', self.top_n_sectors)
 
         if top_momentum < self.min_momentum:
-            # Go defensive
             weights[self.defensive_asset] = params['leverage'] * effective_exposure
         else:
-            # Select top N sectors (regime-specific)
             selected_sectors = []
             for sector, score in sorted_sectors[:top_n]:
                 if score >= self.min_momentum:
@@ -741,19 +672,15 @@ class SectorRotationConsistent_v5(BaseModel):
             if not selected_sectors:
                 weights[self.defensive_asset] = params['leverage'] * effective_exposure
             else:
-                # Check rotation conditions
                 should_rebalance = False
 
-                # Check minimum hold period
                 if self.last_rotation_date is not None:
                     days_held = (current_date - self.last_rotation_date).days
                     if days_held < params['min_hold_days']:
-                        # Keep current positions
                         for sector in self.current_positions:
                             if sector in scores and scores[sector] >= self.weakness_threshold:
                                 weights[sector] = self.current_positions[sector]
 
-                        # If no valid current positions, use new selection
                         if not weights:
                             should_rebalance = True
                     else:
@@ -761,7 +688,6 @@ class SectorRotationConsistent_v5(BaseModel):
                 else:
                     should_rebalance = True
 
-                # Check if rotation is needed
                 if should_rebalance and self.current_positions:
                     for current_sector in self.current_positions:
                         if current_sector not in selected_sectors:
@@ -773,45 +699,19 @@ class SectorRotationConsistent_v5(BaseModel):
                             should_rebalance = False
 
                 if should_rebalance or not self.current_positions:
-                    # Rebalance portfolio with effective exposure
                     base_weight = (params['leverage'] * effective_exposure) / len(selected_sectors)
                     for sector in selected_sectors:
                         weights[sector] = base_weight
 
-                    # Apply concentration boost if warranted
                     weights = self.apply_concentration_boost(weights, scores)
+                    weights = self.apply_correlation_sizing(weights, context)
 
-                    # Update tracking
                     self.current_positions = weights.copy()
                     self.last_rotation_date = current_date
                 else:
-                    # Keep current positions but apply effective exposure
                     weights = {}
                     for sector, weight in self.current_positions.items():
                         weights[sector] = weight * effective_exposure
-
-        # Calculate stop loss and take profit levels
-        stop_losses = {}
-        take_profits = {}
-
-        for asset in weights:
-            if asset in context.asset_features:
-                data = context.asset_features[asset]
-                if len(data) > self.atr_period:
-                    # Calculate ATR
-                    high = data['high'].iloc[-self.atr_period:]
-                    low = data['low'].iloc[-self.atr_period:]
-                    close = data['close'].iloc[-self.atr_period:]
-
-                    tr = pd.DataFrame()
-                    tr['hl'] = high - low
-                    tr['hc'] = abs(high - close.shift(1))
-                    tr['lc'] = abs(low - close.shift(1))
-                    atr = tr.max(axis=1).mean()
-
-                    current_price = close.iloc[-1]
-                    stop_losses[asset] = current_price - (atr * params['stop_loss_mult'])
-                    take_profits[asset] = current_price + (atr * self.take_profit_atr_mult)
 
         return ModelOutput(
             model_name=self.model_id,
@@ -828,11 +728,6 @@ class SectorRotationConsistent_v5(BaseModel):
         self.position_entry_dates = {}
         self.last_rotation_date = None
 
-        # V5: Reset trailing stop tracking
-        self.position_high_watermarks = {}
-        self.position_entry_prices = {}
-
-        # Reset drawdown protection state
         self.peak_nav = None
         self.ytd_start_nav = None
         self.current_year = None
@@ -842,7 +737,6 @@ class SectorRotationConsistent_v5(BaseModel):
         self.profit_lock_floor = None
         self.last_month_end_nav = None
 
-        # V3: Reset crash protection state
         self.crash_mode_active = False
         self.dip_buy_mode_active = False
         self.dip_buy_start_date = None
