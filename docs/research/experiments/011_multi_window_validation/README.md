@@ -48,7 +48,7 @@ Models that pass validation on diverse market conditions (bear, recovery, bull) 
 
 **CRITICAL FINDING**: Momentum-based sector rotation fundamentally cannot survive bear markets. This is not a parameter problem - it's a strategy architecture problem.
 
-See [CASE_STUDY_MOMENTUM_BEAR_MARKET_FAILURE.md](CASE_STUDY_MOMENTUM_BEAR_MARKET_FAILURE.md) for full analysis.
+See [Case Study: Momentum Bear Market Failure](../../case_studies/CASE_STUDY_MOMENTUM_BEAR_MARKET_FAILURE.md) for full analysis.
 
 ## Next Steps
 
