@@ -48,6 +48,9 @@ from models.sector_rotation_consistent_v1 import SectorRotationConsistent_v1
 from models.sector_rotation_consistent_v2 import SectorRotationConsistent_v2
 from models.sector_rotation_consistent_v3 import SectorRotationConsistent_v3
 from models.sector_rotation_consistent_v4 import SectorRotationConsistent_v4
+from models.bear_defensive_rotation_v1 import BearDefensiveRotation_v1
+from models.bear_correlation_gated_v1 import BearCorrelationGated_v1
+from models.bear_multi_asset_v1 import BearMultiAsset_v1
 from models.sector_rotation_consistent_v5 import SectorRotationConsistent_v5
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
@@ -167,6 +170,12 @@ class BacktestAnalyzer:
             return EquityTrendModel_v2_Daily(**parameters)
         elif model_name == "CashSecuredPutModel_v1":
             return CashSecuredPutModel_v1(**parameters)
+        elif model_name == "BearDefensiveRotation_v1":
+            return BearDefensiveRotation_v1(**parameters)
+        elif model_name == "BearCorrelationGated_v1":
+            return BearCorrelationGated_v1(**parameters)
+        elif model_name == "BearMultiAsset_v1":
+            return BearMultiAsset_v1(**parameters)
         else:
             raise ValueError(f"Unknown model: {model_name}")
 

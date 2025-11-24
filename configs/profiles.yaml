@@ -2149,6 +2149,73 @@ profiles:
       min_crash_days: 3
       max_hold_days: 60
 
+  # Experiment 012: Bear Market Strategies
+  exp012_defensive_2022:
+    description: "Bear Defensive Rotation - Test on 2022 bear market"
+    model: BearDefensiveRotation_v1
+    universe:
+    - XLU
+    - XLP
+    - TLT
+    - GLD
+    - UUP
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 30
+      top_n: 2
+      min_momentum: -0.05
+      rebalance_days: 10
+
+  exp012_correlation_2022:
+    description: "Bear Correlation Gated - Test on 2022 bear market"
+    model: BearCorrelationGated_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SGOV
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      correlation_window: 20
+      crisis_correlation: 0.8
+      moderate_correlation: 0.6
+      defensive_top_n: 3
+      rebalance_days: 7
+
+  exp012_multiasset_2022:
+    description: "Bear Multi-Asset - Test on 2022 bear market"
+    model: BearMultiAsset_v1
+    universe:
+    - TLT
+    - IEF
+    - GLD
+    - UUP
+    - XLU
+    - XLP
+    - XLV
+    - SGOV
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 60
+      top_n: 3
+      min_momentum: 0.0
+      rebalance_days: 14
+
 universes:
   major_indices:
   - SPY

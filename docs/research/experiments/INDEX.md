@@ -16,6 +16,9 @@ Experiments with complete documentation in dedicated folders:
 | 004 | [004_atr_stop_loss/](004_atr_stop_loss/) | ATR-based stop loss optimization | Nov 22, 2025 | ✅ Complete |
 | 006 | [006_consistent_stacking/](006_consistent_stacking/) | Consistent yearly alpha with crash protection | Nov 23, 2025 | ✅ Complete |
 | 007 | [007_v5_improvements/](007_v5_improvements/) | V5 improvements: crash tuning, relative strength, correlation | Nov 23, 2025 | ❌ Failed |
+| 010 | Undocumented | EA optimization with 2024 validation - passed but failed 2025 | Nov 23, 2025 | ❌ Failed |
+| 011 | [011_multi_window_validation/](011_multi_window_validation/) | Multi-window validation revealing momentum fails in bear markets | Nov 24, 2025 | ❌ Failed |
+| 012 | [012_bear_market_strategies/](012_bear_market_strategies/) | Bear market defensive strategies: defensive rotation, correlation gating, multi-asset | Nov 24, 2025 | 📝 Planning |
 
 ### Folder Structure
 
