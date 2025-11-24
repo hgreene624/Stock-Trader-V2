@@ -2,7 +2,21 @@
 
 **Date**: 2025-11-22
 **Model**: SectorRotationAdaptive_v3
-**Status**: Complete - Learning only (not deployed)
+**Status**: Complete - **CURRENT CHAMPION**
+
+## Reproducibility
+
+| Field | Value |
+|-------|-------|
+| **model_id** | `SectorRotationAdaptive_v3::m-204f26b3::p-3472939f` |
+| **model_hash** | `m-204f26b3` |
+| **param_id** | `p-3472939f` |
+| **param_summary** | `bull_lev=2, bear_lev=1.4, atr=21, tp=2.5` |
+| **profile** | `ea_optimized_atr` |
+
+```bash
+python3 -m backtest.analyze_cli --profile ea_optimized_atr
+```
 
 ## Abstract
 
@@ -72,6 +86,22 @@ Even the best configuration (10.68% CAGR) lags SPY (14.34% CAGR) by 3.66%. Possi
 
 ## Conclusion
 
-ATR stop losses can improve Sharpe ratio (1.726 vs 1.151 baseline) but the overall CAGR improvement is insufficient to beat SPY. The 21-day ATR period with 1.0/2.5 stop/profit ratios is optimal within tested parameters, but fundamental model changes may be needed to close the gap with benchmark.
+Initial manual testing showed 10.68% CAGR (below SPY). However, EA optimization found parameters that **beat SPY**:
 
-**Decision**: Do not deploy. Use findings to inform next experiment on combining optimal ATR with higher leverage or different rebalancing strategies.
+### EA-Optimized Results (Champion)
+- **CAGR**: 17.64%
+- **Sharpe**: 2.238
+- **Max DD**: 27.7%
+- **BPS**: 1.020
+
+### Key Parameters (EA-optimized)
+```yaml
+atr_period: 21
+stop_loss_atr_mult: 1.6
+take_profit_atr_mult: 2.48
+bull_leverage: 2.0
+bear_leverage: 1.38
+min_hold_days: 2
+```
+
+**Decision**: This is the current best model. Profile `ea_optimized_atr` beats SPY by 3.3%.
