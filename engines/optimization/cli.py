@@ -421,13 +421,13 @@ class OptimizationCLI:
         for param, (min_val, max_val) in simple_ranges.items():
             print(f"  {param}: [{min_val}, {max_val}]")
 
-        # Warn about parameter complexity
+        # Info about parameter complexity (not a hard warning)
         num_params = len(simple_ranges)
-        if num_params > 5:
-            print(f"\n⚠️  HIGH PARAMETER COMPLEXITY WARNING:")
-            print(f"   {num_params} parameters increases overfitting risk exponentially")
-            print(f"   Recommended: 3-5 parameters maximum")
-            print(f"   Consider fixing some parameters using domain knowledge")
+        # Calculate approximate data ratio needed (rule of thumb: N+1 ratio for N params)
+        recommended_ratio = num_params + 1
+        print(f"\n📊 Parameter complexity: {num_params} free parameters")
+        print(f"   Recommended train:validation ratio ≥ {recommended_ratio}:1")
+        print(f"   More parameters = more data needed to avoid overfitting")
 
         print(f"\nEvolutionary settings:")
         print(f"  Population size: {ea_config['population_size']}")
