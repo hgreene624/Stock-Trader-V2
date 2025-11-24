@@ -1,0 +1,62 @@
+# Experiment 011b: No Leverage EA Optimization
+#
+# After 185% degradation in bear market, try without leverage
+# Goal: Find parameters that at least don't LOSE money in 2022
+
+experiment:
+  name: sector_rotation_v4_no_leverage
+  description: "No leverage (1.0x max) - can we survive 2022?"
+  method: evolutionary
+
+  base_config: configs/base/system.yaml
+  target_model: SectorRotationAdaptive_v4
+
+  backtest:
+    train_start_date: "2015-01-01"
+    train_end_date: "2021-12-31"
+    validation_start_date: "2022-01-01"
+    validation_end_date: "2022-12-31"
+    lookback_bars: 250
+
+  # NO LEVERAGE - max 1.0x
+  parameter_ranges:
+    atr_period:
+      min: 10
+      max: 21
+    stop_loss_atr_mult:
+      min: 1.0
+      max: 2.5
+    take_profit_atr_mult:
+      min: 1.5
+      max: 3.5
+    bull_leverage:
+      min: 0.8
+      max: 1.0
+    bear_leverage:
+      min: 0.5
+      max: 1.0
+    bull_momentum_period:
+      min: 90
+      max: 180
+    bear_momentum_period:
+      min: 90
+      max: 180
+    bull_top_n:
+      min: 2
+      max: 5
+
+  evolutionary:
+    population_size: 30
+    num_generations: 15
+    mutation_rate: 0.25
+    crossover_rate: 0.8
+    elitism_count: 3
+    tournament_size: 4
+    seed: 44
+
+  optimization:
+    metric: bps
+
+  results:
+    database: docs/research/experiments/011_multi_window_validation/results/no_leverage.db
+    top_n: 10

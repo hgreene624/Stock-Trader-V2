@@ -1,0 +1,88 @@
+# Experiment 011: Multi-Window Validation EA Optimization
+#
+# Fix for Experiment 010 failure: Single-year validation insufficient
+#
+# Key improvements:
+# - Train on 2015-2021 (7 years)
+# - Validate on THREE windows: 2022 (bear), 2023 (recovery), 2024 (bull)
+# - Must pass ALL validation windows
+# - Constrained leverage (max 1.5x) for stability
+# - 2025 held out for final test
+
+experiment:
+  name: sector_rotation_v4_multi_window
+  description: "Multi-window validation: train 2015-2021, validate 2022+2023+2024"
+  method: evolutionary
+
+  base_config: configs/base/system.yaml
+  target_model: SectorRotationAdaptive_v4
+
+  backtest:
+    # Training period: 7 years (leaves 3 for validation)
+    train_start_date: "2015-01-01"
+    train_end_date: "2021-12-31"
+    # Primary validation (2022 - bear market)
+    validation_start_date: "2022-01-01"
+    validation_end_date: "2022-12-31"
+    # Additional validation windows tested separately
+    lookback_bars: 250
+
+  # Additional validation windows (tested after EA completes)
+  additional_validation:
+    - name: "2023_recovery"
+      start_date: "2023-01-01"
+      end_date: "2023-12-31"
+    - name: "2024_bull"
+      start_date: "2024-01-01"
+      end_date: "2024-12-31"
+
+  # Constrained parameter ranges to prevent overfitting
+  parameter_ranges:
+    atr_period:
+      min: 10
+      max: 21
+    stop_loss_atr_mult:
+      min: 1.0
+      max: 2.5
+    take_profit_atr_mult:
+      min: 1.5
+      max: 3.5
+    # CONSTRAINED: Max leverage 1.5x for stability
+    bull_leverage:
+      min: 1.0
+      max: 1.5
+    bear_leverage:
+      min: 0.8
+      max: 1.5
+    bull_momentum_period:
+      min: 90
+      max: 180
+    bear_momentum_period:
+      min: 90
+      max: 180
+    bull_top_n:
+      min: 2
+      max: 5
+
+  evolutionary:
+    population_size: 30
+    num_generations: 20
+    mutation_rate: 0.25
+    crossover_rate: 0.8
+    elitism_count: 3
+    tournament_size: 4
+    seed: 43  # Different seed for fresh search
+
+  optimization:
+    metric: bps
+
+  results:
+    database: docs/research/experiments/011_multi_window_validation/results/optimization.db
+    top_n: 10
+
+# Success criteria:
+# 1. Training BPS > 0.8
+# 2. ALL validation windows: BPS > 0.5
+# 3. Max degradation from training < 25%
+# 4. 2022 must have positive total return (crisis test)
+# 5. 2025 test confirms generalization
