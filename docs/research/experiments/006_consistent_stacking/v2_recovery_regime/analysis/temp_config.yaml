@@ -1,0 +1,61 @@
+backtest:
+  lookback_bars: 200
+data:
+  data_dir: data
+  primary_timeframe: 1D
+execution:
+  commission_rate: 0.001
+  initial_capital: 100000.0
+  slippage_bps: 5.0
+mode: backtest
+models:
+  SectorRotationConsistent_v2:
+    asset_classes:
+    - equity
+    budget: 1.0
+    enabled: true
+    parameters:
+      atr_period: 21
+      bear_leverage: 1.0
+      bear_stop_mult: 1.5
+      bull_leverage: 1.2
+      bull_stop_mult: 2.5
+      concentration_momentum_threshold: 0.8
+      max_sector_weight: 0.5
+      min_hold_days_high_vol: 5
+      min_hold_days_low_vol: 15
+      min_momentum: 0.1
+      momentum_decay: 0.95
+      momentum_period: 126
+      normal_stop_mult: 2.0
+      rebalance_threshold: 0.15
+      rotation_threshold: 0.05
+      take_profit_atr_mult: 2.5
+      top_n_sectors: 4
+      trend_lookback: 40
+      volatility_leverage_adj: true
+      weakness_threshold: -0.05
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+portfolio:
+  leverage_multiplier: 1.0
+risk:
+  max_asset_class_allocation:
+    crypto: 0.2
+    equity: 1.0
+  max_drawdown_threshold: 0.15
+  max_leverage: 1.0
+  max_position_size: 0.4

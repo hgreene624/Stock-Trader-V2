@@ -1,0 +1,119 @@
+{
+  "model": "SectorRotationConsistent_v1",
+  "start_date": "2020-01-01",
+  "end_date": "2024-12-31",
+  "metrics": {
+    "total_return": 1.2642144324258149,
+    "cagr": 0.17779870578050638,
+    "sharpe_ratio": 2.169679066251724,
+    "max_drawdown": 0.3614335147513517,
+    "win_rate": 0.5,
+    "total_trades": 3207,
+    "initial_nav": 99812.40402632143,
+    "final_nav": 225996.68573151348,
+    "bps": 0.9850678867597064
+  },
+  "generated_at": "2025-11-23T09:53:37.631878",
+  "reproducibility": {
+    "git_commit": "3f405af43ef0e15839270558c9cf02fdb788afa8",
+    "git_dirty": true,
+    "profile_name": "consistent_alpha_baseline",
+    "parameters": {
+      "min_hold_days_low_vol": 15,
+      "min_hold_days_high_vol": 5,
+      "rotation_threshold": 0.05,
+      "bull_leverage": 1.2,
+      "bear_leverage": 1.0,
+      "volatility_leverage_adj": true,
+      "bull_stop_mult": 2.5,
+      "bear_stop_mult": 1.5,
+      "normal_stop_mult": 2.0,
+      "max_sector_weight": 0.5,
+      "concentration_momentum_threshold": 0.8,
+      "rebalance_threshold": 0.15,
+      "trend_lookback": 40,
+      "momentum_decay": 0.95,
+      "weakness_threshold": -0.05,
+      "atr_period": 21,
+      "take_profit_atr_mult": 2.5,
+      "momentum_period": 126,
+      "top_n_sectors": 4,
+      "min_momentum": 0.1
+    },
+    "full_config": {
+      "mode": "backtest",
+      "data": {
+        "primary_timeframe": "1D",
+        "data_dir": "data"
+      },
+      "backtest": {
+        "lookback_bars": 200
+      },
+      "portfolio": {
+        "leverage_multiplier": 1.0
+      },
+      "risk": {
+        "max_leverage": 1.0,
+        "max_position_size": 0.4,
+        "max_asset_class_allocation": {
+          "equity": 1.0,
+          "crypto": 0.2
+        },
+        "max_drawdown_threshold": 0.15
+      },
+      "models": {
+        "SectorRotationConsistent_v1": {
+          "enabled": true,
+          "budget": 1.0,
+          "parameters": {
+            "min_hold_days_low_vol": 15,
+            "min_hold_days_high_vol": 5,
+            "rotation_threshold": 0.05,
+            "bull_leverage": 1.2,
+            "bear_leverage": 1.0,
+            "volatility_leverage_adj": true,
+            "bull_stop_mult": 2.5,
+            "bear_stop_mult": 1.5,
+            "normal_stop_mult": 2.0,
+            "max_sector_weight": 0.5,
+            "concentration_momentum_threshold": 0.8,
+            "rebalance_threshold": 0.15,
+            "trend_lookback": 40,
+            "momentum_decay": 0.95,
+            "weakness_threshold": -0.05,
+            "atr_period": 21,
+            "take_profit_atr_mult": 2.5,
+            "momentum_period": 126,
+            "top_n_sectors": 4,
+            "min_momentum": 0.1
+          },
+          "universe": [
+            "XLK",
+            "XLF",
+            "XLE",
+            "XLV",
+            "XLI",
+            "XLP",
+            "XLU",
+            "XLY",
+            "XLC",
+            "XLB",
+            "XLRE",
+            "TLT",
+            "SPY",
+            "^VIX"
+          ],
+          "asset_classes": [
+            "equity"
+          ]
+        }
+      },
+      "execution": {
+        "initial_capital": 100000.0,
+        "commission_rate": 0.001,
+        "slippage_bps": 5.0
+      }
+    },
+    "warning": "UNCOMMITTED CHANGES - Results may not be reproducible!"
+  }
+}

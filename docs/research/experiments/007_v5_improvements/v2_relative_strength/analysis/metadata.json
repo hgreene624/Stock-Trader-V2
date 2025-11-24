@@ -1,0 +1,125 @@
+{
+  "model": "SectorRotationConsistent_v5",
+  "model_id": "SectorRotationConsistent_v5::p-fb7d5d49",
+  "model_hash": null,
+  "param_id": "p-fb7d5d49",
+  "param_summary": "mom=126, top_n=4, bull_lev=1.2, bear_lev=1, min_mom=0.1",
+  "start_date": "2020-01-01",
+  "end_date": "2024-12-31",
+  "metrics": {
+    "total_return": 0.6187745759402058,
+    "cagr": 0.10125751091362045,
+    "sharpe_ratio": 1.5545226363322477,
+    "max_drawdown": 0.24745809827225884,
+    "win_rate": 0.5,
+    "total_trades": 1352,
+    "initial_nav": 99812.7219343413,
+    "final_nav": 161574.29662270102,
+    "bps": 0.7274404979797594
+  },
+  "generated_at": "2025-11-23T15:20:11.055068",
+  "reproducibility": {
+    "git_commit": "b6d64dd65a0c99b794e0a8be839b6e38e6e869ce",
+    "git_dirty": true,
+    "profile_name": "v5_relative_strength",
+    "parameters": {
+      "crash_drop_threshold": -0.05,
+      "crash_drop_days": 5,
+      "vix_crash_threshold": 30,
+      "vix_recovery_threshold": 25,
+      "crash_exposure": 0.4,
+      "dip_buy_drawdown_threshold": -0.15,
+      "dip_buy_weeks": 2,
+      "use_relative_strength": true,
+      "relative_strength_period": 63,
+      "use_correlation_sizing": false,
+      "bull_leverage": 1.2,
+      "bear_leverage": 1.0,
+      "momentum_period": 126,
+      "top_n_sectors": 4,
+      "min_momentum": 0.1
+    },
+    "full_config": {
+      "mode": "backtest",
+      "system": {
+        "reference_assets": [
+          {
+            "symbol": "SPY",
+            "required": true
+          },
+          {
+            "symbol": "^VIX",
+            "required": false
+          }
+        ]
+      },
+      "data": {
+        "primary_timeframe": "1D",
+        "data_dir": "data"
+      },
+      "backtest": {
+        "lookback_bars": 200
+      },
+      "portfolio": {
+        "leverage_multiplier": 1.0
+      },
+      "risk": {
+        "max_leverage": 1.0,
+        "max_position_size": 0.4,
+        "max_asset_class_allocation": {
+          "equity": 1.0,
+          "crypto": 0.2
+        },
+        "max_drawdown_threshold": 0.15
+      },
+      "models": {
+        "SectorRotationConsistent_v5": {
+          "enabled": true,
+          "budget": 1.0,
+          "parameters": {
+            "crash_drop_threshold": -0.05,
+            "crash_drop_days": 5,
+            "vix_crash_threshold": 30,
+            "vix_recovery_threshold": 25,
+            "crash_exposure": 0.4,
+            "dip_buy_drawdown_threshold": -0.15,
+            "dip_buy_weeks": 2,
+            "use_relative_strength": true,
+            "relative_strength_period": 63,
+            "use_correlation_sizing": false,
+            "bull_leverage": 1.2,
+            "bear_leverage": 1.0,
+            "momentum_period": 126,
+            "top_n_sectors": 4,
+            "min_momentum": 0.1
+          },
+          "universe": [
+            "XLK",
+            "XLF",
+            "XLE",
+            "XLV",
+            "XLI",
+            "XLP",
+            "XLU",
+            "XLY",
+            "XLC",
+            "XLB",
+            "XLRE",
+            "TLT",
+            "SPY",
+            "^VIX"
+          ],
+          "asset_classes": [
+            "equity"
+          ]
+        }
+      },
+      "execution": {
+        "initial_capital": 100000.0,
+        "commission_rate": 0.001,
+        "slippage_bps": 5.0
+      }
+    },
+    "warning": "UNCOMMITTED CHANGES - Results may not be reproducible!"
+  }
+}

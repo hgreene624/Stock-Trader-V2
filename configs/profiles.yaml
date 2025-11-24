@@ -1139,6 +1139,37 @@ profiles:
       bull_top_n: 4
       bear_top_n: 3
 
+  ea_wide_search_winner_capped:
+    description: EA winner with capped leverage for 2025 testing
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2025-01-01'
+    end_date: '2025-11-20'
+    lookback_bars: 200
+    parameters:
+      atr_period: 12
+      stop_loss_atr_mult: 1.46
+      take_profit_atr_mult: 3.75
+      min_hold_days: 2
+      bull_leverage: 1.5
+      bear_leverage: 1.5
+      bull_momentum_period: 138
+      bear_momentum_period: 175
+      bull_top_n: 4
+      bear_top_n: 3
+
   consistent_alpha_baseline:
     description: Baseline config for consistent yearly alpha experiment 005
     model: SectorRotationConsistent_v1

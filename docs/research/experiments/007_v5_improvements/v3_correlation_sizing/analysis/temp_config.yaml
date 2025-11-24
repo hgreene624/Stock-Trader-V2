@@ -1,0 +1,65 @@
+backtest:
+  lookback_bars: 200
+data:
+  data_dir: data
+  primary_timeframe: 1D
+execution:
+  commission_rate: 0.001
+  initial_capital: 100000.0
+  slippage_bps: 5.0
+mode: backtest
+models:
+  SectorRotationConsistent_v5:
+    asset_classes:
+    - equity
+    budget: 1.0
+    enabled: true
+    parameters:
+      bear_leverage: 1.0
+      bull_leverage: 1.2
+      correlation_lookback: 60
+      correlation_threshold: 0.75
+      correlation_weight_reduction: 0.5
+      crash_drop_days: 5
+      crash_drop_threshold: -0.05
+      crash_exposure: 0.4
+      dip_buy_drawdown_threshold: -0.15
+      dip_buy_weeks: 2
+      min_momentum: 0.1
+      momentum_period: 126
+      relative_strength_period: 63
+      top_n_sectors: 4
+      use_correlation_sizing: true
+      use_relative_strength: true
+      vix_crash_threshold: 30
+      vix_recovery_threshold: 25
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - ^VIX
+portfolio:
+  leverage_multiplier: 1.0
+risk:
+  max_asset_class_allocation:
+    crypto: 0.2
+    equity: 1.0
+  max_drawdown_threshold: 0.15
+  max_leverage: 1.0
+  max_position_size: 0.4
+system:
+  reference_assets:
+  - required: true
+    symbol: SPY
+  - required: false
+    symbol: ^VIX
