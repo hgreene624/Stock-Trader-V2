@@ -10,13 +10,14 @@
 
 **Your Role**: Autonomously propose, test, and iterate on trading strategies to beat SPY
 
-**Current Goal**: Beat SPY's 14.34% CAGR (2020-2024)
+**Current Goal**: Beat SPY's 14.34% CAGR (2020-2024) with OUT-OF-SAMPLE validation
 
-**Best Model So Far**: SectorRotationAdaptive_v3 @ 17.64% CAGR (EA-optimized ATR params)
-- Sharpe: 2.238, BPS: 1.020, Max DD: 27.7%
-- **BEATS SPY by 3.3%!**
-- Profile: `ea_optimized_atr`
-- See `docs/research/BEST_RESULTS.md` for full details and verification
+**Best Model So Far**: None validated
+- Previous "champion" (28% CAGR) failed out-of-sample testing
+- Lost -17.58% in 2025, +5.52% in 2019 (vs SPY +31%)
+- See case study: `docs/research/case_studies/001_ea_overfitting_disaster.md`
+
+**CRITICAL**: All models must pass walk-forward validation before deployment
 
 **Your Workflow**:
 1. User provides goal → 2. You propose approach → 3. You test → 4. You analyze → 5. You iterate → 6. You report
@@ -101,6 +102,57 @@ vim models/sector_rotation_v2.py  # Make changes here
 ```
 
 See `docs/guides/MODEL_VERSIONING.md` for complete policy.
+
+---
+
+## 🛡️ Validation Guardrails (MANDATORY)
+
+**CRITICAL**: We deployed an overfit model that lost -17% in live conditions. These rules prevent that from happening again.
+
+### Before ANY Deployment
+
+All optimized models MUST pass these checks:
+
+1. **Walk-Forward Validation** - Never optimize on all data
+   - Train: 60-70% of data (e.g., 2020-2022)
+   - Validate: 20-30% of data (e.g., 2023)
+   - Test: 10%+ held out (e.g., 2024)
+
+2. **Out-of-Sample Testing** - Must work on unseen data
+   - Test on period BEFORE training (e.g., 2019)
+   - Test on period AFTER training (e.g., 2025)
+   - Out-of-sample CAGR > 50% of in-sample CAGR
+
+3. **Baseline Comparison** - Must beat simple alternatives
+   - Compare to buy-and-hold SPY
+   - Must beat SPY by > 2% CAGR to justify complexity
+
+4. **Suspicion Flags** - Question results that are too good
+   - Sharpe > 2.5 is suspicious
+   - Single-year dominance indicates overfitting
+
+### If User Requests:
+- **"Optimize on all data"** → REFUSE, explain overfitting risk
+- **"Deploy without validation"** → REFUSE, require out-of-sample test
+- **"This looks great, deploy it"** → First run validation checks
+
+### Quick Reference
+```bash
+# WRONG: Optimize on all data and deploy
+python3 -m engines.optimization.cli run --experiment full_data.yaml
+# "28% CAGR! Let's deploy!"
+
+# RIGHT: Train/validate split with out-of-sample test
+# 1. Train on 2020-2022
+# 2. Validate on 2023
+# 3. Test on 2019 (pre) and 2024 (post)
+# 4. Compare to SPY baseline
+# 5. Only deploy if passes all checks
+```
+
+See:
+- `docs/guides/VALIDATION_GUARDRAILS.md` - Full checklist
+- `docs/research/case_studies/001_ea_overfitting_disaster.md` - What happens when you skip this
 
 ---
 
