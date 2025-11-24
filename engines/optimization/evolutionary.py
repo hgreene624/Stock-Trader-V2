@@ -76,6 +76,7 @@ class EvolutionaryOptimizer:
         self.elitism_count = elitism_count
         self.tournament_size = tournament_size
         self.logger = logger or StructuredLogger()
+        self.seed = seed
         self.rng = random.Random(seed)
         self.mutation_strength = mutation_strength
 

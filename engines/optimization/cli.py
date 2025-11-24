@@ -372,10 +372,10 @@ class OptimizationCLI:
         has_validation = 'validation_start_date' in backtest_config
 
         if has_validation:
-            train_start = backtest_config.get('train_start_date', backtest_config['start_date'])
+            train_start = backtest_config['train_start_date']
             train_end = backtest_config['train_end_date']
             val_start = backtest_config['validation_start_date']
-            val_end = backtest_config.get('validation_end_date', backtest_config['end_date'])
+            val_end = backtest_config['validation_end_date']
         else:
             # Auto-split: 70% train, 30% validation
             start = datetime.strptime(backtest_config['start_date'], '%Y-%m-%d')
