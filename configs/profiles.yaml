@@ -2184,7 +2184,7 @@ profiles:
     - XLB
     - XLRE
     - TLT
-    - SGOV
+    - SHY
     start_date: '2022-01-01'
     end_date: '2022-12-31'
     lookback_bars: 200
@@ -2206,7 +2206,7 @@ profiles:
     - XLU
     - XLP
     - XLV
-    - SGOV
+    - SHY
     start_date: '2022-01-01'
     end_date: '2022-12-31'
     lookback_bars: 200

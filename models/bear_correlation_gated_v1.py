@@ -5,10 +5,10 @@ Bear market specialist using correlation-based crisis detection.
 
 Strategy:
 - Monitors average pairwise correlation among S&P 500 sectors
-- High correlation (>0.8) indicates crisis/panic selling → Go to cash (SGOV)
+- High correlation (>0.8) indicates crisis/panic selling → Go to cash (SHY)
 - Moderate correlation (0.6-0.8) indicates elevated stress → Mix of cash and defensive
 - Low correlation (<0.6) indicates normal diversification → Rotate to top defensive sectors
-- Uses SGOV (short-term treasury) as cash proxy for minimal duration risk
+- Uses SHY (short-term treasury) as cash proxy for minimal duration risk
 - Rebalances frequently (default 7 days) for faster crisis response
 
 Design Rationale:
@@ -40,7 +40,7 @@ class BearCorrelationGated_v1(BaseModel):
         sectors: list[str] = None,
         defensive_sectors: list[str] = None,
         bond_asset: str = "TLT",
-        cash_proxy: str = "SGOV",  # Short-term treasury as cash
+        cash_proxy: str = "SHY",  # Short-term treasury as cash (SHY is more liquid than SGOV)
         correlation_window: int = 20,
         crisis_correlation: float = 0.8,
         moderate_correlation: float = 0.6,
@@ -55,7 +55,7 @@ class BearCorrelationGated_v1(BaseModel):
             sectors: List of sector ETFs for correlation monitoring
             defensive_sectors: Defensive sectors to rotate into (default: XLU, XLP, XLV)
             bond_asset: Bond ETF (default: TLT)
-            cash_proxy: Cash equivalent ETF (default: SGOV)
+            cash_proxy: Cash equivalent ETF (default: SHY)
             correlation_window: Days for correlation calculation (default: 20)
             crisis_correlation: Threshold for crisis mode (default: 0.8)
             moderate_correlation: Threshold for moderate stress (default: 0.6)

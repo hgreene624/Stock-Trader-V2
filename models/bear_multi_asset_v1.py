@@ -8,7 +8,7 @@ Strategy:
 - Universe: TLT (bonds), IEF (intermediate bonds), GLD (gold), UUP (dollar), XLU, XLP, XLV
 - Ranks all assets by momentum and holds top performers
 - Only holds assets with positive momentum (min_momentum=0.0)
-- Falls back to 50% TLT + 50% SGOV when no assets have positive momentum
+- Falls back to 50% TLT + 50% SHY when no assets have positive momentum
 - Rebalances every N days (default 14)
 
 Design Rationale:
@@ -16,7 +16,7 @@ Design Rationale:
 - Different bear markets favor different assets (2008: bonds, 2022: dollar)
 - Multi-asset approach captures wherever strength emerges
 - Positive momentum filter avoids catching falling knives
-- TLT/SGOV fallback provides bond safety with duration diversification
+- TLT/SHY fallback provides bond safety with duration diversification
 """
 
 import pandas as pd
@@ -40,7 +40,7 @@ class BearMultiAsset_v1(BaseModel):
         model_id: str = "BearMultiAsset_v1",
         multi_assets: list[str] = None,
         bond_fallback: str = "TLT",
-        cash_fallback: str = "SGOV",
+        cash_fallback: str = "SHY",
         momentum_period: int = 60,
         top_n: int = 3,
         min_momentum: float = 0.0,  # Only positive momentum
@@ -53,7 +53,7 @@ class BearMultiAsset_v1(BaseModel):
             model_id: Unique model identifier
             multi_assets: List of multi-asset ETFs
             bond_fallback: Bond ETF for fallback (default: TLT)
-            cash_fallback: Cash ETF for fallback (default: SGOV)
+            cash_fallback: Cash ETF for fallback (default: SHY)
             momentum_period: Lookback period for momentum (default: 60 days)
             top_n: Number of top assets to hold (default: 3)
             min_momentum: Minimum momentum threshold (default: 0.0)
