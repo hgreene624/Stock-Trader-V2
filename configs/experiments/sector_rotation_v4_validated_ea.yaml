@@ -1,0 +1,74 @@
+# Experiment 010: Validated EA Optimization for SectorRotationAdaptive_v4
+#
+# Key improvements over previous experiments:
+# - Proper train/validate split (9:1 ratio for 8 parameters)
+# - Automatic validation on held-out data
+# - Overfitting detection warnings
+# - 2025 held out for final test
+
+experiment:
+  name: sector_rotation_v4_validated_ea
+  description: "EA optimization with proper walk-forward validation (2015-2023 train, 2024 validate)"
+  method: evolutionary
+
+  base_config: configs/base/system.yaml
+  target_model: SectorRotationAdaptive_v4
+
+  backtest:
+    # Training period: 9 years (2015-2023)
+    train_start_date: "2015-01-01"
+    train_end_date: "2023-12-31"
+    # Validation period: 1 year (2024)
+    validation_start_date: "2024-01-01"
+    validation_end_date: "2024-12-31"
+    # 2025 held out for final out-of-sample test
+    lookback_bars: 250
+
+  # 8 parameters with full ranges
+  parameter_ranges:
+    atr_period:
+      min: 5
+      max: 30
+    stop_loss_atr_mult:
+      min: 0.5
+      max: 3.0
+    take_profit_atr_mult:
+      min: 1.0
+      max: 5.0
+    bull_leverage:
+      min: 1.0
+      max: 2.0
+    bear_leverage:
+      min: 1.0
+      max: 2.0
+    bull_momentum_period:
+      min: 60
+      max: 180
+    bear_momentum_period:
+      min: 60
+      max: 180
+    bull_top_n:
+      min: 2
+      max: 6
+
+  evolutionary:
+    population_size: 30
+    num_generations: 20
+    mutation_rate: 0.25
+    crossover_rate: 0.8
+    elitism_count: 3
+    tournament_size: 4
+    seed: 42
+
+  optimization:
+    metric: bps
+
+  results:
+    database: docs/research/experiments/010_validated_ea_optimization/results/optimization.db
+    top_n: 10
+
+# Success criteria (to be validated after optimization):
+# 1. Validation BPS > 0.8
+# 2. Degradation from train to validate < 30%
+# 3. Validation CAGR > 14% (beat SPY)
+# 4. 2025 test confirms generalization

@@ -1,15 +1,14 @@
 """
 SectorRotationAdaptive_v4
 
-Enhanced adaptive sector rotation with VOLATILITY TARGETING and MONTHLY REBALANCING.
+Enhanced adaptive sector rotation with VOLATILITY TARGETING.
 
 Key feature: Scales leverage based on current volatility vs target volatility.
 - When VIX is high (>25), reduces exposure to limit drawdowns
 - When VIX is normal (<20), stays fully invested
 - Preserves upside in calm markets, limits downside in turbulent ones
-- Uses 21-day (monthly) rebalancing for better performance (EXP-001)
 
-Based on v3 with optimized rebalancing frequency.
+Based on v1 optimized parameters with added volatility targeting.
 """
 
 import pandas as pd
@@ -23,7 +22,7 @@ from models.base import BaseModel, Context, ModelOutput
 
 class SectorRotationAdaptive_v4(BaseModel):
     """
-    Adaptive sector rotation with volatility targeting and monthly rebalancing.
+    Adaptive sector rotation with volatility targeting.
     """
 
     def __init__(
@@ -248,6 +247,8 @@ class SectorRotationAdaptive_v4(BaseModel):
         # Apply volatility scaling
         vol_scale = self._calculate_vol_scale(context)
         target_leverage = base_leverage * vol_scale
+        # Cap total leverage to prevent exceeding position limits
+        target_leverage = min(target_leverage, 2.0)
 
         # Check for ATR-based exits
         exits_triggered = {}
@@ -267,10 +268,10 @@ class SectorRotationAdaptive_v4(BaseModel):
                     if symbol in self.entry_atr:
                         del self.entry_atr[symbol]
 
-        # Monthly rebalancing check (21 trading days - EXP-001 optimization)
+        # Weekly rebalancing check (7 trading days - original v3 behavior)
         if self.last_rebalance is not None and not exits_triggered:
             days_since_rebalance = (context.timestamp - self.last_rebalance).days
-            if days_since_rebalance < 21:
+            if days_since_rebalance < 7:
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,
@@ -335,6 +336,8 @@ class SectorRotationAdaptive_v4(BaseModel):
             if len(positive_sectors) > 0:
                 # Apply vol-adjusted leverage
                 weight_per_sector = target_leverage / len(positive_sectors)
+                # Cap individual position weight to 2.0 (safety limit)
+                weight_per_sector = min(weight_per_sector, 2.0)
                 for sector, _ in positive_sectors:
                     weights[sector] = weight_per_sector
 
@@ -365,6 +368,5 @@ class SectorRotationAdaptive_v4(BaseModel):
     def __repr__(self):
         return (
             f"SectorRotationAdaptive_v4(model_id='{self.model_id}', "
-            f"vol_targeting={self.use_vol_targeting}, target_vol={self.target_vol}, "
-            f"rebalance=21d)"
+            f"vol_targeting={self.use_vol_targeting}, target_vol={self.target_vol})"
         )

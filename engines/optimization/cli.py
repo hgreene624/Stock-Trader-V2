@@ -43,6 +43,7 @@ from utils.optimization_tracker import OptimizationTracker
 from backtest.runner import BacktestRunner
 from models.sector_rotation_v1 import SectorRotationModel_v1
 from models.sector_rotation_adaptive_v3 import SectorRotationAdaptive_v3
+from models.sector_rotation_adaptive_v4 import SectorRotationAdaptive_v4
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
 from models.equity_trend_v2_daily import EquityTrendModel_v2_Daily
@@ -80,6 +81,8 @@ class BacktestFitnessEvaluator:
                 model = SectorRotationModel_v1(**params)
             elif self.target_model == "SectorRotationAdaptive_v3":
                 model = SectorRotationAdaptive_v3(**params)
+            elif self.target_model == "SectorRotationAdaptive_v4":
+                model = SectorRotationAdaptive_v4(**params)
             elif self.target_model == "EquityTrendModel_v1":
                 model = EquityTrendModel_v1(**params)
             elif self.target_model == "EquityTrendModel_v1_Daily":
