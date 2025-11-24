@@ -247,6 +247,8 @@ class SectorRotationAdaptive_v3(BaseModel):
         # Apply volatility scaling
         vol_scale = self._calculate_vol_scale(context)
         target_leverage = base_leverage * vol_scale
+        # Cap total leverage to prevent exceeding position limits
+        target_leverage = min(target_leverage, 2.0)
 
         # Check for ATR-based exits
         exits_triggered = {}
@@ -334,6 +336,8 @@ class SectorRotationAdaptive_v3(BaseModel):
             if len(positive_sectors) > 0:
                 # Apply vol-adjusted leverage
                 weight_per_sector = target_leverage / len(positive_sectors)
+                # Cap individual position weight to 2.0 (safety limit)
+                weight_per_sector = min(weight_per_sector, 2.0)
                 for sector, _ in positive_sectors:
                     weights[sector] = weight_per_sector
 
