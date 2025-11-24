@@ -348,7 +348,7 @@ class OptimizationCLI:
 
     def run_evolutionary(self, exp_config: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Run evolutionary algorithm optimization.
+        Run evolutionary algorithm optimization with train/validation split.
 
         Args:
             exp_config: Experiment configuration
@@ -356,10 +356,43 @@ class OptimizationCLI:
         Returns:
             List of final population parameter sets
         """
+        from datetime import datetime, timedelta
+
         print("\n" + "=" * 80)
         print(f"EVOLUTIONARY ALGORITHM: {exp_config['name']}")
         print("=" * 80)
         print(f"Description: {exp_config['description']}")
+        print()
+
+        # Check for validation split configuration
+        backtest_config = exp_config['backtest']
+        has_validation = 'validation_start_date' in backtest_config
+
+        if has_validation:
+            train_start = backtest_config.get('train_start_date', backtest_config['start_date'])
+            train_end = backtest_config['train_end_date']
+            val_start = backtest_config['validation_start_date']
+            val_end = backtest_config.get('validation_end_date', backtest_config['end_date'])
+        else:
+            # Auto-split: 70% train, 30% validation
+            start = datetime.strptime(backtest_config['start_date'], '%Y-%m-%d')
+            end = datetime.strptime(backtest_config['end_date'], '%Y-%m-%d')
+            total_days = (end - start).days
+            train_days = int(total_days * 0.7)
+
+            train_start = backtest_config['start_date']
+            train_end = (start + timedelta(days=train_days)).strftime('%Y-%m-%d')
+            val_start = (start + timedelta(days=train_days + 1)).strftime('%Y-%m-%d')
+            val_end = backtest_config['end_date']
+
+            print("⚠️  NO VALIDATION SPLIT CONFIGURED - Using automatic 70/30 split")
+            print(f"   Training:   {train_start} to {train_end}")
+            print(f"   Validation: {val_start} to {val_end}")
+            print()
+
+        print(f"📊 DATA SPLIT:")
+        print(f"   Training period:   {train_start} to {train_end}")
+        print(f"   Validation period: {val_start} to {val_end}")
         print()
 
         # Initialize EA optimizer
@@ -388,6 +421,14 @@ class OptimizationCLI:
         for param, (min_val, max_val) in simple_ranges.items():
             print(f"  {param}: [{min_val}, {max_val}]")
 
+        # Warn about parameter complexity
+        num_params = len(simple_ranges)
+        if num_params > 5:
+            print(f"\n⚠️  HIGH PARAMETER COMPLEXITY WARNING:")
+            print(f"   {num_params} parameters increases overfitting risk exponentially")
+            print(f"   Recommended: 3-5 parameters maximum")
+            print(f"   Consider fixing some parameters using domain knowledge")
+
         print(f"\nEvolutionary settings:")
         print(f"  Population size: {ea_config['population_size']}")
         print(f"  Generations: {ea_config['num_generations']}")
@@ -412,13 +453,14 @@ class OptimizationCLI:
         print("\nCreating backtest fitness function...")
 
         # Use picklable class for multiprocessing compatibility
-        backtest_config = exp_config['backtest']
         opt_config = exp_config['optimization']
+
+        # IMPORTANT: Use TRAINING dates for optimization (not full period)
         fitness_function = BacktestFitnessEvaluator(
             base_config=exp_config['base_config'],
             target_model=exp_config['target_model'],
-            start_date=backtest_config['start_date'],
-            end_date=backtest_config['end_date'],
+            start_date=train_start,  # Training period only
+            end_date=train_end,
             metric=opt_config.get('metric', 'bps')
         )
 
@@ -443,16 +485,92 @@ class OptimizationCLI:
         # Sort by fitness
         sorted_indices = sorted(range(len(final_population)), key=lambda i: final_fitness[i], reverse=True)
 
-        print("\nTop 5 solutions:")
+        print("\nTop 5 solutions (TRAINING performance):")
         for i, idx in enumerate(sorted_indices[:5], 1):
             print(f"  {i}. {final_population[idx]} → fitness={final_fitness[idx]:.4f}")
 
-        # Save results to optimization tracker
-        # TODO: Fix _save_to_tracker to accept final_population and final_fitness
-        # print("\n" + "=" * 80)
-        # print("SAVING TO OPTIMIZATION TRACKER")
-        # print("=" * 80)
-        # self._save_to_tracker(exp_config, self.full_results)
+        # ═══════════════════════════════════════════════════════════════════════
+        # VALIDATION: Run top performers on held-out data
+        # ═══════════════════════════════════════════════════════════════════════
+        print("\n" + "=" * 80)
+        print("🔍 VALIDATION: Testing top performers on held-out data")
+        print("=" * 80)
+
+        # Create validation fitness function
+        validation_fitness = BacktestFitnessEvaluator(
+            base_config=exp_config['base_config'],
+            target_model=exp_config['target_model'],
+            start_date=val_start,
+            end_date=val_end,
+            metric=opt_config.get('metric', 'bps')
+        )
+
+        # Test top 5 on validation set
+        validation_results = []
+        print("\nRunning validation backtests...")
+        for i, idx in enumerate(sorted_indices[:5], 1):
+            params = final_population[idx]
+            train_score = final_fitness[idx]
+            val_score = validation_fitness(params)
+            validation_results.append({
+                'params': params,
+                'train_score': train_score,
+                'val_score': val_score,
+                'degradation': (train_score - val_score) / train_score * 100 if train_score > 0 else 0
+            })
+            print(f"  {i}. Train: {train_score:.4f} → Val: {val_score:.4f} "
+                  f"({'↓' if val_score < train_score else '↑'}{abs(validation_results[-1]['degradation']):.1f}%)")
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # OVERFITTING DETECTION
+        # ═══════════════════════════════════════════════════════════════════════
+        print("\n" + "=" * 80)
+        print("⚠️  OVERFITTING ANALYSIS")
+        print("=" * 80)
+
+        best_result = validation_results[0]
+        warnings = []
+
+        # Check 1: Validation degradation > 50%
+        if best_result['degradation'] > 50:
+            warnings.append(f"❌ SEVERE OVERFITTING: Validation score dropped {best_result['degradation']:.1f}%")
+
+        elif best_result['degradation'] > 30:
+            warnings.append(f"⚠️  MODERATE OVERFITTING: Validation score dropped {best_result['degradation']:.1f}%")
+
+        # Check 2: Suspicious training score (BPS > 1.5 is very high)
+        if best_result['train_score'] > 1.5:
+            warnings.append(f"⚠️  SUSPICIOUS TRAINING SCORE: BPS {best_result['train_score']:.2f} may be too good")
+
+        # Check 3: Negative validation
+        if best_result['val_score'] < 0:
+            warnings.append(f"❌ NEGATIVE VALIDATION: Model loses money on held-out data!")
+
+        # Check 4: All top performers degraded significantly
+        avg_degradation = sum(r['degradation'] for r in validation_results) / len(validation_results)
+        if avg_degradation > 40:
+            warnings.append(f"❌ ALL TOP PERFORMERS DEGRADED: Average drop {avg_degradation:.1f}%")
+
+        if warnings:
+            print("\n⛔ DEPLOYMENT NOT RECOMMENDED:")
+            for warning in warnings:
+                print(f"   {warning}")
+            print("\n   → Consider: fewer parameters, longer training period, or simpler model")
+        else:
+            print("\n✅ VALIDATION PASSED:")
+            print(f"   Best validation score: {best_result['val_score']:.4f}")
+            print(f"   Degradation: {best_result['degradation']:.1f}%")
+            print(f"   → Model appears to generalize well")
+
+        # Final recommendation
+        print("\n" + "=" * 80)
+        print("📊 FINAL RESULTS")
+        print("=" * 80)
+        print(f"\nBest parameters (by validation score):")
+        best_by_val = max(validation_results, key=lambda x: x['val_score'])
+        print(f"  {best_by_val['params']}")
+        print(f"  Training BPS: {best_by_val['train_score']:.4f}")
+        print(f"  Validation BPS: {best_by_val['val_score']:.4f}")
 
         return final_population
 
