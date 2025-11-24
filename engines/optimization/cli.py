@@ -427,10 +427,17 @@ class OptimizationCLI:
         print(f"This will run ~{ea_config['population_size'] * ea_config['num_generations']} backtests.")
         print("(This may take a while...)\n")
 
+        # Get output directory for incremental logging
+        results_config = exp_config.get('results', {})
+        output_dir = None
+        if 'database' in results_config:
+            output_dir = str(Path(results_config['database']).parent)
+
         final_population, final_fitness = optimizer.optimize(
             initial_population,
             fitness_function,
-            simple_ranges
+            simple_ranges,
+            output_dir=output_dir
         )
 
         # Sort by fitness
@@ -441,10 +448,11 @@ class OptimizationCLI:
             print(f"  {i}. {final_population[idx]} → fitness={final_fitness[idx]:.4f}")
 
         # Save results to optimization tracker
-        print("\n" + "=" * 80)
-        print("SAVING TO OPTIMIZATION TRACKER")
-        print("=" * 80)
-        self._save_to_tracker(exp_config, self.full_results)
+        # TODO: Fix _save_to_tracker to accept final_population and final_fitness
+        # print("\n" + "=" * 80)
+        # print("SAVING TO OPTIMIZATION TRACKER")
+        # print("=" * 80)
+        # self._save_to_tracker(exp_config, self.full_results)
 
         return final_population
 

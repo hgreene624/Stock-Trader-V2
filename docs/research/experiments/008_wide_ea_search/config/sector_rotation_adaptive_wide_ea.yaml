@@ -1,0 +1,115 @@
+# Wide EA Optimization for SectorRotationAdaptive_v3
+# Goal: Cast wide net to find parameters that beat current champion (17.64% CAGR)
+
+experiment:
+  name: "sector_rotation_adaptive_wide_ea"
+  description: "Wide EA search on SectorRotationAdaptive_v3 - 8 parameters, pop=30, gen=20"
+
+  # Optimization method
+  method: "evolutionary"
+
+  # Base configuration
+  base_config: "configs/base/system.yaml"
+
+  # Model to optimize
+  target_model: "SectorRotationAdaptive_v3"
+
+  # Configuration overrides
+  overrides:
+    system:
+      mode: "backtest"
+      backtest_initial_nav: 100000.00
+
+      models:
+        - name: "SectorRotationAdaptive_v3"
+          version: "3.0.0"
+          status: "research"
+          budget_fraction: 1.0
+
+  # Parameter ranges - WIDE search
+  parameter_ranges:
+    # ATR-based stops
+    models.SectorRotationAdaptive_v3.parameters.atr_period:
+      min: 10
+      max: 30
+
+    models.SectorRotationAdaptive_v3.parameters.stop_loss_atr_mult:
+      min: 0.8
+      max: 2.5
+
+    models.SectorRotationAdaptive_v3.parameters.take_profit_atr_mult:
+      min: 1.5
+      max: 4.0
+
+    # Leverage
+    models.SectorRotationAdaptive_v3.parameters.bull_leverage:
+      min: 1.5
+      max: 2.5
+
+    models.SectorRotationAdaptive_v3.parameters.bear_leverage:
+      min: 0.8
+      max: 2.0
+
+    # Momentum parameters (bull and bear)
+    models.SectorRotationAdaptive_v3.parameters.bull_momentum_period:
+      min: 60
+      max: 180
+
+    models.SectorRotationAdaptive_v3.parameters.bear_momentum_period:
+      min: 60
+      max: 180
+
+    models.SectorRotationAdaptive_v3.parameters.bull_top_n:
+      min: 2
+      max: 5
+
+    models.SectorRotationAdaptive_v3.parameters.bear_top_n:
+      min: 2
+      max: 5
+
+    # Hold period
+    models.SectorRotationAdaptive_v3.parameters.min_hold_days:
+      min: 1
+      max: 5
+
+  # Evolutionary algorithm settings - LARGE population
+  evolutionary:
+    # Population settings
+    population_size: 30      # Large population for diversity
+    num_generations: 20      # More generations for convergence
+
+    # Genetic operators
+    mutation_rate: 0.25      # Slightly higher for exploration
+    mutation_strength: 0.2   # Larger mutations for wide search
+    crossover_rate: 0.7      # Standard crossover
+
+    # Selection
+    tournament_size: 4       # Larger tournament for selection pressure
+    elitism_count: 3         # Preserve top 3 each generation
+
+    # Seed with current champion and variations
+    initial_population:
+      - {atr_period: 21, stop_loss_atr_mult: 1.6, take_profit_atr_mult: 2.48, bull_leverage: 2.0, bear_leverage: 1.38, bull_momentum_period: 126, bear_momentum_period: 126, bull_top_n: 3, bear_top_n: 3, min_hold_days: 2}  # Current champion
+      - {atr_period: 14, stop_loss_atr_mult: 1.2, take_profit_atr_mult: 2.0, bull_leverage: 1.8, bear_leverage: 1.2, bull_momentum_period: 100, bear_momentum_period: 100, bull_top_n: 4, bear_top_n: 4, min_hold_days: 2}   # Shorter ATR
+      - {atr_period: 25, stop_loss_atr_mult: 2.0, take_profit_atr_mult: 3.0, bull_leverage: 2.2, bear_leverage: 1.5, bull_momentum_period: 150, bear_momentum_period: 150, bull_top_n: 3, bear_top_n: 3, min_hold_days: 3}   # Longer ATR
+      - {atr_period: 18, stop_loss_atr_mult: 1.4, take_profit_atr_mult: 2.8, bull_leverage: 2.5, bear_leverage: 1.0, bull_momentum_period: 80, bear_momentum_period: 80, bull_top_n: 2, bear_top_n: 2, min_hold_days: 1}    # Aggressive
+
+    # Reproducibility
+    seed: 42
+
+  # Backtest period - full 5-year test
+  backtest:
+    start_date: "2020-01-01"
+    end_date: "2024-12-31"
+
+  # Optimization objective
+  optimization:
+    metric: "bps"
+    maximize: true
+    save_top_n: 30  # Save top 30 solutions
+
+  # Results storage
+  results:
+    database: "docs/research/experiments/008_wide_ea_search/results/optimization.db"
+    summary_csv: "docs/research/experiments/008_wide_ea_search/results/top_30.csv"
+    track_generations: true  # Save best/avg fitness per generation

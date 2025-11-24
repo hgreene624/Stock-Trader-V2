@@ -299,7 +299,8 @@ class EvolutionaryOptimizer:
         self,
         initial_population: List[Dict[str, Any]],
         fitness_function: Callable[[Dict[str, Any]], float],
-        param_ranges: Dict[str, Tuple[Any, Any]]
+        param_ranges: Dict[str, Tuple[Any, Any]],
+        output_dir: str = None
     ) -> Tuple[List[Dict[str, Any]], List[float]]:
         """
         Run full evolutionary optimization.
@@ -308,13 +309,39 @@ class EvolutionaryOptimizer:
             initial_population: Starting population (seeded from grid search)
             fitness_function: Function that evaluates parameter dict → BPS score
             param_ranges: Parameter ranges for mutation
+            output_dir: Directory for incremental generation logs (optional)
 
         Returns:
             Tuple of (final_population, fitness_scores)
         """
         import time
+        import json
+        from datetime import datetime
+        from pathlib import Path
 
         population = initial_population
+
+        # Set up incremental logging
+        generation_log_path = None
+        if output_dir:
+            output_path = Path(output_dir)
+            output_path.mkdir(parents=True, exist_ok=True)
+            generation_log_path = output_path / "generation_log.jsonl"
+
+            # Write initial metadata
+            with open(generation_log_path, 'w') as f:
+                metadata = {
+                    "type": "metadata",
+                    "timestamp": datetime.now().isoformat(),
+                    "seed": self.seed,
+                    "population_size": self.population_size,
+                    "num_generations": self.num_generations,
+                    "mutation_rate": self.mutation_rate,
+                    "crossover_rate": self.crossover_rate,
+                    "elitism_count": self.elitism_count,
+                    "param_ranges": {k: list(v) for k, v in param_ranges.items()}
+                }
+                f.write(json.dumps(metadata) + "\n")
 
         # Track progress
         total_backtests = self.num_generations * self.population_size
@@ -423,6 +450,30 @@ class EvolutionaryOptimizer:
                     "fitness_std": round(_std(fitness_scores), 4)
                 }
             )
+
+            # Incremental generation logging
+            if generation_log_path:
+                # Get top 5 individuals for this generation
+                sorted_indices = sorted(range(len(population)), key=lambda i: fitness_scores[i], reverse=True)
+                top_5 = []
+                for idx in sorted_indices[:5]:
+                    top_5.append({
+                        "params": population[idx],
+                        "fitness": round(fitness_scores[idx], 4)
+                    })
+
+                gen_data = {
+                    "type": "generation",
+                    "timestamp": datetime.now().isoformat(),
+                    "generation": generation + 1,
+                    "best_fitness": round(best_fitness, 4),
+                    "avg_fitness": round(avg_fitness, 4),
+                    "fitness_std": round(_std(fitness_scores), 4),
+                    "gen_time_seconds": round(gen_time, 1),
+                    "top_5": top_5
+                }
+                with open(generation_log_path, 'a') as f:
+                    f.write(json.dumps(gen_data) + "\n")
 
             # Evolve to next generation
             if generation < self.num_generations - 1:

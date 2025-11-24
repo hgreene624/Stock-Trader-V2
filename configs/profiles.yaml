@@ -1108,6 +1108,37 @@ profiles:
       bull_leverage: 2.0
       bear_leverage: 1.38
 
+  ea_wide_search_winner:
+    description: Wide EA search winner from experiment 008 (BPS=1.4399)
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 12
+      stop_loss_atr_mult: 1.46
+      take_profit_atr_mult: 3.75
+      min_hold_days: 2
+      bull_leverage: 1.86
+      bear_leverage: 2.0
+      bull_momentum_period: 138
+      bear_momentum_period: 175
+      bull_top_n: 4
+      bear_top_n: 3
+
   consistent_alpha_baseline:
     description: Baseline config for consistent yearly alpha experiment 005
     model: SectorRotationConsistent_v1
@@ -2057,6 +2088,35 @@ profiles:
       momentum_period: 126
       top_n_sectors: 4
       min_momentum: 0.10
+
+  # Crash Protection Model
+  crash_protection_default:
+    description: Crash detection and dip buying specialist
+    model: CrashProtection_v1
+    universe:
+    - XLK
+    - XLY
+    - XLF
+    - XLI
+    - XLC
+    - XLE
+    - XLB
+    - XLRE
+    - SPY
+    - ^VIX
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_warning_threshold: 30.0
+      vix_panic_threshold: 40.0
+      spy_weekly_drop: -0.05
+      spy_monthly_drop: -0.10
+      vix_recovery_drop: 0.20
+      recovery_leverage: 1.5
+      num_sectors: 3
+      min_crash_days: 3
+      max_hold_days: 60
 
 universes:
   major_indices:
