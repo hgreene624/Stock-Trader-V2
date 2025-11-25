@@ -50,9 +50,13 @@ from models.sector_rotation_consistent_v3 import SectorRotationConsistent_v3
 from models.sector_rotation_consistent_v4 import SectorRotationConsistent_v4
 from models.bear_defensive_rotation_v1 import BearDefensiveRotation_v1
 from models.bear_defensive_rotation_v2 import BearDefensiveRotation_v2
+from models.bear_defensive_rotation_v3 import BearDefensiveRotation_v3
+from models.bear_defensive_rotation_v4 import BearDefensiveRotation_v4
+from models.bear_defensive_rotation_v5 import BearDefensiveRotation_v5
 from models.bear_correlation_gated_v1 import BearCorrelationGated_v1
 from models.bear_multi_asset_v1 import BearMultiAsset_v1
 from models.bear_multi_asset_v2 import BearMultiAsset_v2
+from models.beardipbuyer_v1 import BearDipBuyer_v1
 from models.sector_rotation_consistent_v5 import SectorRotationConsistent_v5
 from models.equity_trend_v1 import EquityTrendModel_v1
 from models.equity_trend_v1_daily import EquityTrendModel_v1_Daily
@@ -176,12 +180,20 @@ class BacktestAnalyzer:
             return BearDefensiveRotation_v1(**parameters)
         elif model_name == "BearDefensiveRotation_v2":
             return BearDefensiveRotation_v2(**parameters)
+        elif model_name == "BearDefensiveRotation_v3":
+            return BearDefensiveRotation_v3(**parameters)
+        elif model_name == "BearDefensiveRotation_v4":
+            return BearDefensiveRotation_v4(**parameters)
+        elif model_name == "BearDefensiveRotation_v5":
+            return BearDefensiveRotation_v5(**parameters)
         elif model_name == "BearCorrelationGated_v1":
             return BearCorrelationGated_v1(**parameters)
         elif model_name == "BearMultiAsset_v1":
             return BearMultiAsset_v1(**parameters)
         elif model_name == "BearMultiAsset_v2":
             return BearMultiAsset_v2(**parameters)
+        elif model_name == "BearDipBuyer_v1":
+            return BearDipBuyer_v1(**parameters)
         else:
             raise ValueError(f"Unknown model: {model_name}")
 
@@ -232,8 +244,12 @@ class BacktestAnalyzer:
             return None
 
         df = pd.read_parquet(benchmark_path)
-        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
-        df = df.set_index('timestamp').sort_index()
+        # Handle both timestamp as column and as index
+        if 'timestamp' in df.columns:
+            df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
+            df = df.set_index('timestamp').sort_index()
+        else:
+            df.index = pd.to_datetime(df.index, utc=True)
 
         # Filter to date range
         if start_date:

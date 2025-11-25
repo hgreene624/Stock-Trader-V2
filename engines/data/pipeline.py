@@ -83,6 +83,11 @@ class DataPipeline:
             else:
                 df_daily.index = pd.to_datetime(df_daily.index, utc=True)
 
+            # Normalize timestamps to midnight UTC for daily data alignment
+            # This fixes issues where VIX has 06:00 UTC while others have 05:00 UTC
+            if daily_only:
+                df_daily.index = df_daily.index.normalize()
+
             if daily_only:
                 # Use daily bars directly
                 df_prepared = self._compute_features_daily_only(df_daily)
@@ -145,7 +150,7 @@ class DataPipeline:
         for ref_asset in reference_assets:
             symbol = ref_asset['symbol']
             required = ref_asset.get('required', False)
-            safe_symbol = symbol.replace('/', '-').replace('^', '')
+            safe_symbol = symbol.replace('/', '-')
 
             daily_file = data_subdir / f"{safe_symbol}_{daily_timeframe}.parquet"
 
@@ -170,6 +175,9 @@ class DataPipeline:
                 df_daily = df_daily.set_index('timestamp')
             else:
                 df_daily.index = pd.to_datetime(df_daily.index, utc=True)
+
+            # Normalize timestamps to midnight UTC for daily data alignment
+            df_daily.index = df_daily.index.normalize()
 
             # Compute features for daily-only data
             df_prepared = self._compute_features_daily_only(df_daily)

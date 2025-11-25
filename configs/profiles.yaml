@@ -1247,28 +1247,116 @@ profiles:
       min_hold_days_high_vol: 2
       rotation_threshold: 0.02
       # Conservative leverage
-      bull_leverage: 1.15
-      bear_leverage: 1.0
-      volatility_leverage_adj: true
-      # Standard stops
-      bull_stop_mult: 2.0
-      bear_stop_mult: 1.5
-      normal_stop_mult: 1.75
-      # Less concentration
-      max_sector_weight: 0.4
-      concentration_momentum_threshold: 0.9
-      rebalance_threshold: 0.10
-      # Shorter trend
-      trend_lookback: 20
-      momentum_decay: 0.90
-      weakness_threshold: -0.03
-      # Standard ATR
-      atr_period: 14
-      take_profit_atr_mult: 2.0
-      # Momentum
+
+  # Bear Market Model Profiles for Phase 1/2 Testing
+  bear_correlation_gated_v1:
+    description: "Bear market correlation-based defensive strategy - Phase 1 winner"
+    model: BearCorrelationGated_v1
+    universe:
+    - SPY
+    - QQQ
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - TLT
+    - GLD
+    - SHY
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      sectors: ['XLK', 'XLF', 'XLE', 'XLV', 'XLI', 'XLP', 'XLU', 'XLY']
+      defensive_sectors: ['XLU', 'XLP']
+      bond_asset: 'TLT'
+      cash_proxy: 'SHY'
+      correlation_window: 20
+      crisis_correlation: 0.80
+      moderate_correlation: 0.60
+      defensive_top_n: 3
+      rebalance_days: 7
+
+  bear_defensive_rotation_v1:
+    description: "Bear market defensive rotation v1 - failed Phase 1"
+    model: BearDefensiveRotation_v1
+    universe:
+    - XLU
+    - XLP
+    - TLT
+    - GLD
+    - UUP
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 30
+      top_n: 2
+      min_momentum: -0.05
+      rebalance_days: 10
+
+  bear_defensive_rotation_v2:
+    description: "Bear market defensive rotation v2 - improved with cash option"
+    model: BearDefensiveRotation_v2
+    universe:
+    - XLU
+    - XLP
+    - TLT
+    - GLD
+    - UUP
+    - SHY
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      rebalance_days: 10
+
+  bear_multi_asset_v1:
+    description: "Bear market multi-asset v1 - failed Phase 1"
+    model: BearMultiAsset_v1
+    universe:
+    - TLT
+    - IEF
+    - GLD
+    - UUP
+    - XLU
+    - XLP
+    - XLV
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
       momentum_period: 60
-      top_n_sectors: 3
-      min_momentum: 0.05
+      top_n: 3
+      min_momentum: 0.0
+      rebalance_days: 14
+
+  bear_multi_asset_v2:
+    description: "Bear market multi-asset v2 - relative momentum approach"
+    model: BearMultiAsset_v2
+    universe:
+    - TLT
+    - IEF
+    - GLD
+    - UUP
+    - XLU
+    - XLP
+    - XLV
+    - SHY
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 40
+      top_n: 3
+      rebalance_days: 14
 
   consistent_alpha_v2:
     description: V2 with recovery regime - experiment 006
@@ -2261,6 +2349,335 @@ profiles:
       momentum_period: 40
       top_n: 3
       rebalance_days: 14
+
+  # Phase 2: Multi-Year Validation - 2020 COVID Crash
+  exp012_defensive_v2_2020:
+    description: "Phase 2: Defensive V2 on 2020 COVID crash"
+    model: BearDefensiveRotation_v2
+    universe:
+    - SPY
+    - XLU
+    - XLP
+    - TLT
+    - GLD
+    - UUP
+    - SHY
+    start_date: '2020-02-01'
+    end_date: '2020-04-30'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      rebalance_days: 10
+
+  exp012_correlation_2020:
+    description: "Phase 2: Correlation Gated on 2020 COVID crash"
+    model: BearCorrelationGated_v1
+    universe:
+    - SPY
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SHY
+    start_date: '2020-02-01'
+    end_date: '2020-04-30'
+    lookback_bars: 200
+    parameters:
+      correlation_window: 20
+      crisis_correlation: 0.8
+      moderate_correlation: 0.6
+      defensive_top_n: 3
+      rebalance_days: 7
+
+  # Phase 2: Multi-Year Validation - 2018 Q4 Selloff
+  exp012_defensive_v2_2018:
+    description: "Phase 2: Defensive V2 on 2018 Q4 selloff"
+    model: BearDefensiveRotation_v2
+    universe:
+    - SPY
+    - XLU
+    - XLP
+    - TLT
+    - GLD
+    - UUP
+    - SHY
+    start_date: '2018-10-01'
+    end_date: '2018-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      rebalance_days: 10
+
+  exp012_correlation_2018:
+    description: "Phase 2: Correlation Gated on 2018 Q4 selloff"
+    model: BearCorrelationGated_v1
+    universe:
+    - SPY
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SHY
+    start_date: '2018-10-01'
+    end_date: '2018-12-31'
+    lookback_bars: 200
+    parameters:
+      correlation_window: 20
+      crisis_correlation: 0.8
+      moderate_correlation: 0.6
+      defensive_top_n: 3
+      rebalance_days: 7
+
+  # Experiment 012b - BearDefensiveRotation_v3 Risk Management Tests
+  exp012b_v3_2020:
+    description: "V3 Risk Mgmt on 2020 COVID crash"
+    model: BearDefensiveRotation_v3
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY]
+    start_date: '2020-02-01'
+    end_date: '2020-04-30'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      rebalance_days: 10
+      target_volatility: 0.15
+      drawdown_threshold: -0.10
+
+  exp012b_v3_2022:
+    description: "V3 Risk Mgmt on 2022 rate hike crash"
+    model: BearDefensiveRotation_v3
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY]
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      rebalance_days: 10
+      target_volatility: 0.15
+      drawdown_threshold: -0.10
+
+  exp012b_v3_2018:
+    description: "V3 Risk Mgmt on 2018 Q4 correction"
+    model: BearDefensiveRotation_v3
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY]
+    start_date: '2018-10-01'
+    end_date: '2018-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      rebalance_days: 10
+      target_volatility: 0.15
+      drawdown_threshold: -0.10
+
+  # Experiment 012b - BearDefensiveRotation_v4 Recovery Enhancement Tests
+  exp012b_v4_2020:
+    description: "V4 Recovery Enhancement on 2020 COVID crash"
+    model: BearDefensiveRotation_v4
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2020-02-01'
+    end_date: '2020-04-30'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 15  # Faster than v2
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      vix_spike_threshold: 40.0
+      vix_decline_threshold: -0.30
+      rebalance_days: 10
+
+  exp012b_v4_2022:
+    description: "V4 Recovery Enhancement on 2022 rate hike crash"
+    model: BearDefensiveRotation_v4
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 15
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      vix_spike_threshold: 40.0
+      vix_decline_threshold: -0.30
+      rebalance_days: 10
+
+  exp012b_v4_2018:
+    description: "V4 Recovery Enhancement on 2018 Q4 correction"
+    model: BearDefensiveRotation_v4
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2018-10-01'
+    end_date: '2018-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 15
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      vix_spike_threshold: 40.0
+      vix_decline_threshold: -0.30
+      rebalance_days: 10
+
+  # Experiment 012b - BearDefensiveRotation_v5 Quality Filter Tests
+  exp012b_v5_2020:
+    description: "V5 Quality Filters on 2020 COVID crash"
+    model: BearDefensiveRotation_v5
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY]
+    start_date: '2020-02-01'
+    end_date: '2020-04-30'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20  # Same as v2
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      min_trend_strength: 0.3
+      correlation_lookback: 20
+      correlation_threshold: 0.3
+      rebalance_days: 10
+
+  exp012b_v5_2022:
+    description: "V5 Quality Filters on 2022 rate hike crash"
+    model: BearDefensiveRotation_v5
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY]
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      min_trend_strength: 0.3
+      correlation_lookback: 20
+      correlation_threshold: 0.3
+      rebalance_days: 10
+
+  exp012b_v5_2018:
+    description: "V5 Quality Filters on 2018 Q4 correction"
+    model: BearDefensiveRotation_v5
+    universe: [SPY, XLU, XLP, TLT, GLD, UUP, SHY]
+    start_date: '2018-10-01'
+    end_date: '2018-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      min_trend_strength: 0.3
+      correlation_lookback: 20
+      correlation_threshold: 0.3
+      rebalance_days: 10
+
+  # Experiment 013 - BearDipBuyer_v1 Panic Dip Buyer Tests
+  exp013_beardipbuyer_2020:
+    description: "BearDipBuyer on 2020 COVID crash - extreme panic test"
+    model: BearDipBuyer_v1
+    universe: [SPY, QQQ, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2020-02-01'
+    end_date: '2020-04-30'
+    lookback_bars: 200
+    parameters:
+      vix_threshold: 30.0
+      vix_extreme_threshold: 35.0
+      rsi_period: 14
+      rsi_oversold: 25.0
+      rsi_extreme: 20.0
+      price_ma_period: 200
+      price_below_ma_pct: 10.0
+      volume_spike_multiplier: 2.0
+      min_trend_strength: -0.3
+      correlation_lookback: 20
+      min_correlation: 0.3
+      vol_window: 20
+      max_volatility: 0.05
+      circuit_breaker_threshold: -0.08
+      fast_momentum_period: 10
+      slow_momentum_period: 30
+      rebalance_days: 5
+
+  exp013_beardipbuyer_2018:
+    description: "BearDipBuyer on 2018 Q4 correction - choppy market test"
+    model: BearDipBuyer_v1
+    universe: [SPY, QQQ, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2018-10-01'
+    end_date: '2018-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_threshold: 30.0
+      vix_extreme_threshold: 35.0
+      rsi_period: 14
+      rsi_oversold: 25.0
+      rsi_extreme: 20.0
+      price_ma_period: 200
+      price_below_ma_pct: 10.0
+      volume_spike_multiplier: 2.0
+      min_trend_strength: -0.3
+      correlation_lookback: 20
+      min_correlation: 0.3
+      vol_window: 20
+      max_volatility: 0.05
+      circuit_breaker_threshold: -0.08
+      fast_momentum_period: 10
+      slow_momentum_period: 30
+      rebalance_days: 5
+
+  exp013_beardipbuyer_2022:
+    description: "BearDipBuyer on 2022 rate hike crash - grinding bear test"
+    model: BearDipBuyer_v1
+    universe: [SPY, QQQ, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_threshold: 30.0
+      vix_extreme_threshold: 35.0
+      rsi_period: 14
+      rsi_oversold: 25.0
+      rsi_extreme: 20.0
+      price_ma_period: 200
+      price_below_ma_pct: 10.0
+      volume_spike_multiplier: 2.0
+      min_trend_strength: -0.3
+      correlation_lookback: 20
+      min_correlation: 0.3
+      vol_window: 20
+      max_volatility: 0.05
+      circuit_breaker_threshold: -0.08
+      fast_momentum_period: 10
+      slow_momentum_period: 30
+      rebalance_days: 5
 
 universes:
   major_indices:

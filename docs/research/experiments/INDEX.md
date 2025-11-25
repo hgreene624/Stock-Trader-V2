@@ -18,7 +18,8 @@ Experiments with complete documentation in dedicated folders:
 | 007 | [007_v5_improvements/](007_v5_improvements/) | V5 improvements: crash tuning, relative strength, correlation | Nov 23, 2025 | ❌ Failed |
 | 010 | Undocumented | EA optimization with 2024 validation - passed but failed 2025 | Nov 23, 2025 | ❌ Failed |
 | 011 | [011_multi_window_validation/](011_multi_window_validation/) | Multi-window validation revealing momentum fails in bear markets | Nov 24, 2025 | ❌ Failed |
-| 012 | [012_bear_market_strategies/](012_bear_market_strategies/) | Bear market defensive strategies: defensive rotation, correlation gating, multi-asset | Nov 24, 2025 | 📝 Planning |
+| 012 | [012_bear_market_strategies/](012_bear_market_strategies/) | Bear market defensive strategies with recovery timing focus | Nov 24-25, 2025 | ✅ Complete |
+| 013 | [013_beardipbuyer/](013_beardipbuyer/) | Opportunistic bear market profit model - aggressive dip buying | Nov 25, 2025 | 🔄 In Design |
 
 ### Folder Structure
 
@@ -115,6 +116,12 @@ Most successful configurations share:
 ### 3. Simple Beats Complex
 - Single-factor momentum outperforms multi-factor
 - Fewer parameters = more robust
+
+### 4. Bear Markets Require Regime-Specific Strategies
+- Recovery timing > loss limitation (models missing 30% rebounds underperform)
+- Bear markets not monolithic: panic (2020), choppy (2018), grind (2022) need different approaches
+- Momentum strategies fundamentally limited in bear markets (no winners to chase)
+- BearDefensiveRotation_v2 achieved +5.74% profit in 2020 COVID crash by capturing V-recovery
 
 ---
 

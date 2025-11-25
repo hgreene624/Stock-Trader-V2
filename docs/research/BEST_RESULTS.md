@@ -52,6 +52,32 @@ parameters:
 
 ---
 
+## Research Findings - Bear Markets
+
+### Experiment 012: Defensive Strategies (Nov 24-25, 2025)
+
+**Key Discovery**: Recovery timing > loss limitation
+
+Models that "safely" lose -5% but miss 30% recoveries underperform models that capture rebounds.
+
+**Best Bear Model**: BearDefensiveRotation_v2 (defensive asset rotation with cash option)
+- 2020 COVID crash: **+5.74% profit** (captured V-recovery)
+- 2022 grind: -5.23% (limited loss)
+- 2018 choppy: -21.70% (catastrophic)
+
+**Critical Insight**: Bear markets are not monolithic
+- Panic crashes (2020): Need aggression to capture rebounds
+- Choppy bears (2018): Need quality filters to avoid whipsaws
+- Grinding bears (2022): Need simplicity to avoid overtrading
+
+**Why Momentum Fails in Bears**: Momentum chases winners, but in bear markets there are no consistent winners to chase (see case study: CASE_STUDY_MOMENTUM_BEAR_MARKET_FAILURE.md).
+
+**Next Steps**: Build "BearDipBuyer" model optimized for PROFIT in bear markets, not just loss limitation. Integrate with existing bull market models via regime handoff system.
+
+**Documentation**: See `docs/research/experiments/012_bear_market_strategies/EXPERIMENT_SUMMARY.md`
+
+---
+
 ## Failed Approaches (Do Not Repeat)
 
 | Approach | Result | Why It Failed |
