@@ -2243,3 +2243,46 @@ universes:
   my_custom_universe:
   - SPY
   - QQQ
+
+  # Experiment 012: Bear Market V2 Models
+  exp012_defensive_v2_2022:
+    description: "Bear Defensive Rotation V2 - With cash option"
+    model: BearDefensiveRotation_v2
+    universe:
+    - SPY  # For regime detection
+    - XLU
+    - XLP
+    - TLT
+    - GLD
+    - UUP
+    - SHY
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 20
+      top_n: 2
+      min_momentum: -0.05
+      cash_threshold: -0.10
+      rebalance_days: 10
+
+  exp012_multiasset_v2_2022:
+    description: "Bear Multi-Asset V2 - Relative momentum"
+    model: BearMultiAsset_v2
+    universe:
+    - SPY  # For regime detection
+    - TLT
+    - IEF
+    - GLD
+    - UUP
+    - XLU
+    - XLP
+    - XLV
+    - SHY
+    start_date: '2022-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      momentum_period: 40
+      top_n: 3
+      rebalance_days: 14
