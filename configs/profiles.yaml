@@ -2679,6 +2679,59 @@ profiles:
       slow_momentum_period: 30
       rebalance_days: 5
 
+  # Validation tests for BearDipBuyer
+  exp013_validation_2015:
+    description: "BearDipBuyer validation - 2015-2016 market correction"
+    model: BearDipBuyer_v1
+    universe: [SPY, QQQ, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2015-08-01'
+    end_date: '2016-02-29'
+    lookback_bars: 200
+    parameters:
+      vix_threshold: 30.0
+      vix_extreme_threshold: 35.0
+      rsi_period: 14
+      rsi_oversold: 25.0
+      rsi_extreme: 20.0
+      price_ma_period: 200
+      price_below_ma_pct: 10.0
+      volume_spike_multiplier: 2.0
+      min_trend_strength: -0.3
+      correlation_lookback: 20
+      min_correlation: 0.3
+      vol_window: 20
+      max_volatility: 0.05
+      circuit_breaker_threshold: -0.08
+      fast_momentum_period: 10
+      slow_momentum_period: 30
+      rebalance_days: 5
+
+  exp013_validation_2020_full:
+    description: "BearDipBuyer validation - 2020 full year (crash + recovery)"
+    model: BearDipBuyer_v1
+    universe: [SPY, QQQ, TLT, GLD, UUP, SHY, ^VIX]
+    start_date: '2020-01-01'
+    end_date: '2020-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_threshold: 30.0
+      vix_extreme_threshold: 35.0
+      rsi_period: 14
+      rsi_oversold: 25.0
+      rsi_extreme: 20.0
+      price_ma_period: 200
+      price_below_ma_pct: 10.0
+      volume_spike_multiplier: 2.0
+      min_trend_strength: -0.3
+      correlation_lookback: 20
+      min_correlation: 0.3
+      vol_window: 20
+      max_volatility: 0.05
+      circuit_breaker_threshold: -0.08
+      fast_momentum_period: 10
+      slow_momentum_period: 30
+      rebalance_days: 5
+
 universes:
   major_indices:
   - SPY
@@ -2703,3 +2756,4 @@ universes:
   my_custom_universe:
   - SPY
   - QQQ
+
