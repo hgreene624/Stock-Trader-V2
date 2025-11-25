@@ -70,6 +70,7 @@ class AdaptiveRegimeSwitcher_v1(BaseModel):
         self.hysteresis_buffer = hysteresis_buffer
 
         # Initialize constituent models with EA-optimized parameters from champion (17.64% CAGR)
+        # Using same defaults as standalone model for consistency
         self.bull_model = SectorRotationAdaptive_v3(
             model_id="SectorRotation_Bull",
             atr_period=21,
@@ -80,10 +81,10 @@ class AdaptiveRegimeSwitcher_v1(BaseModel):
             bear_leverage=1.38,
             bull_momentum_period=126,
             bear_momentum_period=126,
-            bull_top_n=3,
-            bear_top_n=3,
-            bull_min_momentum=0.0,
-            bear_min_momentum=0.0
+            bull_top_n=4,  # Changed from 3 to match model default
+            bear_top_n=4,  # Changed from 3 to match model default
+            bull_min_momentum=0.10,  # Changed from 0.0 to match model default
+            bear_min_momentum=0.10   # Changed from 0.0 to match model default
         )
         self.panic_model = BearDipBuyer_v1(model_id="BearDipBuyer_Panic")
 

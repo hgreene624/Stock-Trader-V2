@@ -175,11 +175,12 @@ class BacktestRunner:
         symbols = list(symbols)
 
         # Check if using daily-only model
-        # Daily models, sector rotation models, or bear market models use daily data only
+        # Daily models, sector rotation models, bear market models, or composite models use daily data only
         daily_only = any(
             'Daily' in mdl.__class__.__name__ or
             'Sector' in mdl.__class__.__name__ or
-            'Bear' in mdl.__class__.__name__
+            'Bear' in mdl.__class__.__name__ or
+            'Adaptive' in mdl.__class__.__name__
             for mdl in self.models
         )
 
