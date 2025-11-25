@@ -134,10 +134,14 @@ def download_data(args):
                     # Already in the right format (synthetic 4H data)
                     df = df.reset_index() if df.index.name == 'timestamp' else df
 
-                # Save to Parquet
+                # Ensure timestamp is the index before saving (for consistency)
+                if 'timestamp' in df.columns and df.index.name != 'timestamp':
+                    df = df.set_index('timestamp')
+
+                # Save to Parquet with timestamp as index
                 safe_symbol = symbol.replace('/', '-')
                 output_file = data_dir / f"{safe_symbol}_{timeframe}.parquet"
-                df.to_parquet(output_file, index=False)
+                df.to_parquet(output_file, index=True)
 
                 print(f"  ✓ {symbol} ({timeframe}): {len(df)} bars downloaded → {output_file}")
                 success_count += 1
