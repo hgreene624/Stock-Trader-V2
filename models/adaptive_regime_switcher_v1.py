@@ -69,15 +69,32 @@ class AdaptiveRegimeSwitcher_v1(BaseModel):
         self.use_hysteresis = use_hysteresis
         self.hysteresis_buffer = hysteresis_buffer
 
-        # Initialize constituent models
-        self.bull_model = SectorRotationAdaptive_v3(model_id="SectorRotation_Bull")
+        # Initialize constituent models with EA-optimized parameters from champion (17.64% CAGR)
+        self.bull_model = SectorRotationAdaptive_v3(
+            model_id="SectorRotation_Bull",
+            atr_period=21,
+            stop_loss_atr_mult=1.6,
+            take_profit_atr_mult=2.48,
+            min_hold_days=2,
+            bull_leverage=2.0,
+            bear_leverage=1.38,
+            bull_momentum_period=126,
+            bear_momentum_period=126,
+            bull_top_n=3,
+            bear_top_n=3,
+            bull_min_momentum=0.0,
+            bear_min_momentum=0.0
+        )
         self.panic_model = BearDipBuyer_v1(model_id="BearDipBuyer_Panic")
 
-        # Combined universe
-        self.all_assets = list(set(
-            self.bull_model.universe +
-            self.panic_model.all_assets
-        ))
+        # Combined universe (exclude VIX - it's not tradeable)
+        combined_assets = set(self.bull_model.all_assets + self.panic_model.all_assets)
+        # Remove VIX from universe - it's only for reading, not trading
+        combined_assets.discard('^VIX')
+        self.all_assets = list(combined_assets)
+
+        # CRITICAL: Set assets attribute for BacktestRunner compatibility
+        self.assets = self.all_assets
 
         # Track current regime
         self.current_regime = "normal"  # 'normal', 'elevated', 'extreme'
@@ -87,6 +104,8 @@ class AdaptiveRegimeSwitcher_v1(BaseModel):
             version="1.0.0",
             universe=self.all_assets
         )
+
+        print(f"[AdaptiveRegimeSwitcher] Initialized with universe: {sorted(self.all_assets)}")
 
     def detect_regime(self, context: Context) -> str:
         """
@@ -199,12 +218,16 @@ class AdaptiveRegimeSwitcher_v1(BaseModel):
             close_col = 'Close' if 'Close' in vix_features.columns else 'close'
             vix_level = float(vix_features[close_col].iloc[-1])
 
+        # Track whether sub-models want to hold current positions
+        hold_current = False
+
         # Generate weights based on regime
         if regime == "extreme":
             # Full panic mode - 100% BearDipBuyer
             print(f"  [RegimeSwitcher] VIX={vix_level:.2f} → EXTREME PANIC (100% BearDipBuyer)")
             panic_output = self.panic_model.generate_target_weights(context)
             weights = panic_output.weights
+            hold_current = panic_output.hold_current
 
         elif regime == "elevated":
             # Blended mode - 70% BearDipBuyer, 30% SectorRotation
@@ -213,27 +236,38 @@ class AdaptiveRegimeSwitcher_v1(BaseModel):
             bull_output = self.bull_model.generate_target_weights(context)
             panic_output = self.panic_model.generate_target_weights(context)
 
-            weights = self.blend_weights(
-                bull_output.weights,
-                panic_output.weights,
-                self.blend_ratio_panic
-            )
+            # If either model wants to hold, we should hold
+            # (conservative approach - respect hold signals from either model)
+            hold_current = bull_output.hold_current or panic_output.hold_current
+
+            if hold_current:
+                # If holding, use current exposures as weights
+                weights = context.current_exposures
+            else:
+                weights = self.blend_weights(
+                    bull_output.weights,
+                    panic_output.weights,
+                    self.blend_ratio_panic
+                )
 
         else:
             # Normal mode - 100% SectorRotation
             print(f"  [RegimeSwitcher] VIX={vix_level:.2f} → NORMAL (100% SectorRotation)")
             bull_output = self.bull_model.generate_target_weights(context)
             weights = bull_output.weights
+            hold_current = bull_output.hold_current
 
         # Log final weights
         if weights:
             weights_str = ", ".join([f"{k}={v:.3f}" for k, v in sorted(weights.items(), key=lambda x: -x[1])[:5]])
-            print(f"       Top weights: {weights_str}")
+            action = "HOLDING" if hold_current else "REBALANCING"
+            print(f"       {action} - Top weights: {weights_str}")
 
         return ModelOutput(
             model_name=self.model_id,
             timestamp=context.timestamp,
-            weights=weights
+            weights=weights,
+            hold_current=hold_current
         )
 
     def __repr__(self):

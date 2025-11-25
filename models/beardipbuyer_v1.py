@@ -105,9 +105,10 @@ class BearDipBuyer_v1(BaseModel):
         self.safe_assets = ['TLT', 'GLD', 'UUP']
         self.cash_asset = 'SHY'
 
-        # Add VIX to assets for panic detection
+        # VIX is used for panic detection but NOT traded
         self.vix_symbol = '^VIX'
-        self.all_assets = self.universe + [self.vix_symbol]
+        # IMPORTANT: Do NOT include VIX in tradeable assets - it's only for reading
+        self.all_assets = self.universe.copy()  # Tradeable assets only
         self.assets = self.all_assets  # Required for BacktestRunner
 
         self.model_id = model_id
@@ -140,7 +141,7 @@ class BearDipBuyer_v1(BaseModel):
         super().__init__(
             name=model_id,
             version="1.0.0",
-            universe=self.all_assets
+            universe=self.all_assets  # Now excludes VIX
         )
 
         # State tracking

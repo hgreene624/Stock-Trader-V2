@@ -564,6 +564,15 @@ profiles:
       - bull
       - neutral
 
+  adaptive_regime_switcher_default:
+    description: "Adaptive regime switcher combining SectorRotation and BearDipBuyer"
+    model: AdaptiveRegimeSwitcher_v1
+    universe: sector_etfs_plus
+    start_date: 2020-01-01
+    end_date: 2024-12-31
+    lookback_bars: 200
+    parameters: {}
+
   my_test_1:
     description: Cash-Secured Put - aggressive delta
     model: CashSecuredPutModel_v1
@@ -2731,6 +2740,66 @@ profiles:
       fast_momentum_period: 10
       slow_momentum_period: 30
       rebalance_days: 5
+
+  # Experiment 014: Adaptive Regime Switcher
+  exp014_combined_2020_2024:
+    description: "Adaptive regime switcher combining SectorRotation + BearDipBuyer"
+    model: AdaptiveRegimeSwitcher_v1
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    - SPY
+    - QQQ
+    - GLD
+    - UUP
+    - SHY
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_extreme_panic: 35.0
+      vix_elevated_panic: 30.0
+      vix_normal: 25.0
+      blend_ratio_panic: 0.7
+      use_hysteresis: true
+      hysteresis_buffer: 2.0
+
+  exp014_baseline_sector:
+    description: "SectorRotationAdaptive_v3 baseline for comparison"
+    model: SectorRotationAdaptive_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      atr_period: 21
+      stop_loss_atr_mult: 1.6
+      take_profit_atr_mult: 2.48
+      min_hold_days: 2
+      bull_leverage: 2.0
+      bear_leverage: 1.38
 
 universes:
   major_indices:
