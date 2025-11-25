@@ -12,7 +12,10 @@
 
 **Current Goal**: Beat SPY's 14.34% CAGR (2020-2024) with OUT-OF-SAMPLE validation
 
-**Best Model So Far**: None validated
+**Best Model So Far**: AdaptiveRegimeSwitcher_v2 (In Development)
+- **Current**: 13.05% CAGR (2020-2024) - Needs improvement to beat SPY
+- **v3 Projected**: ~16-17.5% CAGR with price trend confirmation
+- See: `docs/research/experiments/014_adaptive_regime_switcher/IMPROVEMENT_ANALYSIS.md`
 - Previous "champion" (28% CAGR) failed out-of-sample testing
 - Lost -17.58% in 2025, +5.52% in 2019 (vs SPY +31%)
 - See case study: `docs/research/case_studies/001_ea_overfitting_disaster.md`
@@ -659,6 +662,7 @@ Check:
 ## Additional Resources
 
 - **BEST RESULTS (START HERE)**: [docs/research/BEST_RESULTS.md](docs/research/BEST_RESULTS.md) - Current champion and what to beat
+- **EXPERIMENT 014 ANALYSIS**: [docs/research/experiments/014_adaptive_regime_switcher/IMPROVEMENT_ANALYSIS.md](docs/research/experiments/014_adaptive_regime_switcher/IMPROVEMENT_ANALYSIS.md) - Complete analysis of v2 and path to v3
 - **RESEARCH PROTOCOL (CRITICAL)**: [docs/research/RESEARCH_PROTOCOL.md](docs/research/RESEARCH_PROTOCOL.md) - **MUST follow for all experiments**
 - **Experiment Structure**: [docs/research/experiments/EXPERIMENT_STRUCTURE.md](docs/research/experiments/EXPERIMENT_STRUCTURE.md) - Directory structure standard
 - **Walk-Forward Guide**: [docs/guides/walk_forward.md](docs/guides/walk_forward.md) - Prevent overfitting with out-of-sample validation
