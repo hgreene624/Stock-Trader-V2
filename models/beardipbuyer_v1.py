@@ -171,6 +171,9 @@ class BearDipBuyer_v1(BaseModel):
                 close_col = 'Close' if 'Close' in vix_data.columns else 'close'
                 vix_level = vix_data[close_col].iloc[-1]
 
+        # DIAGNOSTIC: Print VIX level
+        print(f"[{context.timestamp.date()}] VIX={vix_level:.2f}", end="")
+
         # Get SPY data for RSI and price checks
         spy_data = context.asset_features.get('SPY')
         if spy_data is not None and len(spy_data) > self.rsi_period:
@@ -178,6 +181,9 @@ class BearDipBuyer_v1(BaseModel):
 
             # Calculate RSI
             rsi = self.calculate_rsi(spy_data[close_col], self.rsi_period)
+
+            # DIAGNOSTIC: Print RSI
+            print(f", RSI={rsi:.1f}", end="")
 
             # Calculate price vs MA
             if len(spy_data) >= self.price_ma_period:
@@ -197,8 +203,17 @@ class BearDipBuyer_v1(BaseModel):
             else:
                 volume_spike = False
 
-            # Level 3: Extreme panic
-            if vix_level > self.vix_extreme_threshold and rsi < self.rsi_extreme:
+            # Level 3: Extreme panic (FIX: VIX alone can trigger)
+            if vix_level > 50.0:  # Once-in-decade panic (2020: VIX=82)
+                panic_level = 3
+                panic_signals.append('VIX_GENERATIONAL')
+                if rsi < self.rsi_extreme:
+                    panic_signals.append('RSI_EXTREME')
+                if price_vs_ma < -self.price_below_ma_pct:
+                    panic_signals.append('PRICE_EXTREME')
+                if volume_spike:
+                    panic_signals.append('VOLUME_CAPITULATION')
+            elif vix_level > self.vix_extreme_threshold and rsi < self.rsi_extreme:
                 panic_level = 3
                 panic_signals.extend(['VIX_EXTREME', 'RSI_EXTREME'])
                 if price_vs_ma < -self.price_below_ma_pct:
@@ -229,6 +244,9 @@ class BearDipBuyer_v1(BaseModel):
             elif vix_level > 25.0:
                 panic_level = 1
                 panic_signals.append('VIX_MODERATE_ONLY')
+
+        # DIAGNOSTIC: Print final panic level
+        print(f", PANIC_LEVEL={panic_level}, signals={panic_signals}")
 
         return panic_level
 
@@ -335,6 +353,8 @@ class BearDipBuyer_v1(BaseModel):
         Check if drawdown threshold breached (from V3).
         Returns True if should exit to cash.
 
+        FIX: Reset circuit breaker when drawdown improves, not just at new highs.
+
         Args:
             current_nav: Current portfolio NAV
 
@@ -360,7 +380,15 @@ class BearDipBuyer_v1(BaseModel):
             self.circuit_breaker_active = True
             return True
 
-        return self.circuit_breaker_active  # Stay in cash once activated until new highs
+        # FIX: Reset breaker if drawdown improves to half the threshold
+        # E.g., if threshold is -8%, reset when drawdown improves to -4%
+        reset_threshold = self.circuit_breaker_threshold / 2.0
+        if self.circuit_breaker_active and drawdown > reset_threshold:
+            self.circuit_breaker_active = False
+            print(f"  → Circuit breaker RESET (drawdown improved to {drawdown*100:.1f}%)")
+            return False
+
+        return self.circuit_breaker_active
 
     def calculate_sector_correlation(self, context: Context) -> float:
         """
@@ -431,21 +459,29 @@ class BearDipBuyer_v1(BaseModel):
         #         weights={}
         #     )
 
-        # Check circuit breaker FIRST (from V3)
-        current_nav = getattr(context, 'model_budget_value', 100000.0)
-        if self.check_circuit_breaker(current_nav):
-            # Circuit breaker activated - exit to 100% cash
-            return ModelOutput(
-                model_name=self.model_id,
-                timestamp=context.timestamp,
-                weights={self.cash_asset: 1.0}
-            )
+        # Calculate panic level FIRST to decide if circuit breaker should apply
+        panic_level = self.calculate_panic_level(context)
+
+        # FIX: Disable circuit breaker during panic periods (we WANT volatility then)
+        # Only check breaker when NOT in panic mode
+        if panic_level == 0:
+            current_nav = float(getattr(context, 'model_budget_value', 100000.0))
+            drawdown_pct = ((current_nav - self.max_nav) / self.max_nav * 100) if self.max_nav > 0 else 0
+            if self.check_circuit_breaker(current_nav):
+                # Circuit breaker activated - exit to 100% cash
+                print(f"  → CIRCUIT BREAKER ACTIVE (NAV=${current_nav:.2f}, max_nav=${self.max_nav:.2f}, DD={drawdown_pct:.1f}%)")
+                return ModelOutput(
+                    model_name=self.model_id,
+                    timestamp=context.timestamp,
+                    weights={self.cash_asset: 1.0}
+                )
 
         # Check if it's time to rebalance
         if self.last_rebalance is not None:
             days_since_rebalance = (context.timestamp - self.last_rebalance).days
             if days_since_rebalance < self.rebalance_days:
                 # Not time to rebalance yet - hold current positions
+                # (No print here to avoid clutter)
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,
@@ -455,8 +491,8 @@ class BearDipBuyer_v1(BaseModel):
 
         self.last_rebalance = context.timestamp
 
-        # Calculate panic level (NEW)
-        panic_level = self.calculate_panic_level(context)
+        # Panic level already calculated above for circuit breaker check
+        # (prints diagnostic info internally)
 
         # Initialize weights
         weights = {}
@@ -464,6 +500,7 @@ class BearDipBuyer_v1(BaseModel):
         # Panic level logic
         if panic_level == 3:
             # EXTREME PANIC: Buy growth aggressively with quality filters
+            print(f"  → EXTREME PANIC (Level 3) - checking growth assets")
             qualified_assets = []
 
             for asset in self.growth_assets:
@@ -483,6 +520,9 @@ class BearDipBuyer_v1(BaseModel):
                         fast_momentum = (features[close_col].iloc[-1] /
                                        features[close_col].iloc[-(self.fast_momentum_period+1)] - 1)
                         qualified_assets.append((asset, fast_momentum, trend_strength))
+                        print(f"     ✓ {asset}: trend_strength={trend_strength:.3f}, fast_mom={fast_momentum:.3f}")
+                else:
+                    print(f"     ✗ {asset}: trend_strength={trend_strength:.3f} < {self.min_trend_strength:.3f}")
 
             if qualified_assets:
                 # Sort by momentum (best bounce candidates first)
@@ -493,11 +533,13 @@ class BearDipBuyer_v1(BaseModel):
                 for asset, _, _ in qualified_assets:
                     weights[asset] = base_weight
 
-                # Apply volatility scaling (from V3)
-                vol_scalar = self.calculate_volatility_scalar(context)
-                weights = {k: v * vol_scalar * 1.0 for k, v in weights.items()}  # 1.0 = full size
+                # FIX: NO volatility scaling during extreme panic - we WANT to buy high vol
+                # During extreme panic, high volatility is the opportunity, not the risk
+                print(f"     No vol scaling during extreme panic (buying the chaos)")
+                # weights stay at full size (1.0x)
             else:
                 # No qualified assets even in extreme panic - stay in cash
+                print(f"     No qualified assets - staying in cash")
                 weights[self.cash_asset] = 1.0
 
         elif panic_level == 2:
@@ -544,38 +586,44 @@ class BearDipBuyer_v1(BaseModel):
             if not weights:
                 weights[self.cash_asset] = 1.0
             else:
-                # Apply volatility scaling and panic size (0.7)
+                # FIX: Reduce volatility scaling during high panic (0.7 base size only)
+                # Use moderate vol scalar to prevent extreme positions but still buy opportunity
                 vol_scalar = self.calculate_volatility_scalar(context)
+                vol_scalar = max(vol_scalar, 0.5)  # Floor at 0.5 (don't reduce below 50%)
+                print(f"     Vol scalar: {vol_scalar:.3f} (floored at 0.5)")
                 weights = {k: v * vol_scalar * 0.7 for k, v in weights.items()}
 
         elif panic_level == 1:
-            # MODERATE PANIC: Tactical rebounds only with strict filters
-            best_momentum = None
-            best_asset = None
+            # MODERATE PANIC: Buy best safe havens (FIX: no momentum requirement)
+            print(f"  → MODERATE PANIC (Level 1) - buying safe havens")
+            best_safe_havens = []
 
-            for asset in self.growth_assets:
+            for asset in self.safe_assets:
                 if asset not in context.asset_features:
                     continue
                 features = context.asset_features[asset]
+                close_col = 'Close' if 'Close' in features.columns else 'close'
 
-                # Require stronger trend for moderate panic
-                trend_strength = self.calculate_trend_strength(features, self.slow_momentum_period)
-                if trend_strength >= 0.3:  # Stricter than min_trend_strength
-                    close_col = 'Close' if 'Close' in features.columns else 'close'
-                    if len(features) > self.fast_momentum_period:
-                        fast_momentum = (features[close_col].iloc[-1] /
-                                       features[close_col].iloc[-(self.fast_momentum_period+1)] - 1)
-                        if fast_momentum > 0 and (best_momentum is None or fast_momentum > best_momentum):
-                            best_momentum = fast_momentum
-                            best_asset = asset
+                if len(features) > self.slow_momentum_period:
+                    momentum = (features[close_col].iloc[-1] /
+                              features[close_col].iloc[-(self.slow_momentum_period+1)] - 1)
+                    best_safe_havens.append((asset, momentum))
+                    print(f"     {asset}: momentum={momentum:.3f}")
 
-            if best_asset:
-                # Single best asset with small size
-                vol_scalar = self.calculate_volatility_scalar(context)
-                weights[best_asset] = 0.3 * vol_scalar  # 0.3 = small tactical position
-                weights[self.cash_asset] = 1.0 - weights[best_asset]
+            if best_safe_havens:
+                # Sort by momentum and take top 2
+                best_safe_havens.sort(key=lambda x: x[1], reverse=True)
+                top_safe = best_safe_havens[:2]
+
+                # 50% in safe havens, 50% cash
+                safe_weight = 0.5 / len(top_safe)
+                for asset, _ in top_safe:
+                    weights[asset] = safe_weight
+                weights[self.cash_asset] = 0.5
+                print(f"     Allocated 50% to safe havens, 50% cash")
             else:
                 weights[self.cash_asset] = 1.0
+                print(f"     No safe havens available - staying in cash")
 
         else:
             # NO PANIC: Stay in cash
@@ -599,6 +647,13 @@ class BearDipBuyer_v1(BaseModel):
         total_weight = sum(weights.values())
         if total_weight < 1.0:
             weights[self.cash_asset] = weights.get(self.cash_asset, 0) + (1.0 - total_weight)
+
+        # DIAGNOSTIC: Print final weights
+        if weights:
+            weights_str = ", ".join([f"{k}={v:.3f}" for k, v in weights.items() if v > 0.001])
+            print(f"  → FINAL WEIGHTS: {weights_str}")
+        else:
+            print(f"  → FINAL WEIGHTS: Empty (will hold current)")
 
         return ModelOutput(
             model_name=self.model_id,
