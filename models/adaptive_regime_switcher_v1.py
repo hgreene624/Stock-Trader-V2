@@ -253,12 +253,20 @@ class AdaptiveRegimeSwitcher_v1(BaseModel):
 
         else:
             # Normal mode - 100% SectorRotation
+            # FIX A: Return bull_output directly to preserve model state and tracking
             print(f"  [RegimeSwitcher] VIX={vix_level:.2f} → NORMAL (100% SectorRotation)")
             bull_output = self.bull_model.generate_target_weights(context)
-            weights = bull_output.weights
-            hold_current = bull_output.hold_current
 
-        # Log final weights
+            # Log final weights
+            if bull_output.weights:
+                weights_str = ", ".join([f"{k}={v:.3f}" for k, v in sorted(bull_output.weights.items(), key=lambda x: -x[1])[:5]])
+                action = "HOLDING" if bull_output.hold_current else "REBALANCING"
+                print(f"       {action} - Top weights: {weights_str}")
+
+            # Return bull_output directly to preserve model_name and all internal state
+            return bull_output
+
+        # Log final weights (for elevated/extreme modes)
         if weights:
             weights_str = ", ".join([f"{k}={v:.3f}" for k, v in sorted(weights.items(), key=lambda x: -x[1])[:5]])
             action = "HOLDING" if hold_current else "REBALANCING"
