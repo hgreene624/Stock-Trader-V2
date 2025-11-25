@@ -121,7 +121,8 @@ Most successful configurations share:
 - Recovery timing > loss limitation (models missing 30% rebounds underperform)
 - Bear markets not monolithic: panic (2020), choppy (2018), grind (2022) need different approaches
 - Momentum strategies fundamentally limited in bear markets (no winners to chase)
-- BearDefensiveRotation_v2 achieved +5.74% profit in 2020 COVID crash by capturing V-recovery
+- BearDefensiveRotation_v3 (bug-fixed) achieved +12.79% profit in 2020 COVID crash, +63% better than V2
+- Risk management features (volatility scaling, circuit breaker) work when applied at rebalance intervals, not daily
 
 ---
 

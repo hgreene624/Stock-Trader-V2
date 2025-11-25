@@ -1,6 +1,6 @@
 # Best Results Registry
 
-**Last Updated**: 2025-11-23
+**Last Updated**: 2025-11-25
 **Benchmark**: SPY 14.34% CAGR (2020-2024)
 
 ---
@@ -60,19 +60,25 @@ parameters:
 
 Models that "safely" lose -5% but miss 30% recoveries underperform models that capture rebounds.
 
-**Best Bear Model**: BearDefensiveRotation_v2 (defensive asset rotation with cash option)
-- 2020 COVID crash: **+5.74% profit** (captured V-recovery)
-- 2022 grind: -5.23% (limited loss)
-- 2018 choppy: -21.70% (catastrophic)
+**Best Bear Model**: BearDefensiveRotation_v3 (Bug Fixed Nov 25, 2025)
+- **2020 COVID crash**: **+12.79% profit** (captured V-recovery, +123% better than V2)
+- **2022 grind**: -5.70% (controlled loss, nearly equal to V2's -5.23%)
+- **2018 choppy**: -14.90% (improved from V2's -21.70%)
+- **Average CAGR**: -2.60% (vs V2: -7.06%, **+63% improvement**)
+- **Trade frequency**: 122/year (proper 10-day rebalancing)
+
+**Critical Bug Fixed**: V3 was applying volatility scaling DAILY instead of at rebalance intervals, causing 548 trades/year. Fix reduced trades by 78% and improved performance by 41-48% across periods.
 
 **Critical Insight**: Bear markets are not monolithic
 - Panic crashes (2020): Need aggression to capture rebounds
-- Choppy bears (2018): Need quality filters to avoid whipsaws
-- Grinding bears (2022): Need simplicity to avoid overtrading
+- Choppy bears (2018): Need defensive rotation with risk controls
+- Grinding bears (2022): Need proper rebalancing cadence to avoid overtrading
+
+**Risk Management Works When Timed Correctly**: V3's volatility scaling and circuit breaker provide value when applied at rebalance intervals, not daily. Timing of risk controls matters as much as the controls themselves.
 
 **Why Momentum Fails in Bears**: Momentum chases winners, but in bear markets there are no consistent winners to chase (see case study: CASE_STUDY_MOMENTUM_BEAR_MARKET_FAILURE.md).
 
-**Next Steps**: Build "BearDipBuyer" model optimized for PROFIT in bear markets, not just loss limitation. Integrate with existing bull market models via regime handoff system.
+**Next Steps**: Experiment 013 (BearDipBuyer) - opportunistic panic buying model for additional profit in extreme crashes. Integrate with bull market models via regime handoff system.
 
 **Documentation**: See `docs/research/experiments/012_bear_market_strategies/EXPERIMENT_SUMMARY.md`
 
