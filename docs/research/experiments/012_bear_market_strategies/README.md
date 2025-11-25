@@ -1,14 +1,20 @@
 # Experiment 012: Bear Market Defensive Strategies
 
-**Date**: November 24, 2025
-**Status**: Phase 1 Complete - BearCorrelationGated_v1 Advances
+**Date**: November 24-25, 2025
+**Status**: ✅ COMPLETED + Bug Fix Applied
 **Objective**: Design and test bear-market-specific model architectures that can protect capital during market downturns
 
 ## Executive Summary
 
-Current sector rotation momentum models fail catastrophically in bear markets (-17.58% in 2025 YTD for SectorRotationAdaptive_v3). This experiment designs three distinct bear market strategies that fundamentally differ from momentum approaches.
+Current sector rotation momentum models fail catastrophically in bear markets (-17.58% in 2025 YTD for SectorRotationAdaptive_v3). This experiment designed and tested three distinct bear market strategies that fundamentally differ from momentum approaches.
 
-**Phase 1 Results**: BearCorrelationGated_v1 successfully limited losses to -5.32% vs SPY's -18% in 2022, achieving 70% downside protection. Two other models failed.
+**Final Result**: **BearDefensiveRotation_v3** (after bug fix) is the recommended production model:
+- **2020 COVID crash**: +12.79% (captured V-recovery)
+- **2022 grinding bear**: -5.70% (controlled loss vs SPY -18%)
+- **2018 choppy bear**: -14.90% (improved from V1: -21.70%)
+- **Average CAGR**: -2.60% (vs V2: -7.06%, +63% improvement)
+
+**Critical Bug Fixed** (Nov 25, 2025): V3 was applying volatility scaling daily instead of at rebalance intervals, causing 548 trades/year. After fix: 122 trades/year with dramatically better performance.
 
 ## Problem Statement
 
@@ -17,6 +23,42 @@ From Experiments 010 & 011 and Case Studies:
 - **Removing leverage makes it worse** (232% degradation vs 185% with leverage)
 - **Regime detection insufficient** - only changes parameters, not strategy
 - **Need fundamentally different approach** for bear markets
+
+## Experiment Results (All Phases Complete)
+
+### Phase 1: Initial Model Screening (2022 Only)
+Tested 3 architectures:
+- ✅ **BearCorrelationGated_v1**: -5.32% (vs SPY -18%) - PASSED
+- ❌ **BearDefensiveRotation_v1**: -18.78% - FAILED
+- ❌ **BearMultiAsset_v1**: -22.74% - FAILED
+
+### Phase 1b: Model Improvements
+Fixed failing models:
+- ✅ **BearDefensiveRotation_v2**: -5.23% (improved by +13.55% from V1)
+- ⚠️ **BearMultiAsset_v2**: -14.01% (improved but still weak)
+
+### Phase 2: Multi-Year Validation (2018, 2020, 2022)
+**Key Discovery**: Recovery timing > Loss limitation
+- V2 captured +5.74% profit in 2020 COVID crash (captured V-recovery)
+- CorrelationGated stayed defensive too long, missed recovery
+
+### Phase 2b: Feature Testing
+**V3 Risk Management Features** (Bug Fixed Nov 25, 2025):
+- Added volatility scaling and circuit breaker
+- **Bug**: Was applying features daily (548 trades/year)
+- **Fix**: Apply only at rebalance intervals (122 trades/year)
+- **Result**: Best overall performance (+63% better than V2)
+
+### Final Rankings (Across 2018, 2020, 2022)
+
+| Model | Avg CAGR | Best Use Case |
+|-------|----------|---------------|
+| **BearDefensiveRotation_v3** | **-2.60%** | **RECOMMENDED - All bear types** |
+| BearDefensiveRotation_v2 | -7.06% | Simplicity/interpretability |
+| BearCorrelationGated_v1 | -6.46% | Consistent loss limitation |
+| BearDefensiveRotation_v5 | -7.06% | Experimental (inconsistent) |
+
+**See** [EXPERIMENT_SUMMARY.md](EXPERIMENT_SUMMARY.md) **for complete details.**
 
 ## Proposed Architectures
 
@@ -152,8 +194,17 @@ This experiment differs from past failures:
 5. ✅ Create testing profiles (Completed)
 6. ✅ Run Phase 1 tests (2022) (Completed)
 7. ✅ Analyze Phase 1 results (Completed - see phase1_analysis.md)
-8. ⏳ Run Phase 2 tests with BearCorrelationGated_v1 (Next)
-9. ⏳ Consider enhancements (volatility confirmation, parameter tuning)
+8. ✅ Run Phase 2 tests - Multi-year validation (Completed)
+9. ✅ Run Phase 2b tests - Feature testing (Completed)
+10. ✅ **Bug Fix**: Fixed V3 overtrading issue (Nov 25, 2025)
+11. ✅ Re-test V3 across all periods (Completed)
+12. ✅ Update all documentation (Completed)
+
+**Experiment Status**: ✅ COMPLETED
+
+**Production Recommendation**: Deploy BearDefensiveRotation_v3 (bug-fixed version)
+
+**Next Experiment**: [Experiment 013 - BearDipBuyer](../013_beardipbuyer/) - Opportunistic panic buying strategy
 
 ## Key Insights from Literature Review
 
@@ -201,4 +252,6 @@ python3 -m backtest.analyze_cli --profile bear_defensive_2025_ytd
 
 ---
 
-*Last Updated: November 24, 2025*
+*Experiment Completed: November 24, 2025*
+*Bug Fix Applied: November 25, 2025*
+*Documentation Updated: November 25, 2025*

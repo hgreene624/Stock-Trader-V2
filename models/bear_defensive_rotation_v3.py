@@ -163,6 +163,8 @@ class BearDefensiveRotation_v3(BaseModel):
         # Update peak NAV if we're at new highs
         if current_nav > self.max_nav:
             self.max_nav = current_nav
+            if self.circuit_breaker_active:
+                print(f"  → Circuit breaker RESET (new high: ${current_nav:.2f})")
             self.circuit_breaker_active = False  # Reset if making new highs
 
         # Calculate current drawdown
@@ -173,6 +175,8 @@ class BearDefensiveRotation_v3(BaseModel):
 
         # Activate breaker if threshold crossed
         if drawdown < self.drawdown_threshold:
+            if not self.circuit_breaker_active:
+                print(f"  → Circuit breaker TRIGGERED (NAV=${current_nav:.2f}, max=${self.max_nav:.2f}, DD={drawdown*100:.1f}%)")
             self.circuit_breaker_active = True
             return True
 
@@ -212,26 +216,18 @@ class BearDefensiveRotation_v3(BaseModel):
             days_since_rebalance = (context.timestamp - self.last_rebalance).days
             if days_since_rebalance < self.rebalance_days:
                 # Not time to rebalance yet - hold current positions
-                # But still apply volatility scaling to current positions
-                current_weights = context.current_exposures.copy()
-
-                # Apply volatility scaling
-                vol_scalar = self.calculate_volatility_scalar(context)
-                scaled_weights = {k: v * vol_scalar for k, v in current_weights.items()}
-
-                # If scaling reduced total exposure, put remainder in SHY
-                total_exposure = sum(scaled_weights.values())
-                if total_exposure < 1.0:
-                    scaled_weights[self.cash_asset] = scaled_weights.get(self.cash_asset, 0) + (1.0 - total_exposure)
-
+                # BUG: This was applying volatility scaling DAILY causing overtrading!
+                # FIX: Just hold current positions, no daily adjustments
+                print(f"  [V3] Holding (day {days_since_rebalance}/{self.rebalance_days})")
                 return ModelOutput(
                     model_name=self.model_id,
                     timestamp=context.timestamp,
-                    weights=scaled_weights,
-                    hold_current=False  # We're modifying weights, not holding exactly
+                    weights=context.current_exposures,
+                    hold_current=True  # Actually hold without modifications
                 )
 
         self.last_rebalance = context.timestamp
+        print(f"  [V3] Rebalancing at {context.timestamp.date()}")
 
         # Calculate momentum for each defensive asset
         asset_momentum = {}
@@ -304,12 +300,17 @@ class BearDefensiveRotation_v3(BaseModel):
 
         # V3: Apply volatility scaling to final weights
         vol_scalar = self.calculate_volatility_scalar(context)
+        print(f"       Vol scalar: {vol_scalar:.3f}")
         scaled_weights = {k: v * vol_scalar for k, v in weights.items()}
 
         # If scaling reduced total exposure, put remainder in SHY
         total_exposure = sum(scaled_weights.values())
         if total_exposure < 1.0:
             scaled_weights[self.cash_asset] = scaled_weights.get(self.cash_asset, 0) + (1.0 - total_exposure)
+
+        # Log final weights
+        weights_str = ", ".join([f"{k}={v:.3f}" for k, v in scaled_weights.items() if v > 0.001])
+        print(f"       Final weights: {weights_str}")
 
         return ModelOutput(
             model_name=self.model_id,
