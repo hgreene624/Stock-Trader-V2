@@ -220,9 +220,10 @@ class ModelOutput:
                 assert weight <= 3.0, \
                     f"NAV exposure for {symbol} exceeds limit (3.0), got {weight}"
             else:
-                # New positions - should be model-relative (0-1 range typically)
-                assert weight <= 2.0, \
-                    f"Weight for {symbol} exceeds reasonable limit (2.0), got {weight}"
+                # New positions - can be leveraged for vol-targeting models
+                # Allow up to 3.0x for models with volatility scaling
+                assert weight <= 3.0, \
+                    f"Weight for {symbol} exceeds reasonable limit (3.0), got {weight}"
 
         # Validate total weights
         total_weight = sum(self.weights.values())
