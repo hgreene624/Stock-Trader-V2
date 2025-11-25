@@ -2219,31 +2219,6 @@ profiles:
       min_momentum: 0.0
       rebalance_days: 14
 
-universes:
-  major_indices:
-  - SPY
-  - QQQ
-  - DIA
-  - IWM
-  tech_etfs:
-  - QQQ
-  - XLK
-  - SMH
-  - SOXX
-  sector_rotation:
-  - XLF
-  - XLE
-  - XLK
-  - XLV
-  - XLY
-  crypto_majors:
-  - BTC-USD
-  - ETH-USD
-  - SOL-USD
-  my_custom_universe:
-  - SPY
-  - QQQ
-
   # Experiment 012: Bear Market V2 Models
   exp012_defensive_v2_2022:
     description: "Bear Defensive Rotation V2 - With cash option"
@@ -2286,3 +2261,28 @@ universes:
       momentum_period: 40
       top_n: 3
       rebalance_days: 14
+
+universes:
+  major_indices:
+  - SPY
+  - QQQ
+  - DIA
+  - IWM
+  tech_etfs:
+  - QQQ
+  - XLK
+  - SMH
+  - SOXX
+  sector_rotation:
+  - XLF
+  - XLE
+  - XLK
+  - XLV
+  - XLY
+  crypto_majors:
+  - BTC-USD
+  - ETH-USD
+  - SOL-USD
+  my_custom_universe:
+  - SPY
+  - QQQ
