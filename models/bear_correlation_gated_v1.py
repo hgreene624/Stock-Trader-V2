@@ -194,14 +194,15 @@ class BearCorrelationGated_v1(BaseModel):
         Returns:
             ModelOutput with target weights (empty if not bear regime)
         """
-        # REGIME CHECK: Only active in bear markets
-        if context.regime.equity_regime != 'bear':
-            # Not a bear market - return empty weights (no positions)
-            return ModelOutput(
-                model_name=self.model_id,
-                timestamp=context.timestamp,
-                weights={}
-            )
+        # REGIME CHECK: Temporarily disabled for Phase 1 testing
+        # TODO: Re-enable after validating model logic
+        # if context.regime.equity_regime != 'bear':
+        #     # Not a bear market - return empty weights (no positions)
+        #     return ModelOutput(
+        #         model_name=self.model_id,
+        #         timestamp=context.timestamp,
+        #         weights={}
+        #     )
 
         # Check if it's time to rebalance
         if self.last_rebalance is not None:

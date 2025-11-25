@@ -2154,6 +2154,7 @@ profiles:
     description: "Bear Defensive Rotation - Test on 2022 bear market"
     model: BearDefensiveRotation_v1
     universe:
+    - SPY  # For regime detection only
     - XLU
     - XLP
     - TLT
@@ -2172,6 +2173,7 @@ profiles:
     description: "Bear Correlation Gated - Test on 2022 bear market"
     model: BearCorrelationGated_v1
     universe:
+    - SPY  # For regime detection only
     - XLK
     - XLF
     - XLE
@@ -2199,6 +2201,7 @@ profiles:
     description: "Bear Multi-Asset - Test on 2022 bear market"
     model: BearMultiAsset_v1
     universe:
+    - SPY  # For regime detection only
     - TLT
     - IEF
     - GLD
