@@ -849,7 +849,7 @@ The v3 overfitting disaster was a valuable learning experience. By studying "Bui
 
 ---
 
-## DECISION UPDATE (2025-11-26)
+/Users/holdengreene/PycharmProjects/Stock-Trader-V2/docs/research/literature reviews/building_algorithmic_systems_lessons.md
 
 After analyzing infrastructure gaps and complexity vs value trade-offs, we decided:
 

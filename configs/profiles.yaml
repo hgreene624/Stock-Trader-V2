@@ -2875,6 +2875,69 @@ profiles:
       bull_leverage: 2.0
       bear_leverage: 1.38
 
+
+  adaptive_regime_switcher_v4_train:
+    description: v4 with conservative params - training on 2018-2022
+    model: AdaptiveRegimeSwitcher_v4
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2018-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_defensive: 30.0
+      vix_extreme: 45.0
+      bull_leverage: 1.25
+      bull_momentum_period: 126
+      bull_top_n: 4
+      bull_min_momentum: 0.10
+      bull_breadth_threshold: 0.5
+      defensive_top_n: 2
+      defensive_leverage: 1.0
+      rebalance_days: 30
+
+  adaptive_regime_switcher_v4_validate:
+    description: v4 validation on 2023-2024 out-of-sample
+    model: AdaptiveRegimeSwitcher_v4
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2023-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_defensive: 30.0
+      vix_extreme: 45.0
+      bull_leverage: 1.25
+      bull_momentum_period: 126
+      bull_top_n: 4
+      bull_min_momentum: 0.10
+      bull_breadth_threshold: 0.5
+      defensive_top_n: 2
+      defensive_leverage: 1.0
+      rebalance_days: 30
+
 universes:
   major_indices:
   - SPY
@@ -2900,3 +2963,65 @@ universes:
   - SPY
   - QQQ
 
+
+  adaptive_regime_switcher_v4_train:
+    description: v4 with conservative params - training on 2018-2022
+    model: AdaptiveRegimeSwitcher_v4
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2018-01-01'
+    end_date: '2022-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_defensive: 30.0
+      vix_extreme: 45.0
+      bull_leverage: 1.25
+      bull_momentum_period: 126
+      bull_top_n: 4
+      bull_min_momentum: 0.10
+      bull_breadth_threshold: 0.5
+      defensive_top_n: 2
+      defensive_leverage: 1.0
+      rebalance_days: 30
+
+  adaptive_regime_switcher_v4_validate:
+    description: v4 validation on 2023-2024 out-of-sample
+    model: AdaptiveRegimeSwitcher_v4
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2023-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      vix_defensive: 30.0
+      vix_extreme: 45.0
+      bull_leverage: 1.25
+      bull_momentum_period: 126
+      bull_top_n: 4
+      bull_min_momentum: 0.10
+      bull_breadth_threshold: 0.5
+      defensive_top_n: 2
+      defensive_leverage: 1.0
+      rebalance_days: 30
