@@ -1,5 +1,7 @@
 # Case Studies
 
+> **Last Updated**: 2025-11-26
+
 Documented failures and lessons learned from trading strategy research.
 
 ## Index

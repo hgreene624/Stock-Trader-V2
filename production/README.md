@@ -1,5 +1,7 @@
 # Production Trading System
 
+> **Last Updated**: 2025-11-26
+
 **Single Source of Truth** for deploying and monitoring the algorithmic trading bot.
 
 ## Architecture Overview

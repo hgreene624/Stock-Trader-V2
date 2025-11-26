@@ -1,11 +1,14 @@
 # Model Documentation
 
+> **Last Updated**: 2025-11-26
+
 This directory contains detailed documentation for all trading models in the system.
 
 ## Production Models
 
 ### Sector Rotation Family (BEST PERFORMERS)
-- [SectorRotationModel_v1.md](SectorRotationModel_v1.md) - **13.01% CAGR (verified)** - Base momentum model
+- [SectorRotationAdaptive_v3](SectorRotationAdaptive_v3.md) - **17.64% CAGR** - Current champion (beats SPY!)
+- [SectorRotationModel_v1.md](SectorRotationModel_v1.md) - 13.01% CAGR - Base momentum model
 - [SectorRotationBull_v1.md](SectorRotationBull_v1.md) - Not Yet Tested - Bull market specialist
 - [SectorRotationBear_v1.md](SectorRotationBear_v1.md) - Not Yet Tested - Bear market defensive
 - [SectorRotationAdaptive_v3.md](SectorRotationAdaptive_v3.md) - Testing - Volatility targeting

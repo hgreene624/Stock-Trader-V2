@@ -1,5 +1,7 @@
 # Trading Platform Research
 
+> **Last Updated**: 2025-11-26
+
 Central repository for all trading strategy research, experiments, and findings.
 
 ## Quick Links

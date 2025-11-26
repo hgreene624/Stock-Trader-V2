@@ -1,5 +1,9 @@
 # Production Trading Bot - VPS Deployment Guide
 
+> **Last Updated**: 2025-11-26
+>
+> ⚠️ **Note**: This document may contain outdated version references. Current version is v35.
+
 ## 🚀 Quick Deploy
 
 SSH into your VPS and run the deployment script:

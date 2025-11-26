@@ -1,6 +1,10 @@
 # Multi-Model Algorithmic Trading Platform
 
-A production-ready algorithmic trading platform that combines multiple strategy models (equity trend, index mean-reversion, crypto momentum) with regime-aware portfolio management, systematic parameter optimization, and comprehensive risk controls.
+> **Last Updated**: 2025-11-26
+
+A production-ready algorithmic trading platform that combines multiple strategy models (sector rotation, equity trend, index mean-reversion) with regime-aware portfolio management, systematic parameter optimization, and comprehensive risk controls.
+
+**Current Best Model**: `SectorRotationAdaptive_v3` - 17.64% CAGR (beats SPY's 14.34%)
 
 ## Features
 

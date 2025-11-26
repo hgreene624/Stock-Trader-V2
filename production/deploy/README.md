@@ -1,5 +1,7 @@
 # Deployment Pipeline
 
+> **Last Updated**: 2025-11-26
+
 Automated deployment system for the trading bot VPS infrastructure.
 
 ## Quick Start

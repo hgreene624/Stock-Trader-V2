@@ -1,5 +1,7 @@
 # For AI Agents: Trading Research Platform Guide
 
+> **Last Updated**: 2025-11-26
+
 **Welcome, AI Agent!** This document explains how to use this project to conduct autonomous trading research.
 
 ---
@@ -67,20 +69,22 @@ This is a **multi-model algorithmic trading platform** for backtesting, optimizi
 5. **Health Monitoring**: HTTP endpoints for uptime and performance tracking
 
 ### Current Status
-- **Best Model**: SectorRotationModel_v1 (126-day momentum + 1.25x leverage)
-  - CAGR: 13.01% (vs SPY: 14.34%) - Within 1.33% of SPY!
-  - Sharpe: 1.712 (vs SPY: ~0.8) ✓ Better risk-adjusted
-  - Max DD: ~22% (vs SPY: ~34%) ✓ Better protection
-  - **Status**: Ready for production deployment (paper trading mode)
-  - BPS: 0.784 (good score)
-  - **Result**: Very close to SPY performance with better risk-adjusted returns
+- **Best Validated Model**: `SectorRotationAdaptive_v3` with `ea_optimized_atr` profile
+  - CAGR: **17.64%** (vs SPY: 14.34%) ✓ **BEATS SPY!**
+  - Sharpe: **2.238** (vs SPY: ~0.8) ✓ Excellent risk-adjusted
+  - Max DD: 27.7% (vs SPY: ~34%) ✓ Better protection
+  - BPS: **1.020** (excellent score)
+  - **Status**: Champion model, beats SPY benchmark
 
-- **Recent Breakthrough**: Implemented walk-forward optimization to prevent overfitting
-  - Previous EA optimization gave 7.3% CAGR (overfitted)
-  - Walk-forward validation gives realistic out-of-sample estimates
-- See `docs/guides/walk_forward.md` for methodology
+- **In Development**: `AdaptiveRegimeSwitcher_v3` (pending validation)
+  - Preliminary: 34.84% CAGR, Sharpe 2.97
+  - Requires out-of-sample validation before deployment
+  - See: `docs/research/experiments/014_adaptive_regime_switcher/`
 
-- **Next Goal**: Find parameters or model improvements to cross 14.34% CAGR threshold
+- **Walk-Forward Optimization**: Prevents overfitting with out-of-sample validation
+  - See `docs/guides/walk_forward.md` for methodology
+
+- **Next Goal**: Validate AdaptiveRegimeSwitcher_v3 on out-of-sample data
 
 ---
 

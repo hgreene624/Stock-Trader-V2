@@ -1,5 +1,7 @@
 # Scripts Directory
 
+> **Last Updated**: 2025-11-26
+
 Utility scripts for the trading platform.
 
 ## Available Scripts
