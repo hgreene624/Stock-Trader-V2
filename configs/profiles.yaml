@@ -2807,6 +2807,47 @@ profiles:
       stop_loss_atr_mult: 1.6
       min_hold_days: 2
 
+  exp014_v3_price_confirmation:
+    description: "Adaptive regime switcher v3 with price trend confirmation (CRITICAL FIX)"
+    model: AdaptiveRegimeSwitcher_v3
+    universe:
+    - XLK
+    - XLF
+    - XLE
+    - XLV
+    - XLI
+    - XLP
+    - XLU
+    - XLY
+    - XLC
+    - XLB
+    - XLRE
+    - TLT
+    start_date: '2020-01-01'
+    end_date: '2024-12-31'
+    lookback_bars: 200
+    parameters:
+      # v3 NEW: Raised VIX thresholds from 25/35 to 28/40
+      vix_defensive: 28.0
+      vix_extreme: 40.0
+      # v3 NEW: Price trend confirmation parameters
+      use_price_confirmation: true
+      spy_symbol: "SPY"
+      price_ma_period: 200
+      defensive_price_threshold: 0.98  # SPY must be < 98% of 200 MA
+      extreme_price_threshold: 0.95    # SPY must be < 95% of 200 MA
+      # Same as v2
+      bull_momentum_period: 126
+      bull_top_n: 4
+      bull_min_momentum: 0.10
+      bull_leverage: 2.0
+      defensive_top_n: 2
+      defensive_leverage: 1.0
+      atr_period: 21
+      take_profit_atr_mult: 2.48
+      stop_loss_atr_mult: 1.6
+      min_hold_days: 2
+
   exp014_baseline_sector:
     description: "SectorRotationAdaptive_v3 baseline for comparison"
     model: SectorRotationAdaptive_v3
