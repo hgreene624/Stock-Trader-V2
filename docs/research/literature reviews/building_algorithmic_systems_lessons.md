@@ -849,8 +849,111 @@ The v3 overfitting disaster was a valuable learning experience. By studying "Bui
 
 ---
 
-**Document Status:** Complete
-**Next Action:** Discuss options with user and choose path forward
+## DECISION UPDATE (2025-11-26)
+
+After analyzing infrastructure gaps and complexity vs value trade-offs, we decided:
+
+**Build Minimum Viable Validation Infrastructure First (Option A)**
+
+### What We're Building (The Simple 3)
+
+**1. Monkey Test Framework** (Complexity: LOW, Value: CRITICAL)
+- Generate 1000+ random baseline strategies
+- Compare real strategy against random variants
+- Output: Percentile rank, "beat %" metric
+- **Purpose:** Prove strategy has edge beyond random chance
+- **File:** `engines/validation/monkey_tests.py`
+
+**2. Component Testing Framework** (Complexity: LOW, Value: HIGH)
+- Test entry logic with random exits
+- Test exit logic with random entries
+- Isolate which components contribute edge
+- **Purpose:** Know which parts of strategy actually work
+- **File:** `engines/validation/component_tests.py`
+
+**3. Data Burn Tracker** (Complexity: VERY LOW, Value: MEDIUM)
+- Log which strategies have seen which data ranges
+- Warn if attempting to re-use test data
+- Enforce "virgin data" for validation
+- **Purpose:** Prevent accidental data burning
+- **File:** `engines/data/burn_tracker.py`
+
+### Why These 3
+
+- **LOW complexity:** ~350 lines total across 3 simple scripts
+- **HIGH value:** Each prevents specific v3-style failure
+- **NO dependencies:** Use existing backtest infrastructure
+- **REUSABLE:** Every future strategy benefits
+- **BOOK-ALIGNED:** Core requirements from "Building Algorithmic Trading Systems"
+
+### Validation Philosophy
+
+**Goal:** Move from "THINK it works" to "KNOW it works"
+
+Without formal validation tools:
+- v3 appeared to have 34.84% CAGR edge
+- Actually was curve-fitted to 2020-2024
+- Lost -31.62% on unseen 2025 data
+
+With validation tools:
+- Monkey test would show 50% win rate = random
+- Component test would isolate which parts work
+- Data tracker prevents burning remaining clean data
+
+### What We're NOT Building (Yet)
+
+These remain available for future enhancement:
+
+**Tier 2: Medium Complexity (Optional)**
+- Walk-forward enhancements (auto-stitch, comparison tools)
+- Monte Carlo position sizing (trade resampling, optimal f)
+- MFE/MAE analysis (excursion tracking)
+
+**Tier 3: High Complexity (Low Priority)**
+- Statistical validation suite (bootstrap, permutation tests)
+- Advanced risk metrics (VaR, CVaR, Ulcer Index)
+- Robustness testing suite (parameter sensitivity heat maps)
+
+**Rationale for deferring:**
+- Walk-forward basics already exist in `engines/optimization/walk_forward.py`
+- Can use conservative 1.0x leverage until Monte Carlo sizing built
+- Standard metrics (Sharpe, drawdown) sufficient for now
+- Focus on essential validation first
+
+### Next Steps
+
+1. **Implement the Simple 3 validation tools**
+2. **Validate Standalone v3 properly** using new tools:
+   - Monkey test: Does it beat 90% of random sector selections?
+   - Component test: Is momentum logic the edge?
+   - Walk-forward: Use existing tool
+3. **Deploy decision** based on validated results
+4. **Build additional tools** as needed for future research
+
+### Reference: Full Infrastructure Gaps
+
+For future work, here are all identified gaps from project-knowledge-oracle analysis:
+
+**Currently Missing:**
+- ❌ Monkey test framework (BUILDING)
+- ❌ Component testing (BUILDING)
+- ❌ Data partitioning (BUILDING)
+- ❌ Monte Carlo position sizing
+- ❌ Incubation tracking (paper vs walk-forward)
+- ❌ Statistical validation tools
+- ❌ Robustness testing
+- ❌ Advanced risk metrics
+
+**Currently Exists (Partial):**
+- ✅ Basic walk-forward (`engines/optimization/walk_forward.py`)
+- ✅ Basic backtest (`backtest/executor.py`, `backtest/runner.py`)
+- ✅ Standard metrics (CAGR, Sharpe, DD, Win Rate, BPS)
+
+---
+
+**Document Status:** Updated with implementation decision
+**Decision Date:** 2025-11-26
+**Next Action:** Implement Simple 3 validation tools, then validate Standalone v3
 **Related Documents:**
 - Validation failure report: `docs/research/experiments/014_adaptive_regime_switcher/VALIDATION_FAILURE_REPORT.md`
 - Original v3 analysis: `docs/research/experiments/014_adaptive_regime_switcher/IMPROVEMENT_ANALYSIS.md`
