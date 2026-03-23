@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="updated dashboard" />
+    <list default="true" id="58ad1758-f475-41e9-bece-ff268cdcb478" name="Changes" comment="&#10;  Add validation infrastructure to prevent overfitting&#10;&#10;  Implements &quot;Simple 3&quot; validation tools from &quot;Building Algorithmic Trading Systems&quot;:&#10;  - Monkey test framework: validates strategy beats &gt;90% of random variants&#10;  - Component test framework: isolates edge from entries vs exits&#10;  - Data burn tracker: prevents test data contamination&#10;&#10;  Also includes:&#10;  - AdaptiveRegimeSwitcher_v4 (conservative approach, failed validation)&#10;  - Comprehensive validation tools documentation&#10;  - CLI tools for all validation workflows&#10;&#10;  Validation infrastructure successfully caught v3 overfitting and v4 over-correction&#10;  before deployment, preventing potential losses.&#10;&#10;  🤖 Generated with Claude Code&#10;  Co-Authored-By: Claude &lt;noreply@anthropic.com&gt;&#10;&#10;  Or if you prefer shorter:&#10;&#10;  Add validation infrastructure (monkey tests, component tests, data burn tracker)&#10;&#10;  Prevents overfitting disasters by validating strategies against random baselines,&#10;  testing components separately, and tracking data usage. Successfully caught v3/v4&#10;  issues before deployment." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -223,7 +223,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764177067009</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="&#10;  Add validation infrastructure to prevent overfitting&#10;&#10;  Implements &quot;Simple 3&quot; validation tools from &quot;Building Algorithmic Trading Systems&quot;:&#10;  - Monkey test framework: validates strategy beats &gt;90% of random variants&#10;  - Component test framework: isolates edge from entries vs exits&#10;  - Data burn tracker: prevents test data contamination&#10;&#10;  Also includes:&#10;  - AdaptiveRegimeSwitcher_v4 (conservative approach, failed validation)&#10;  - Comprehensive validation tools documentation&#10;  - CLI tools for all validation workflows&#10;&#10;  Validation infrastructure successfully caught v3 overfitting and v4 over-correction&#10;  before deployment, preventing potential losses.&#10;&#10;  🤖 Generated with Claude Code&#10;  Co-Authored-By: Claude &lt;noreply@anthropic.com&gt;&#10;&#10;  Or if you prefer shorter:&#10;&#10;  Add validation infrastructure (monkey tests, component tests, data burn tracker)&#10;&#10;  Prevents overfitting disasters by validating strategies against random baselines,&#10;  testing components separately, and tracking data usage. Successfully caught v3/v4&#10;  issues before deployment.">
+      <option name="closed" value="true" />
+      <created>1764184316752</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1764184316752</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -245,6 +253,7 @@
     <MESSAGE value="trading bot v11 deployed." />
     <MESSAGE value="trading bot v13 deployed. Bug fixed with buy decisions" />
     <MESSAGE value="updated dashboard" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated dashboard" />
+    <MESSAGE value="&#10;  Add validation infrastructure to prevent overfitting&#10;&#10;  Implements &quot;Simple 3&quot; validation tools from &quot;Building Algorithmic Trading Systems&quot;:&#10;  - Monkey test framework: validates strategy beats &gt;90% of random variants&#10;  - Component test framework: isolates edge from entries vs exits&#10;  - Data burn tracker: prevents test data contamination&#10;&#10;  Also includes:&#10;  - AdaptiveRegimeSwitcher_v4 (conservative approach, failed validation)&#10;  - Comprehensive validation tools documentation&#10;  - CLI tools for all validation workflows&#10;&#10;  Validation infrastructure successfully caught v3 overfitting and v4 over-correction&#10;  before deployment, preventing potential losses.&#10;&#10;   Generated with Claude Code&#10;  Co-Authored-By: Claude &lt;noreply@anthropic.com&gt;&#10;&#10;  Or if you prefer shorter:&#10;&#10;  Add validation infrastructure (monkey tests, component tests, data burn tracker)&#10;&#10;  Prevents overfitting disasters by validating strategies against random baselines,&#10;  testing components separately, and tracking data usage. Successfully caught v3/v4&#10;  issues before deployment." />
+    <option name="LAST_COMMIT_MESSAGE" value="&#10;  Add validation infrastructure to prevent overfitting&#10;&#10;  Implements &quot;Simple 3&quot; validation tools from &quot;Building Algorithmic Trading Systems&quot;:&#10;  - Monkey test framework: validates strategy beats &gt;90% of random variants&#10;  - Component test framework: isolates edge from entries vs exits&#10;  - Data burn tracker: prevents test data contamination&#10;&#10;  Also includes:&#10;  - AdaptiveRegimeSwitcher_v4 (conservative approach, failed validation)&#10;  - Comprehensive validation tools documentation&#10;  - CLI tools for all validation workflows&#10;&#10;  Validation infrastructure successfully caught v3 overfitting and v4 over-correction&#10;  before deployment, preventing potential losses.&#10;&#10;   Generated with Claude Code&#10;  Co-Authored-By: Claude &lt;noreply@anthropic.com&gt;&#10;&#10;  Or if you prefer shorter:&#10;&#10;  Add validation infrastructure (monkey tests, component tests, data burn tracker)&#10;&#10;  Prevents overfitting disasters by validating strategies against random baselines,&#10;  testing components separately, and tracking data usage. Successfully caught v3/v4&#10;  issues before deployment." />
   </component>
 </project>
